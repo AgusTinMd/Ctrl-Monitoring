@@ -104,3 +104,45 @@ begin
   Sleep(800);
   Result := '';
 end;
+
+function IsUnderFolder(const Path, Folder: String): Boolean;
+begin
+  Result := (Folder <> '') and
+    (Pos(Uppercase(AddBackslash(Folder)), Uppercase(AddBackslash(Path))) = 1);
+end;
+
+// La tarea de «Iniciar con Windows» ejecuta el exe como administrador. Si la
+// carpeta elegida no está en Program Files (por ejemplo E:\Ctrl Monitor),
+// suele heredar permisos de escritura para cualquier usuario: otro programa
+// sin privilegios podría reemplazar el exe y ganar administrador al iniciar
+// sesión. Por eso se cortan los permisos heredados y se deja solo lectura y
+// ejecución para los usuarios. Se usan SID para que funcione en cualquier idioma.
+procedure ProtectInstallFolder;
+var
+  App: String;
+  ResultCode: Integer;
+begin
+  App := RemoveBackslashUnlessRoot(ExpandConstant('{app}'));
+
+  if IsUnderFolder(App, ExpandConstant('{commonpf64}')) or
+     IsUnderFolder(App, ExpandConstant('{commonpf32}')) then
+    Exit;
+
+  // Administradores y SYSTEM: control total; Usuarios: lectura y ejecución.
+  if not Exec(ExpandConstant('{sys}\icacls.exe'),
+    '"' + App + '" /inheritance:r /grant:r *S-1-5-32-544:(OI)(CI)F *S-1-5-18:(OI)(CI)F *S-1-5-32-545:(OI)(CI)RX /C /Q',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    Log(Format('icacls sobre la carpeta devolvió %d', [ResultCode]));
+
+  // Los archivos ya copiados vuelven a heredar de la carpeta protegida.
+  if not Exec(ExpandConstant('{sys}\icacls.exe'),
+    '"' + App + '\*" /reset /T /C /Q',
+    '', SW_HIDE, ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    Log(Format('icacls sobre los archivos devolvió %d', [ResultCode]));
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    ProtectInstallFolder;
+end;
