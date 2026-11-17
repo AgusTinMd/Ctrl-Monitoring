@@ -1,0 +1,156 @@
+namespace CtrlMonitor.Core.Localization;
+
+public static partial class Translations
+{
+    private static readonly IReadOnlyDictionary<string, string> En = new Dictionary<string, string>
+    {
+        // App and dialogs
+        ["app.subtitle"] = "Hardware monitor",
+        ["app.startFailed"] = "Ctrl Monitor could not start.\n\n{0}\n\nMake sure PawnIO is installed and the app is running as administrator.",
+        ["app.needsAdmin"] = "Ctrl Monitor needs to run as administrator to read the CPU temperature, the fans and the motherboard Super I/O.\n\n{0}",
+        ["app.elevation.denied"] = "Windows did not grant the requested permissions.",
+        ["app.elevation.cancelled"] = "The permission request was cancelled.",
+        ["app.elevation.unavailable"] = "CtrlMonitor.exe was not found to restart the app.",
+        ["app.elevation.failed"] = "Windows rejected the elevation request.",
+        ["app.crash"] = "Ctrl Monitor ran into an error and will close.\n\n{0}",
+
+        // Navigation
+        ["nav.summary"] = "Home",
+        ["nav.chart"] = "Charts",
+        ["nav.fans"] = "Fans",
+        ["nav.sensors"] = "Sensors",
+        ["nav.settings"] = "Settings",
+        ["nav.hide"] = "Hide navigation (Ctrl+B)",
+        ["nav.show"] = "Show navigation (Ctrl+B)",
+
+        // Components
+        ["hw.cpu"] = "Processor",
+        ["hw.gpu"] = "Graphics card",
+        ["hw.board"] = "Motherboard",
+        ["hw.superio"] = "Super I/O",
+
+        // Summary
+        ["summary.subtitle"] = "Real-time temperatures, power and fans.",
+        ["summary.cpuTemp"] = "CPU TEMPERATURE",
+        ["summary.gpuTemp"] = "GPU TEMPERATURE",
+        ["summary.cpuPower"] = "CPU POWER",
+        ["summary.gpuPower"] = "GPU POWER",
+        ["summary.temperature"] = "Temperature",
+        ["summary.coreMax"] = "Hottest core",
+        ["summary.power"] = "Power",
+        ["summary.fan"] = "Fan",
+        ["summary.boardCaption"] = "MOTHERBOARD",
+        ["summary.boardTemp"] = "BOARD TEMPERATURE",
+        ["summary.status"] = "STATUS",
+
+        // Charts
+        ["chart.title"] = "Charts",
+        ["chart.subtitle"] = "Choose which metric each chart shows; the scale adjusts automatically.",
+        ["chart.clear"] = "Clear",
+        ["chart.add"] = "Add",
+        ["chart.addTooltip"] = "Choose the metric of the chart you want to add",
+        ["chart.hint"] = "The last 10 minutes are kept in memory. Use each card's selector to change its metric and drag the cards to reorder them; the vertical scale adjusts to the series.",
+        ["chart.empty"] = "No charts. Choose a metric and click Add.",
+        ["chart.dragTooltip"] = "Drag the card to move it",
+        ["chart.metricTooltip"] = "Choose which metric this chart shows",
+        ["chart.removeTooltip"] = "Remove this chart",
+        ["chart.waiting"] = "Waiting for data…",
+        ["chart.noData"] = "No data yet",
+        ["chart.now"] = "now",
+
+        // Chart metrics
+        ["metric.cpu.subtitle"] = "Processor package",
+        ["metric.gpu.subtitle"] = "Graphics card core",
+        ["metric.board.title"] = "Board",
+        ["metric.board.subtitle"] = "Super I/O sensor",
+        ["metric.hotspot.subtitle"] = "GPU hot spot",
+        ["metric.ram.subtitle"] = "Physical memory in use",
+        ["metric.vram.subtitle"] = "Graphics card memory",
+        ["metric.network.title"] = "Network",
+        ["metric.network.subtitle"] = "Download and upload on the physical network",
+        ["metric.label.fan"] = "FAN",
+        ["metric.label.inUse"] = "IN USE",
+        ["metric.label.down"] = "DOWNLOAD",
+        ["metric.label.up"] = "UPLOAD",
+        ["unit.gbOf"] = " GB of {0} GB",
+        ["vram.text"] = "{0:0.0} GB of {1:0.0} GB · {2:0} %",
+
+        // Fans
+        ["fans.subtitle"] = "RPM and PWM of each detected channel. Ctrl Monitor only reads; the BIOS applies the fan curve.",
+        ["fans.onlyActive"] = "Active only",
+        ["fans.onlyActiveTooltip"] = "Show only channels spinning above 0 RPM",
+        ["fans.pwmByBios"] = "PWM applied by the BIOS",
+        ["fans.noPwm"] = "No PWM reading on this channel.",
+        ["fans.noneSpinning"] = "No fan is spinning right now. Uncheck “Active only” to see every channel.",
+        ["fans.noChannelsHint"] = "If no channel shows up, run Ctrl Monitor as administrator to enable Super I/O reading.",
+        ["fans.initial"] = "No fans detected",
+        ["fans.summary.none"] = "No fan channels detected.",
+        ["fans.summary.one"] = "{0} of {1} channel spinning · max {2} RPM",
+        ["fans.summary.many"] = "{0} of {1} channels spinning · max {2} RPM",
+        ["fan.spinning"] = "Spinning",
+        ["fan.stopped"] = "Stopped",
+
+        // Sensors
+        ["sensors.subtitle"] = "Every detected reading, grouped by component.",
+        ["sensors.toggleTooltip"] = "Show or hide the sensors",
+        ["sensors.count"] = "{0} sensors",
+
+        // Settings
+        ["settings.subtitle"] = "Refresh rate, startup, language and hardware diagnostics.",
+        ["settings.monitoring"] = "Monitoring",
+        ["settings.readOnly"] = "The app only reads sensors; it never writes PWM or changes the BIOS.",
+        ["settings.refresh"] = "Refresh interval",
+        ["settings.refreshHint"] = "Between 0.5 and 10 seconds. Faster uses a little more CPU.",
+        ["settings.language"] = "Language",
+        ["settings.languageHint"] = "“Automatic” follows the Windows display language.",
+        ["settings.runAtStartup"] = "Start with Windows",
+        ["settings.runAtStartupHint"] = "Creates a scheduled task with elevated permissions so UAC doesn't prompt at every startup.",
+        ["settings.startMinimized"] = "Start minimized to the tray",
+        ["settings.minimizeToTray"] = "Minimize to the tray when closing the window",
+        ["settings.exitHint"] = "To quit completely, use “Exit” in the tray icon menu.",
+        ["settings.saveNow"] = "Save now",
+        ["settings.hardware"] = "Detected hardware",
+        ["settings.ram"] = "RAM",
+        ["settings.disks"] = "Disks",
+        ["settings.driver"] = "Driver",
+        ["settings.admin"] = "Administrator",
+        ["settings.diagnostics"] = "Data and diagnostics",
+        ["settings.config"] = "Configuration:",
+        ["settings.openConfig"] = "Open configuration",
+        ["settings.openLogs"] = "Open logs",
+        ["settings.biosNote"] = "Fan control is left to the BIOS.",
+        ["language.auto"] = "Automatic (Windows language)",
+
+        // Common values
+        ["common.yes"] = "Yes",
+        ["common.no"] = "No",
+        ["common.notAvailable"] = "Not available",
+        ["common.detecting"] = "Detecting…",
+        ["driver.ready"] = "PawnIO ready",
+        ["driver.missing"] = "PawnIO not detected",
+        ["ram.module.one"] = "{0} module",
+        ["ram.module.many"] = "{0} modules",
+        ["disks.unit.one"] = "{0} drive",
+        ["disks.unit.many"] = "{0} drives",
+
+        // Status and saving
+        ["status.starting"] = "Starting",
+        ["status.readingSensors"] = "Reading sensors…",
+        ["status.noData"] = "No data",
+        ["status.noDataDetail"] = "The sensors could not be read. Check PawnIO and the app permissions.",
+        ["status.monitoring"] = "Monitoring",
+        ["status.groups"] = "{0} groups",
+        ["update.noSensors"] = "No sensors available",
+        ["update.updated"] = "Updated {0}",
+        ["save.loaded"] = "Settings loaded",
+        ["save.saved"] = "Saved {0}",
+        ["save.error"] = "Error while saving: {0}",
+        ["save.pending"] = "Unsaved changes",
+        ["save.startupError"] = "Could not set up start with Windows: {0}",
+        ["save.folderError"] = "Could not open the folder: {0}",
+
+        // Tray
+        ["tray.open"] = "Open Ctrl Monitor",
+        ["tray.exit"] = "Exit"
+    };
+}

@@ -2,7 +2,7 @@
 
 Aplicación de escritorio para Windows que **muestra en tiempo real** las temperaturas, la velocidad de los ventiladores, la potencia, los voltajes, la carga, el PWM, el uso de RAM y VRAM y el tráfico de red. Es **estrictamente de solo lectura**: no escribe PWM, no aplica curvas y no modifica el BIOS.
 
-La interfaz está en español, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el logo de ASUS. El **control de los ventiladores queda a cargo del BIOS**.
+La interfaz está en **español, inglés y portugués (Brasil)**, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el logo de ASUS. El **control de los ventiladores queda a cargo del BIOS**.
 
 > **Hardware de referencia:** ASUS PRIME B560M-A · Intel Core i5-10400F · AMD Radeon RX 6700 XT.
 
@@ -10,7 +10,7 @@ La interfaz está en español, vive en la bandeja del sistema y puede arrancar c
 
 ## Qué hace
 
-- **Resumen** con los valores destacados de CPU, GPU y placa: temperatura, máxima de núcleos, hotspot, potencia, carga, RPM y VRAM de la GPU.
+- **Inicio** con los valores destacados de CPU, GPU y placa: temperatura, máxima de núcleos, hotspot, potencia, carga, RPM y VRAM de la GPU.
 - **Gráfico en vivo** con paneles independientes y un selector de métrica en cada uno: CPU, GPU, placa, hotspot, RAM, VRAM y red. Por defecto se muestran CPU, GPU y RAM; el resto se agrega desde la barra superior, cualquier tarjeta se puede quitar con la **✕** y se reordenan **arrastrándolas** (el orden se guarda). Cada panel ajusta su escala vertical y comparte las ventanas de 1, 5 o 10 minutos. Las RPM del ventilador y el consumo actual en vatios aparecen junto a la temperatura; RAM y VRAM muestran GB en uso sobre el total y porcentaje; la red muestra bajada y subida en MB/s.
 - **Ventiladores** con cada canal detectado, sus RPM y el PWM que está aplicando el BIOS. La casilla **Solo activos** oculta los canales detenidos.
 - **Sensores** con todas las lecturas detectadas, agrupadas por componente: temperaturas, ventiladores, potencia, voltajes, carga, PWM y memoria de la GPU. Cada grupo se puede plegar o desplegar.
@@ -21,7 +21,8 @@ La interfaz está en español, vive en la bandeja del sistema y puede arrancar c
 - **Iconos vectoriales** de CPU, GPU y placa madre, más el logo de ASUS en las tarjetas de hardware.
 - **Bandeja del sistema** con tooltip de CPU/GPU y menú para abrir o salir.
 - **Inicio con Windows** mediante tarea programada con permisos altos.
-- **Persistencia** de las preferencias de refresco, arranque, bandeja, barra lateral y el layout de los gráficos.
+- **Multilenguaje**: español, inglés y portugués (Brasil). Por defecto sigue el idioma de Windows (inglés si no está soportado) y se cambia al instante desde **Ajustes → Idioma**.
+- **Persistencia** de las preferencias de refresco, arranque, bandeja, barra lateral, idioma y el layout de los gráficos.
 
 ## Qué no hace
 
@@ -101,7 +102,7 @@ El workflow también se puede lanzar a mano desde **Actions → Release → Run 
 ## Uso
 
 1. Abrí Ctrl Monitor y aceptá el cartel de UAC.
-2. En **Resumen** revisá las tarjetas de CPU, GPU, potencia y el estado general.
+2. En **Inicio** revisá las tarjetas de CPU, GPU, potencia y el estado general.
 3. En **Gráfico** seguí la evolución de las temperaturas, la memoria y la red. Cada tarjeta tiene su propio selector de métrica y escala automática; elegí 1, 5 o 10 minutos y usá **Limpiar** para reiniciar el trazado. Las RPM del ventilador y el consumo en vatios se muestran junto a la temperatura en CPU, GPU y hotspot; las tarjetas de RAM y VRAM muestran los GB en uso sobre el total y el porcentaje; la de red muestra bajada y subida. Usá **Agregar** para sumar otra métrica y la **✕** de una tarjeta para quitarla.
 4. En **Ventiladores** está cada canal detectado con sus RPM y el PWM aplicado por el BIOS. Los canales en cero se muestran atenuados; activá **Solo activos** para ocultarlos.
 5. En **Sensores** está el volcado completo agrupado por componente. Las filas con barra son porcentajes (carga y PWM). Tocá la cabecera de un grupo para plegarlo o desplegarlo.
@@ -127,6 +128,7 @@ Claves de configuración:
 | `RunAtStartup` | `false` | Crea la tarea programada de inicio. |
 | `ShowNavigation` | `true` | Muestra la barra lateral de navegación. |
 | `ChartMetrics` | `["Cpu","Gpu","Ram"]` | Métricas visibles del modo gráfico, en orden. Se agregan y quitan desde la interfaz. |
+| `Language` | `"auto"` | Idioma de la interfaz: `auto` (el de Windows), `es`, `en` o `pt-BR`. |
 
 Si el archivo se corrompe, la app lo respalda como `config.json.bak-*` y vuelve a los valores por defecto.
 
@@ -155,6 +157,7 @@ src/CtrlMonitor.Core/      Lógica sin UI
   Inventory/               Lectura WMI de RAM y discos, uso de memoria y tráfico de red
   Configuration/           Modelo y persistencia
   Diagnostics/             Logs
+  Localization/            Idiomas y textos traducidos (es, en, pt-BR)
 src/CtrlMonitor.App/       WPF
   Themes/Theme.xaml        Paleta, estilos, iconos vectoriales y navegación
   Controls/LiveChart.cs    Gráfico en vivo por serie o combinado

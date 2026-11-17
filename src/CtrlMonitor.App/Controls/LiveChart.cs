@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Media;
 using CtrlMonitor.App.Models;
 using CtrlMonitor.Core.Charting;
+using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.Controls;
 
@@ -237,7 +238,7 @@ public sealed class LiveChart : FrameworkElement
         if (!hasData)
         {
             FormattedText waiting = Text(
-                samples.Count == 0 ? "Esperando datos…" : "Sin datos todavía",
+                Loc.T(samples.Count == 0 ? "chart.waiting" : "chart.noData"),
                 typeface,
                 12,
                 textBrush,
@@ -422,7 +423,7 @@ public sealed class LiveChart : FrameworkElement
 
             double minutesAgo = windowMinutes * (1 - fraction);
             string labelText = i == divisions
-                ? "ahora"
+                ? Loc.T("chart.now")
                 : minutesAgo >= 0.95
                     ? $"-{minutesAgo:0.#} min"
                     : $"-{minutesAgo * 60:0} s";

@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
 using CtrlMonitor.App.ViewModels;
+using CtrlMonitor.Core.Localization;
 using H.NotifyIcon;
 
 namespace CtrlMonitor.App.Services;
@@ -14,6 +15,8 @@ public sealed class TrayService : IDisposable
     private readonly Action _showWindow;
     private readonly Action _exit;
     private readonly TaskbarIcon _icon;
+    private readonly MenuItem _openItem;
+    private readonly MenuItem _exitItem;
     private bool _disposed;
 
     public TrayService(MainViewModel viewModel, Action showWindow, Action exit)
@@ -24,15 +27,18 @@ public sealed class TrayService : IDisposable
 
         var menu = new ContextMenu();
 
-        var openItem = new MenuItem
+        _openItem = new MenuItem
         {
-            Header = "Abrir Ctrl Monitor",
+            Header = Loc.T("tray.open"),
             FontWeight = System.Windows.FontWeights.SemiBold
         };
-        openItem.Click += (_, _) => _showWindow();
+        _openItem.Click += (_, _) => _showWindow();
 
-        var exitItem = new MenuItem { Header = "Salir" };
-        exitItem.Click += (_, _) => _exit();
+        _exitItem = new MenuItem { Header = Loc.T("tray.exit") };
+        _exitItem.Click += (_, _) => _exit();
+
+        MenuItem openItem = _openItem;
+        MenuItem exitItem = _exitItem;
 
         menu.Items.Add(openItem);
         menu.Items.Add(new Separator());
@@ -58,7 +64,14 @@ public sealed class TrayService : IDisposable
         _icon.ForceCreate(false);
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        Loc.Instance.LanguageChanged += OnLanguageChanged;
         UpdateTooltip();
+    }
+
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        _openItem.Header = Loc.T("tray.open");
+        _exitItem.Header = Loc.T("tray.exit");
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -90,6 +103,7 @@ public sealed class TrayService : IDisposable
 
         _disposed = true;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        Loc.Instance.LanguageChanged -= OnLanguageChanged;
 
         try
         {

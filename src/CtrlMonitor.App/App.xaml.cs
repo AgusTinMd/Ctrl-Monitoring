@@ -5,6 +5,7 @@ using CtrlMonitor.App.ViewModels;
 using CtrlMonitor.Core.Configuration;
 using CtrlMonitor.Core.Diagnostics;
 using CtrlMonitor.Core.Hardware;
+using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App;
 
@@ -33,6 +34,11 @@ public partial class App : Application
         base.OnStartup(e);
 
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+        // El idioma se aplica antes que nada para que los avisos de elevación
+        // y de error también salgan traducidos. Leer la configuración no
+        // necesita permisos de administrador.
+        ApplyConfiguredLanguage();
 
         if (!EnsureElevated(e.Args))
         {
@@ -69,8 +75,7 @@ public partial class App : Application
         {
             AppLog.Error($"No se pudo iniciar Ctrl Monitor :: {ex}", ex);
             MessageBox.Show(
-                $"No se pudo iniciar CtrlMonitor.\n\n{ex.Message}\n\n" +
-                "Verificá que PawnIO esté instalado y que la app se ejecute como administrador.",
+                Loc.F("app.startFailed", ex.Message),
                 "Ctrl Monitor",
                 MessageBoxButton.OK,
                 MessageBoxImage.Error);
@@ -87,7 +92,7 @@ public partial class App : Application
         if (args.Any(arg => arg.Equals(ElevationService.RetryArgument, StringComparison.OrdinalIgnoreCase)))
         {
             AppLog.Warn("La app sigue sin permisos de administrador después de reintentar la elevación.");
-            ShowElevationWarning("Windows no otorgó los permisos solicitados.");
+            ShowElevationWarning(Loc.T("app.elevation.denied"));
             return false;
         }
 
@@ -101,9 +106,9 @@ public partial class App : Application
 
         string detail = result switch
         {
-            ElevationResult.Cancelled => "Se canceló la solicitud de permisos.",
-            ElevationResult.Unavailable => "No se encontró CtrlMonitor.exe para relanzar la app.",
-            _ => "Windows rechazó la solicitud de elevación."
+            ElevationResult.Cancelled => Loc.T("app.elevation.cancelled"),
+            ElevationResult.Unavailable => Loc.T("app.elevation.unavailable"),
+            _ => Loc.T("app.elevation.failed")
         };
 
         AppLog.Warn($"Elevación no completada: {detail}");
@@ -114,11 +119,23 @@ public partial class App : Application
     private static void ShowElevationWarning(string detail)
     {
         MessageBox.Show(
-            "Ctrl Monitor necesita ejecutarse como administrador para leer la temperatura del CPU, " +
-            $"los ventiladores y el Super I/O de la placa.\n\n{detail}",
+            Loc.F("app.needsAdmin", detail),
             "Ctrl Monitor",
             MessageBoxButton.OK,
             MessageBoxImage.Warning);
+    }
+
+    private static void ApplyConfiguredLanguage()
+    {
+        try
+        {
+            Loc.Instance.SetLanguage(new ConfigStore().Load().Language);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn($"No se pudo aplicar el idioma configurado: {ex.Message}");
+            Loc.Instance.SetLanguage(AppLanguage.Auto);
+        }
     }
 
     private void Initialize(string[] args)
@@ -301,7 +318,7 @@ public partial class App : Application
         AppLog.Error($"Excepción no controlada en la UI :: {e.Exception}", e.Exception);
 
         MessageBox.Show(
-            $"Ctrl Monitor encontró un error y se cerrará.\n\n{e.Exception.Message}",
+            Loc.F("app.crash", e.Exception.Message),
             "Ctrl Monitor",
             MessageBoxButton.OK,
             MessageBoxImage.Error);
