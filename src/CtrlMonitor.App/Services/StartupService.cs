@@ -40,6 +40,17 @@ public static class StartupService
 
         string previous = ScheduledTaskXml.GetCommand(query.Output) ?? "(desconocido)";
 
+        // Solo se toma la tarea si este exe está en una carpeta que únicamente
+        // los administradores pueden modificar. Un build del repo o un zip en
+        // Descargas no deben quedar ejecutándose como administrador al iniciar.
+        if (!InstallLocation.IsProtectedFromNonAdmins(executable))
+        {
+            AppLog.Warn(
+                $"La tarea de inicio apunta a {previous}; no se cambia a {executable} " +
+                "porque esa carpeta la pueden modificar usuarios sin privilegios.");
+            return false;
+        }
+
         if (!SetEnabled(true, out string? error))
         {
             AppLog.Warn($"La tarea de inicio apunta a {previous} y no se pudo corregir: {error}");
