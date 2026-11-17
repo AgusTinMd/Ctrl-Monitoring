@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using FanCtrl.App.Models;
+using FanCtrl.Core.Charting;
 
 namespace FanCtrl.App.Controls;
 
@@ -214,7 +215,20 @@ public sealed class LiveChart : FrameworkElement
         if (AutoScale)
             (min, max) = GetAutoScaleRange(samples, series, start);
 
-        DrawGrid(dc, plot, gridBrush, textBrush, typeface, dpi, min, max, windowMinutes, step, Unit ?? string.Empty);
+        // El paso base sirve para rangos chicos; con rangos grandes (red a
+        // 100 MB/s con paso 1) se agranda para que las etiquetas no se encimen.
+        AxisTicks ticks = AxisTicks.Compute(min, max, step, plot.Height);
+
+        if (AutoScale && ticks.GridStep > step)
+        {
+            double ceiling = Math.Max(AxisMax, AxisMin + step);
+            min = Math.Floor(min / ticks.GridStep) * ticks.GridStep;
+            max = Math.Min(ceiling, Math.Ceiling(max / ticks.GridStep) * ticks.GridStep);
+            min = Math.Max(Math.Min(AxisMin, AxisMax - step), min);
+            ticks = AxisTicks.Compute(min, max, step, plot.Height);
+        }
+
+        DrawGrid(dc, plot, gridBrush, textBrush, typeface, dpi, min, max, windowMinutes, ticks, Unit ?? string.Empty);
 
         bool hasData = samples.Any(sample =>
             sample.TimestampUtc >= start
@@ -362,17 +376,23 @@ public sealed class LiveChart : FrameworkElement
         double min,
         double max,
         double windowMinutes,
-        double step,
+        AxisTicks ticks,
         string unit)
     {
-        double labelStep = max - min <= step * 4 ? step : step * 2;
+        double step = ticks.GridStep;
+        double first = Math.Ceiling(min / step - 1e-9) * step;
 
-        for (double value = Math.Ceiling(min / step) * step;
-             value <= max + 0.01;
-             value += step)
+        // Índice entero en vez de acumular «value += step», que arrastra error
+        // de coma flotante y desalinea las etiquetas.
+        for (int i = 0; ; i++)
         {
+            double value = first + i * step;
+
+            if (value > max + step * 1e-6)
+                break;
+
             double y = plot.Bottom - (value - min) / (max - min) * plot.Height;
-            bool isLabel = Math.Abs(value % labelStep) < 0.01;
+            bool isLabel = ticks.IsLabel(value);
             var pen = new Pen(gridBrush, isLabel ? 0.9 : 0.45);
 
             if (pen.CanFreeze)
