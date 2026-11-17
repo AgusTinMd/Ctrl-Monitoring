@@ -1,17 +1,39 @@
+using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.ViewModels;
 
-/// <summary>Métrica que puede mostrar un panel del modo gráfico.</summary>
-public sealed class ChartMetric
+/// <summary>
+/// Métrica que puede mostrar un panel del modo gráfico. Los textos se guardan
+/// como claves de traducción; si una clave no existe (por ejemplo «CPU»), se
+/// muestra tal cual. Avisa cuando cambia el idioma para que los selectores
+/// actualicen los nombres.
+/// </summary>
+public sealed class ChartMetric : INotifyPropertyChanged
 {
+    public ChartMetric()
+    {
+        // Las métricas son estáticas y viven toda la app: no hace falta desuscribir.
+        Loc.Instance.LanguageChanged += (_, _) =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
     public required string Key { get; init; }
 
-    public required string Title { get; init; }
+    /// <summary>Clave del nombre de la métrica.</summary>
+    public required string TitleKey { get; init; }
 
-    public required string Subtitle { get; init; }
+    /// <summary>Clave de la descripción breve bajo el selector.</summary>
+    public required string SubtitleKey { get; init; }
+
+    public string Title => Loc.T(TitleKey);
+
+    public string Subtitle => Loc.T(SubtitleKey);
 
     public required Brush Color { get; init; }
 
@@ -29,7 +51,10 @@ public sealed class ChartMetric
 
     public required string PrimaryUnit { get; init; }
 
-    public string SecondaryLabel { get; init; } = string.Empty;
+    /// <summary>Clave de la etiqueta sobre el valor secundario; por ejemplo, «VENTILADOR».</summary>
+    public string SecondaryLabelKey { get; init; } = string.Empty;
+
+    public string SecondaryLabel => SecondaryLabelKey.Length == 0 ? string.Empty : Loc.T(SecondaryLabelKey);
 
     public Func<MainViewModel, double?>? Secondary { get; init; }
 
@@ -43,8 +68,10 @@ public sealed class ChartMetric
     /// <summary>Color opcional del valor secundario, para diferenciarlo en el gráfico.</summary>
     public Brush? SecondaryBrush { get; init; }
 
-    /// <summary>Etiqueta sobre el valor principal; por ejemplo, «BAJADA».</summary>
-    public string PrimaryLabel { get; init; } = string.Empty;
+    /// <summary>Clave de la etiqueta sobre el valor principal; por ejemplo, «BAJADA».</summary>
+    public string PrimaryLabelKey { get; init; } = string.Empty;
+
+    public string PrimaryLabel => PrimaryLabelKey.Length == 0 ? string.Empty : Loc.T(PrimaryLabelKey);
 
     /// <summary>Unidad dinámica del valor principal.</summary>
     public Func<MainViewModel, string>? PrimaryUnitSelector { get; init; }
@@ -169,6 +196,9 @@ public sealed partial class ChartPanelViewModel : ObservableObject
             : Format(metric.Tertiary(_owner), metric.TertiaryFormat);
     }
 
+    /// <summary>Vuelve a tomar los textos de la métrica después de cambiar de idioma.</summary>
+    public void RefreshLanguage() => ApplyMetric();
+
     private void ApplyMetric()
     {
         ChartMetric metric = SelectedMetric;
@@ -205,8 +235,8 @@ internal static class ChartMetrics
     public static ChartMetric Cpu { get; } = new()
     {
         Key = "Cpu",
-        Title = "CPU",
-        Subtitle = "Paquete del procesador",
+        TitleKey = "CPU",
+        SubtitleKey = "metric.cpu.subtitle",
         Color = UiBrushes.ChartCpu,
         AxisUnit = "°",
         AxisMin = 20,
@@ -215,7 +245,7 @@ internal static class ChartMetrics
         Primary = vm => vm.CpuTemperature,
         PrimaryFormat = "0.0",
         PrimaryUnit = "°C",
-        SecondaryLabel = "VENTILADOR",
+        SecondaryLabelKey = "metric.label.fan",
         Secondary = vm => vm.CpuFanRpm,
         SecondaryFormat = "0",
         SecondaryUnit = " RPM",
@@ -227,8 +257,8 @@ internal static class ChartMetrics
     public static ChartMetric Gpu { get; } = new()
     {
         Key = "Gpu",
-        Title = "GPU",
-        Subtitle = "Núcleo de la tarjeta gráfica",
+        TitleKey = "GPU",
+        SubtitleKey = "metric.gpu.subtitle",
         Color = UiBrushes.ChartGpu,
         AxisUnit = "°",
         AxisMin = 20,
@@ -237,7 +267,7 @@ internal static class ChartMetrics
         Primary = vm => vm.GpuTemperature,
         PrimaryFormat = "0.0",
         PrimaryUnit = "°C",
-        SecondaryLabel = "VENTILADOR",
+        SecondaryLabelKey = "metric.label.fan",
         Secondary = vm => vm.GpuFanRpm,
         SecondaryFormat = "0",
         SecondaryUnit = " RPM",
@@ -249,8 +279,8 @@ internal static class ChartMetrics
     public static ChartMetric Board { get; } = new()
     {
         Key = "Board",
-        Title = "Placa",
-        Subtitle = "Sensor del Super I/O",
+        TitleKey = "metric.board.title",
+        SubtitleKey = "metric.board.subtitle",
         Color = UiBrushes.ChartBoard,
         AxisUnit = "°",
         AxisMin = 20,
@@ -264,8 +294,8 @@ internal static class ChartMetrics
     public static ChartMetric Hotspot { get; } = new()
     {
         Key = "Hotspot",
-        Title = "Hotspot",
-        Subtitle = "Punto caliente de la GPU",
+        TitleKey = "Hotspot",
+        SubtitleKey = "metric.hotspot.subtitle",
         Color = UiBrushes.ChartHotspot,
         AxisUnit = "°",
         AxisMin = 20,
@@ -274,7 +304,7 @@ internal static class ChartMetrics
         Primary = vm => vm.GpuHotspot,
         PrimaryFormat = "0.0",
         PrimaryUnit = "°C",
-        SecondaryLabel = "VENTILADOR",
+        SecondaryLabelKey = "metric.label.fan",
         Secondary = vm => vm.GpuFanRpm,
         SecondaryFormat = "0",
         SecondaryUnit = " RPM",
@@ -286,8 +316,8 @@ internal static class ChartMetrics
     public static ChartMetric Ram { get; } = new()
     {
         Key = "Ram",
-        Title = "RAM",
-        Subtitle = "Memoria física en uso",
+        TitleKey = "RAM",
+        SubtitleKey = "metric.ram.subtitle",
         Color = UiBrushes.ChartRam,
         AxisUnit = "%",
         AxisMin = 0,
@@ -296,19 +326,19 @@ internal static class ChartMetrics
         Primary = vm => vm.RamPercent,
         PrimaryFormat = "0",
         PrimaryUnit = " %",
-        SecondaryLabel = "EN USO",
+        SecondaryLabelKey = "metric.label.inUse",
         Secondary = vm => vm.RamUsedGb,
         SecondaryFormat = "0.0",
         SecondaryUnitSelector = vm => vm.RamTotalGb is { } total
-            ? $" GB de {total.ToString("0.#", CultureInfo.CurrentCulture)} GB"
+            ? Loc.F("unit.gbOf", total.ToString("0.#", CultureInfo.CurrentCulture))
             : " GB"
     };
 
     public static ChartMetric Vram { get; } = new()
     {
         Key = "Vram",
-        Title = "VRAM",
-        Subtitle = "Memoria de la tarjeta gráfica",
+        TitleKey = "VRAM",
+        SubtitleKey = "metric.vram.subtitle",
         Color = UiBrushes.ChartVram,
         AxisUnit = "%",
         AxisMin = 0,
@@ -317,19 +347,19 @@ internal static class ChartMetrics
         Primary = vm => vm.VramPercent,
         PrimaryFormat = "0",
         PrimaryUnit = " %",
-        SecondaryLabel = "EN USO",
+        SecondaryLabelKey = "metric.label.inUse",
         Secondary = vm => vm.VramUsedGb,
         SecondaryFormat = "0.0",
         SecondaryUnitSelector = vm => vm.VramTotalGb is { } total
-            ? $" GB de {total.ToString("0.#", CultureInfo.CurrentCulture)} GB"
+            ? Loc.F("unit.gbOf", total.ToString("0.#", CultureInfo.CurrentCulture))
             : " GB"
     };
 
     public static ChartMetric Network { get; } = new()
     {
         Key = "Network",
-        Title = "Red",
-        Subtitle = "Bajada y subida de la red física",
+        TitleKey = "metric.network.title",
+        SubtitleKey = "metric.network.subtitle",
         Color = UiBrushes.ChartNetDown,
         AxisUnit = " MB/s",
         AxisMin = 0,
@@ -340,8 +370,8 @@ internal static class ChartMetrics
         Primary = vm => vm.NetDownMbs,
         PrimaryFormat = "0.00",
         PrimaryUnit = " MB/s",
-        PrimaryLabel = "BAJADA",
-        SecondaryLabel = "SUBIDA",
+        PrimaryLabelKey = "metric.label.down",
+        SecondaryLabelKey = "metric.label.up",
         Secondary = vm => vm.NetUpMbs,
         SecondaryFormat = "0.00",
         SecondaryUnit = " MB/s",

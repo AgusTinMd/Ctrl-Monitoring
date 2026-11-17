@@ -13,8 +13,32 @@ using CtrlMonitor.Core.Configuration;
 using CtrlMonitor.Core.Diagnostics;
 using CtrlMonitor.Core.Hardware;
 using CtrlMonitor.Core.Inventory;
+using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.ViewModels;
+
+/// <summary>Opción del selector de idioma de Ajustes.</summary>
+public sealed class LanguageOption : ObservableObject
+{
+    public LanguageOption(string code, string? nativeName)
+    {
+        Code = code;
+        _nativeName = nativeName;
+    }
+
+    private readonly string? _nativeName;
+
+    /// <summary>«auto», «es», «en» o «pt-BR»; es lo que se guarda en la configuración.</summary>
+    public string Code { get; }
+
+    /// <summary>
+    /// Los idiomas se muestran en su propio idioma (para encontrarlos aunque la
+    /// app esté en otro); «Automático» se traduce.
+    /// </summary>
+    public string DisplayName => _nativeName ?? Loc.T("language.auto");
+
+    public void RefreshLanguage() => OnPropertyChanged(nameof(DisplayName));
+}
 
 /// <summary>
 /// Estado de la app de monitorización. No escribe PWM: solo consume los
@@ -32,6 +56,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly NetworkUsageReader _networkUsage = new();
 
     private int _lastActiveFanCount = -1;
+
+    private MachineInventory? _inventory;
 
     private bool _disposed;
 
@@ -60,7 +86,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         _hardware.SnapshotUpdated += OnSnapshotUpdated;
 
-        SaveStatus = "Configuración cargada";
+        LanguageOptions = new[] { new LanguageOption(AppLanguage.Auto, null) }
+            .Concat(AppLanguage.Supported.Select(language => new LanguageOption(language.Code, language.NativeName)))
+            .ToList();
+        Loc.Instance.LanguageChanged += OnLanguageChanged;
+
+        SaveStatus = Loc.T("save.loaded");
         UpdateFromSnapshot(_hardware.Latest);
         UpdateStatus();
 
@@ -119,11 +150,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public string DriverVersion => _hardware.DriverVersion;
 
-    public string DriverShortText => _hardware.PawnIoInstalled ? "PawnIO listo" : "PawnIO no detectado";
+    public string DriverShortText => Loc.T(_hardware.PawnIoInstalled ? "driver.ready" : "driver.missing");
 
     public Brush DriverBrush => _hardware.PawnIoInstalled ? UiBrushes.Success : UiBrushes.Danger;
 
-    public string AdminText => _hardware.IsAdministrator ? "Sí" : "No";
+    public string AdminText => Loc.T(_hardware.IsAdministrator ? "common.yes" : "common.no");
 
     public string ConfigPath => _store.ConfigPath;
 
@@ -205,13 +236,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private double? _netUpMbs;
 
     [ObservableProperty]
-    private string _lastUpdateText = "Esperando datos…";
+    private string _lastUpdateText = Loc.T("chart.waiting");
 
     [ObservableProperty]
-    private string _statusTitle = "Iniciando";
+    private string _statusTitle = Loc.T("status.starting");
 
     [ObservableProperty]
-    private string _statusDetail = "Leyendo sensores…";
+    private string _statusDetail = Loc.T("status.readingSensors");
 
     [ObservableProperty]
     private Brush _statusBrush = UiBrushes.Muted;
@@ -226,7 +257,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private int _chartWindowMinutes = 5;
 
     [ObservableProperty]
-    private string _fanSummaryText = "Sin ventiladores detectados";
+    private string _fanSummaryText = Loc.T("fans.initial");
 
     [ObservableProperty]
     private bool _showOnlyActiveFans;
@@ -235,10 +266,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private bool _showActiveFilterEmpty;
 
     [ObservableProperty]
-    private string _ramText = "Detectando…";
+    private string _ramText = Loc.T("common.detecting");
 
     [ObservableProperty]
-    private string _disksText = "Detectando…";
+    private string _disksText = Loc.T("common.detecting");
 
     [ObservableProperty]
     private string _disksTooltip = string.Empty;
@@ -316,11 +347,35 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             }
             else
             {
-                SaveStatus = $"No se pudo configurar el inicio automático: {error}";
+                SaveStatus = Loc.F("save.startupError", error);
 
                 // El binding TwoWay ya marcó el check; forzamos que vuelva al valor real.
                 OnPropertyChanged();
             }
+        }
+    }
+
+    /// <summary>Opciones del selector de idioma: automático y los idiomas soportados.</summary>
+    public IReadOnlyList<LanguageOption> LanguageOptions { get; }
+
+    /// <summary>
+    /// Preferencia de idioma («auto», «es», «en» o «pt-BR»). Cambiarla traduce
+    /// la interfaz al instante y la guarda en la configuración.
+    /// </summary>
+    public string Language
+    {
+        get => _config.Language;
+        set
+        {
+            string normalized = AppLanguage.NormalizeSetting(value);
+
+            if (string.Equals(_config.Language, normalized, StringComparison.Ordinal))
+                return;
+
+            _config.Language = normalized;
+            OnPropertyChanged();
+            Loc.Instance.SetLanguage(normalized);
+            SaveSoon();
         }
     }
 
@@ -392,8 +447,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _saveTimer.Stop();
 
         SaveStatus = _store.Save(_config)
-            ? $"Guardado {DateTime.Now:HH:mm:ss}"
-            : $"Error al guardar: {_store.LastError}";
+            ? Loc.F("save.saved", DateTime.Now.ToString("HH:mm:ss"))
+            : Loc.F("save.error", _store.LastError);
     }
 
     [RelayCommand]
@@ -411,6 +466,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _saveTimer.Stop();
         _saveTimer.Tick -= OnSaveTimerTick;
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
+        Loc.Instance.LanguageChanged -= OnLanguageChanged;
 
         SaveNow();
         AppLog.Info("Monitor de hardware cerrado.");
@@ -423,22 +479,73 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (_disposed)
             return;
 
+        _inventory = inventory;
+        ApplyInventoryTexts();
+    }
+
+    private void ApplyInventoryTexts()
+    {
+        if (_inventory is not { } inventory)
+        {
+            RamText = Loc.T("common.detecting");
+            DisksText = Loc.T("common.detecting");
+            return;
+        }
+
         RamText = FormatMemory(inventory);
         DisksText = FormatDisks(inventory);
         DisksTooltip = FormatDiskDetails(inventory);
     }
 
+    /// <summary>
+    /// Vuelve a traducir los textos que arma el ViewModel. Los que se
+    /// recalculan en cada refresco (última actualización, resumen de
+    /// ventiladores, VRAM) se actualizan solos en el próximo ciclo.
+    /// </summary>
+    private void OnLanguageChanged(object? sender, EventArgs e)
+    {
+        if (_disposed)
+            return;
+
+        OnPropertyChanged(nameof(DriverShortText));
+        OnPropertyChanged(nameof(AdminText));
+
+        foreach (LanguageOption option in LanguageOptions)
+            option.RefreshLanguage();
+
+        foreach (ChartPanelViewModel panel in ChartPanels)
+            panel.RefreshLanguage();
+
+        foreach (FanViewModel fan in Fans)
+            fan.RefreshLanguage();
+
+        foreach (SensorGroupViewModel group in Groups)
+            group.RefreshLanguage();
+
+        ApplyInventoryTexts();
+
+        // Solo textos: no se vuelve a leer la red ni se agrega una muestra al
+        // gráfico, para no meter picos falsos.
+        HardwareSnapshot latest = _hardware.Latest;
+        UpdateVideoMemory(latest.Sensors
+            .Where(s => s.HardwareType is "GpuAmd" or "GpuNvidia")
+            .ToList());
+        UpdateFans(latest.Sensors);
+        UpdateStatus();
+        RefreshChartPanels();
+    }
+
     private static string FormatMemory(MachineInventory inventory)
     {
         if (inventory.TotalMemoryBytes <= 0)
-            return "No disponible";
+            return Loc.T("common.notAvailable");
 
         string text = FormatBytes(inventory.TotalMemoryBytes);
 
         if (inventory.Modules.Count > 0)
         {
             int count = inventory.Modules.Count;
-            text += $" · {count} {(count == 1 ? "módulo" : "módulos")}";
+            text += " · " + Loc.F(count == 1 ? "ram.module.one" : "ram.module.many", count);
 
             int speed = inventory.Modules.Max(module => module.SpeedMhz);
 
@@ -452,12 +559,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private static string FormatDisks(MachineInventory inventory)
     {
         if (inventory.Disks.Count == 0)
-            return "No disponible";
+            return Loc.T("common.notAvailable");
 
         int count = inventory.Disks.Count;
         long total = inventory.Disks.Sum(disk => disk.SizeBytes);
 
-        return $"{count} {(count == 1 ? "unidad" : "unidades")} · {FormatBytes(total)}";
+        return Loc.F(count == 1 ? "disks.unit.one" : "disks.unit.many", count) + " · " + FormatBytes(total);
     }
 
     private static string FormatDiskDetails(MachineInventory inventory) =>
@@ -486,7 +593,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (_disposed)
             return;
 
-        SaveStatus = "Cambios sin guardar";
+        SaveStatus = Loc.T("save.pending");
         _saveTimer.Stop();
         _saveTimer.Start();
     }
@@ -511,7 +618,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             UpdateVideoMemory(Array.Empty<SensorReading>());
             RefreshChartPanels();
-            LastUpdateText = "Sin sensores disponibles";
+            LastUpdateText = Loc.T("update.noSensors");
             UpdateStatus();
             return;
         }
@@ -553,7 +660,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdateGroups(snapshot);
         UpdateFans(snapshot.Sensors);
 
-        LastUpdateText = $"Actualizado {DateTime.Now:HH:mm:ss}";
+        LastUpdateText = Loc.F("update.updated", DateTime.Now.ToString("HH:mm:ss"));
         UpdateStatus();
     }
 
@@ -689,7 +796,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         VramUsedGb = used / 1024d;
         VramTotalGb = total / 1024d;
         VramPercent = Math.Clamp(used / total * 100d, 0, 100);
-        VramText = $"{VramUsedGb:0.0} GB de {VramTotalGb:0.0} GB · {VramPercent:0} %";
+        VramText = Loc.F("vram.text", VramUsedGb, VramTotalGb, VramPercent);
     }
 
     private void UpdateNetwork()
@@ -770,10 +877,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         int spinning = readings.Count(s => s.Value > 0);
         int fastest = readings.Count == 0 ? 0 : (int)Math.Round(readings.Max(s => s.Value));
 
-        string channelWord = readings.Count == 1 ? "canal" : "canales";
         FanSummaryText = readings.Count == 0
-            ? "Sin canales de ventilador detectados."
-            : $"{spinning} de {readings.Count} {channelWord} girando · máximo {fastest} RPM";
+            ? Loc.T("fans.summary.none")
+            : Loc.F(readings.Count == 1 ? "fans.summary.one" : "fans.summary.many",
+                spinning, readings.Count, fastest);
 
         int activeCount = Fans.Count(fan => fan.Rpm > 0);
 
@@ -791,15 +898,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         if (_hardware.Latest.Sensors.Count == 0)
         {
-            StatusTitle = "Sin datos";
-            StatusDetail = "No se pudieron leer los sensores. Verificá PawnIO y los permisos.";
+            StatusTitle = Loc.T("status.noData");
+            StatusDetail = Loc.T("status.noDataDetail");
             StatusBrush = UiBrushes.Danger;
             StatusSoftBrush = UiBrushes.DangerSoft;
             return;
         }
 
-        StatusTitle = "Monitorizando";
-        StatusDetail = $"CPU {FormatTemperature(CpuTemperature)} · GPU {FormatTemperature(GpuTemperature)} · {Groups.Count} grupos";
+        StatusTitle = Loc.T("status.monitoring");
+        StatusDetail = $"CPU {FormatTemperature(CpuTemperature)} · GPU {FormatTemperature(GpuTemperature)} · {Loc.F("status.groups", Groups.Count)}";
         StatusBrush = UiBrushes.Success;
         StatusSoftBrush = UiBrushes.SuccessSoft;
     }
@@ -883,7 +990,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            SaveStatus = $"No se pudo abrir la carpeta: {ex.Message}";
+            SaveStatus = Loc.F("save.folderError", ex.Message);
         }
     }
 }

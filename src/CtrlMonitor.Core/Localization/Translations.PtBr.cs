@@ -1,0 +1,156 @@
+namespace CtrlMonitor.Core.Localization;
+
+public static partial class Translations
+{
+    private static readonly IReadOnlyDictionary<string, string> PtBr = new Dictionary<string, string>
+    {
+        // App e diálogos
+        ["app.subtitle"] = "Monitor de hardware",
+        ["app.startFailed"] = "Não foi possível iniciar o Ctrl Monitor.\n\n{0}\n\nVerifique se o PawnIO está instalado e se o app está sendo executado como administrador.",
+        ["app.needsAdmin"] = "O Ctrl Monitor precisa ser executado como administrador para ler a temperatura da CPU, as ventoinhas e o Super I/O da placa-mãe.\n\n{0}",
+        ["app.elevation.denied"] = "O Windows não concedeu as permissões solicitadas.",
+        ["app.elevation.cancelled"] = "A solicitação de permissão foi cancelada.",
+        ["app.elevation.unavailable"] = "O CtrlMonitor.exe não foi encontrado para reiniciar o app.",
+        ["app.elevation.failed"] = "O Windows recusou a solicitação de elevação.",
+        ["app.crash"] = "O Ctrl Monitor encontrou um erro e será fechado.\n\n{0}",
+
+        // Navegação
+        ["nav.summary"] = "Início",
+        ["nav.chart"] = "Gráficos",
+        ["nav.fans"] = "Ventoinhas",
+        ["nav.sensors"] = "Sensores",
+        ["nav.settings"] = "Configurações",
+        ["nav.hide"] = "Ocultar a navegação (Ctrl+B)",
+        ["nav.show"] = "Mostrar a navegação (Ctrl+B)",
+
+        // Componentes
+        ["hw.cpu"] = "Processador",
+        ["hw.gpu"] = "Placa de vídeo",
+        ["hw.board"] = "Placa-mãe",
+        ["hw.superio"] = "Super I/O",
+
+        // Resumo
+        ["summary.subtitle"] = "Temperaturas, potência e ventoinhas em tempo real.",
+        ["summary.cpuTemp"] = "TEMPERATURA DA CPU",
+        ["summary.gpuTemp"] = "TEMPERATURA DA GPU",
+        ["summary.cpuPower"] = "POTÊNCIA DA CPU",
+        ["summary.gpuPower"] = "POTÊNCIA DA GPU",
+        ["summary.temperature"] = "Temperatura",
+        ["summary.coreMax"] = "Núcleo mais quente",
+        ["summary.power"] = "Potência",
+        ["summary.fan"] = "Ventoinha",
+        ["summary.boardCaption"] = "PLACA-MÃE",
+        ["summary.boardTemp"] = "TEMPERATURA DA PLACA",
+        ["summary.status"] = "STATUS",
+
+        // Gráficos
+        ["chart.title"] = "Gráficos",
+        ["chart.subtitle"] = "Escolha qual métrica cada gráfico mostra; a escala se ajusta sozinha.",
+        ["chart.clear"] = "Limpar",
+        ["chart.add"] = "Adicionar",
+        ["chart.addTooltip"] = "Escolha a métrica do gráfico que você quer adicionar",
+        ["chart.hint"] = "Os últimos 10 minutos ficam na memória. Use o seletor de cada cartão para mudar a métrica e arraste os cartões para reordená-los; a escala vertical se ajusta à série.",
+        ["chart.empty"] = "Nenhum gráfico. Escolha uma métrica e clique em Adicionar.",
+        ["chart.dragTooltip"] = "Arraste o cartão para mudá-lo de lugar",
+        ["chart.metricTooltip"] = "Escolha qual métrica este gráfico mostra",
+        ["chart.removeTooltip"] = "Remover este gráfico",
+        ["chart.waiting"] = "Aguardando dados…",
+        ["chart.noData"] = "Ainda sem dados",
+        ["chart.now"] = "agora",
+
+        // Métricas dos gráficos
+        ["metric.cpu.subtitle"] = "Pacote do processador",
+        ["metric.gpu.subtitle"] = "Núcleo da placa de vídeo",
+        ["metric.board.title"] = "Placa",
+        ["metric.board.subtitle"] = "Sensor do Super I/O",
+        ["metric.hotspot.subtitle"] = "Ponto mais quente da GPU",
+        ["metric.ram.subtitle"] = "Memória física em uso",
+        ["metric.vram.subtitle"] = "Memória da placa de vídeo",
+        ["metric.network.title"] = "Rede",
+        ["metric.network.subtitle"] = "Download e upload da rede física",
+        ["metric.label.fan"] = "VENTOINHA",
+        ["metric.label.inUse"] = "EM USO",
+        ["metric.label.down"] = "DOWNLOAD",
+        ["metric.label.up"] = "UPLOAD",
+        ["unit.gbOf"] = " GB de {0} GB",
+        ["vram.text"] = "{0:0.0} GB de {1:0.0} GB · {2:0} %",
+
+        // Ventoinhas
+        ["fans.subtitle"] = "RPM e PWM de cada canal detectado. O Ctrl Monitor apenas lê; a curva é aplicada pela BIOS.",
+        ["fans.onlyActive"] = "Somente ativas",
+        ["fans.onlyActiveTooltip"] = "Mostrar somente os canais com RPM acima de zero",
+        ["fans.pwmByBios"] = "PWM aplicado pela BIOS",
+        ["fans.noPwm"] = "Sem leitura de PWM neste canal.",
+        ["fans.noneSpinning"] = "Nenhuma ventoinha está girando agora. Desmarque “Somente ativas” para ver todos os canais.",
+        ["fans.noChannelsHint"] = "Se nenhum canal aparecer, execute o Ctrl Monitor como administrador para habilitar a leitura do Super I/O.",
+        ["fans.initial"] = "Nenhuma ventoinha detectada",
+        ["fans.summary.none"] = "Nenhum canal de ventoinha detectado.",
+        ["fans.summary.one"] = "{0} de {1} canal girando · máximo {2} RPM",
+        ["fans.summary.many"] = "{0} de {1} canais girando · máximo {2} RPM",
+        ["fan.spinning"] = "Girando",
+        ["fan.stopped"] = "Parada",
+
+        // Sensores
+        ["sensors.subtitle"] = "Todas as leituras detectadas, agrupadas por componente.",
+        ["sensors.toggleTooltip"] = "Mostrar ou ocultar os sensores",
+        ["sensors.count"] = "{0} sensores",
+
+        // Configurações
+        ["settings.subtitle"] = "Atualização, inicialização, idioma e diagnóstico do hardware.",
+        ["settings.monitoring"] = "Monitoramento",
+        ["settings.readOnly"] = "O app apenas lê sensores; nunca grava PWM nem altera a BIOS.",
+        ["settings.refresh"] = "Intervalo de atualização",
+        ["settings.refreshHint"] = "Entre 0,5 e 10 segundos. Mais rápido consome um pouco mais de CPU.",
+        ["settings.language"] = "Idioma",
+        ["settings.languageHint"] = "“Automático” usa o idioma do Windows.",
+        ["settings.runAtStartup"] = "Iniciar com o Windows",
+        ["settings.runAtStartupHint"] = "Cria uma tarefa agendada com permissões elevadas para evitar o aviso do UAC.",
+        ["settings.startMinimized"] = "Iniciar minimizado na bandeja",
+        ["settings.minimizeToTray"] = "Minimizar para a bandeja ao fechar a janela",
+        ["settings.exitHint"] = "Para sair de vez, use “Sair” no menu do ícone da bandeja.",
+        ["settings.saveNow"] = "Salvar agora",
+        ["settings.hardware"] = "Hardware detectado",
+        ["settings.ram"] = "Memória RAM",
+        ["settings.disks"] = "Discos",
+        ["settings.driver"] = "Driver",
+        ["settings.admin"] = "Administrador",
+        ["settings.diagnostics"] = "Dados e diagnóstico",
+        ["settings.config"] = "Configuração:",
+        ["settings.openConfig"] = "Abrir configuração",
+        ["settings.openLogs"] = "Abrir logs",
+        ["settings.biosNote"] = "O controle das ventoinhas fica a cargo da BIOS.",
+        ["language.auto"] = "Automático (idioma do Windows)",
+
+        // Valores comuns
+        ["common.yes"] = "Sim",
+        ["common.no"] = "Não",
+        ["common.notAvailable"] = "Não disponível",
+        ["common.detecting"] = "Detectando…",
+        ["driver.ready"] = "PawnIO pronto",
+        ["driver.missing"] = "PawnIO não detectado",
+        ["ram.module.one"] = "{0} módulo",
+        ["ram.module.many"] = "{0} módulos",
+        ["disks.unit.one"] = "{0} unidade",
+        ["disks.unit.many"] = "{0} unidades",
+
+        // Status e salvamento
+        ["status.starting"] = "Iniciando",
+        ["status.readingSensors"] = "Lendo sensores…",
+        ["status.noData"] = "Sem dados",
+        ["status.noDataDetail"] = "Não foi possível ler os sensores. Verifique o PawnIO e as permissões.",
+        ["status.monitoring"] = "Monitorando",
+        ["status.groups"] = "{0} grupos",
+        ["update.noSensors"] = "Nenhum sensor disponível",
+        ["update.updated"] = "Atualizado {0}",
+        ["save.loaded"] = "Configuração carregada",
+        ["save.saved"] = "Salvo {0}",
+        ["save.error"] = "Erro ao salvar: {0}",
+        ["save.pending"] = "Alterações não salvas",
+        ["save.startupError"] = "Não foi possível configurar a inicialização com o Windows: {0}",
+        ["save.folderError"] = "Não foi possível abrir a pasta: {0}",
+
+        // Bandeja
+        ["tray.open"] = "Abrir Ctrl Monitor",
+        ["tray.exit"] = "Sair"
+    };
+}
