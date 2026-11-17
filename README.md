@@ -93,14 +93,14 @@ The tests cover settings persistence and normalization (including legacy files w
 powershell -ExecutionPolicy Bypass -File build\package.ps1
 
 # A different version
-powershell -ExecutionPolicy Bypass -File build\package.ps1 -Version 2.7.0
+powershell -ExecutionPolicy Bypass -File build\package.ps1 -Version 2.8.0
 ```
 
 To publish on GitHub, push a version tag. The [`release.yml`](.github/workflows/release.yml) workflow runs the tests, packages with the same script and creates the Release with the files:
 
 ```powershell
-git tag v2.7.0
-git push origin v2.7.0
+git tag v2.8.0
+git push origin v2.8.0
 ```
 
 The workflow can also be started by hand from **Actions → Release → Run workflow**: it produces the files as downloadable artifacts without publishing a Release. The installer script lives in [`installer/CtrlMonitor.iss`](installer/CtrlMonitor.iss).
@@ -304,14 +304,14 @@ Los tests cubren la persistencia y normalización de la configuración (incluida
 powershell -ExecutionPolicy Bypass -File build\package.ps1
 
 # Otra versión
-powershell -ExecutionPolicy Bypass -File build\package.ps1 -Version 2.7.0
+powershell -ExecutionPolicy Bypass -File build\package.ps1 -Version 2.8.0
 ```
 
 Para publicar en GitHub, subí un tag con la versión. El workflow [`release.yml`](.github/workflows/release.yml) corre los tests, empaqueta con el mismo script y crea la Release con los archivos:
 
 ```powershell
-git tag v2.7.0
-git push origin v2.7.0
+git tag v2.8.0
+git push origin v2.8.0
 ```
 
 El workflow también se puede lanzar a mano desde **Actions → Release → Run workflow**: genera los archivos como artefactos descargables sin publicar una Release. El script del instalador está en [`installer/CtrlMonitor.iss`](installer/CtrlMonitor.iss).
