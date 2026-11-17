@@ -358,6 +358,21 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         ChartsChanged();
     }
 
+    /// <summary>
+    /// Mueve una tarjeta del modo gráfico a otra posición y guarda el nuevo
+    /// orden. Se usa al arrastrar y soltar las tarjetas.
+    /// </summary>
+    public void MoveChartPanel(ChartPanelViewModel panel, int newIndex)
+    {
+        int oldIndex = ChartPanels.IndexOf(panel);
+
+        if (oldIndex < 0 || newIndex < 0 || newIndex >= ChartPanels.Count || oldIndex == newIndex)
+            return;
+
+        ChartPanels.Move(oldIndex, newIndex);
+        ChartsChanged();
+    }
+
     [RelayCommand]
     private void SaveNow()
     {
