@@ -86,24 +86,26 @@ The tests cover settings persistence and normalization (including legacy files w
 
 ### Package and publish a release
 
+**The version always comes from the git tag.** The csproj stays at `0.0.0` (local builds show "Ctrl Monitor (dev)" in Settings), so there's nothing to bump before a release.
+
 `build\package.ps1` creates the self-contained executable, the portable zip, the installer and `SHA256SUMS.txt` in `artifacts\`. The installer needs [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`); without it, the script builds everything else and warns you.
 
 ```powershell
-# Version from the csproj
+# Version from the latest vX.Y.Z tag
 powershell -ExecutionPolicy Bypass -File build\package.ps1
 
-# A different version
+# A specific version
 powershell -ExecutionPolicy Bypass -File build\package.ps1 -Version 2.8.0
 ```
 
-To publish on GitHub, push a version tag. The [`release.yml`](.github/workflows/release.yml) workflow runs the tests, packages with the same script and creates the Release with the files:
+To publish on GitHub, merge `DEV` into `main` with a single PR and push a version tag on `main`. The [`release.yml`](.github/workflows/release.yml) workflow runs the tests, packages with the same script using the tag's version and creates the Release with the files:
 
 ```powershell
 git tag v2.8.0
 git push origin v2.8.0
 ```
 
-The workflow can also be started by hand from **Actions → Release → Run workflow**: it produces the files as downloadable artifacts without publishing a Release. The installer script lives in [`installer/CtrlMonitor.iss`](installer/CtrlMonitor.iss).
+The workflow can also be started by hand from **Actions → Release → Run workflow**: it produces the files as downloadable artifacts without publishing a Release (with an empty version it uses the latest tag). The installer script lives in [`installer/CtrlMonitor.iss`](installer/CtrlMonitor.iss).
 
 ## Usage
 
@@ -297,24 +299,26 @@ Los tests cubren la persistencia y normalización de la configuración (incluida
 
 ### Empaquetar y publicar una versión
 
+**La versión sale siempre del tag de git.** El csproj queda fijo en `0.0.0` (una compilación local muestra «Ctrl Monitor (dev)» en Ajustes), así que no hay que cambiar nada antes de publicar.
+
 `build\package.ps1` genera en `artifacts\` el exe autocontenido, el zip portable, el instalador y `SHA256SUMS.txt`. El instalador necesita [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`); sin él, el script arma el resto y avisa.
 
 ```powershell
-# Versión del csproj
+# Versión del último tag vX.Y.Z
 powershell -ExecutionPolicy Bypass -File build\package.ps1
 
-# Otra versión
+# Una versión en particular
 powershell -ExecutionPolicy Bypass -File build\package.ps1 -Version 2.8.0
 ```
 
-Para publicar en GitHub, subí un tag con la versión. El workflow [`release.yml`](.github/workflows/release.yml) corre los tests, empaqueta con el mismo script y crea la Release con los archivos:
+Para publicar en GitHub, pasá `DEV` a `main` con un solo PR y subí un tag con la versión sobre `main`. El workflow [`release.yml`](.github/workflows/release.yml) corre los tests, empaqueta con el mismo script usando la versión del tag y crea la Release con los archivos:
 
 ```powershell
 git tag v2.8.0
 git push origin v2.8.0
 ```
 
-El workflow también se puede lanzar a mano desde **Actions → Release → Run workflow**: genera los archivos como artefactos descargables sin publicar una Release. El script del instalador está en [`installer/CtrlMonitor.iss`](installer/CtrlMonitor.iss).
+El workflow también se puede lanzar a mano desde **Actions → Release → Run workflow**: genera los archivos como artefactos descargables sin publicar una Release (con la versión vacía usa el último tag). El script del instalador está en [`installer/CtrlMonitor.iss`](installer/CtrlMonitor.iss).
 
 ## Uso
 

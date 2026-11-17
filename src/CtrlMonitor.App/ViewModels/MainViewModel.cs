@@ -161,8 +161,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public string LogDirectory => AppPaths.LogDirectory;
 
     /// <summary>
-    /// Versión del ejecutable (la que fija el csproj o el tag de la release),
-    /// para no tener que actualizar este texto a mano en cada versión.
+    /// Versión del ejecutable. La pone el tag vX.Y.Z al publicar; una
+    /// compilación local queda en 0.0.0 y se muestra como «(dev)».
     /// </summary>
     public string VersionText { get; } = BuildVersionText();
 
@@ -170,9 +170,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         Version? version = typeof(MainViewModel).Assembly.GetName().Version;
 
-        return version is null
-            ? "Ctrl Monitor"
-            : $"Ctrl Monitor {version.Major}.{version.Minor}.{Math.Max(0, version.Build)}";
+        if (version is null || (version.Major == 0 && version.Minor == 0 && version.Build <= 0))
+            return "Ctrl Monitor (dev)";
+
+        return $"Ctrl Monitor {version.Major}.{version.Minor}.{version.Build}";
     }
 
     [ObservableProperty]

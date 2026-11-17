@@ -15,7 +15,9 @@
     PawnIO sigue siendo un requisito externo (driver firmado, instalador propio).
 
 .PARAMETER Version
-    Version a publicar (por ejemplo 2.6.0). Si se omite, se lee del csproj.
+    Version a publicar (por ejemplo 2.7.0 o v2.7.0). Si se omite, se usa el
+    ultimo tag vX.Y.Z del repositorio. El csproj queda fijo en 0.0.0: la
+    version real siempre sale del tag.
 
 .PARAMETER Iscc
     Ruta a ISCC.exe. Si se omite, se busca en el PATH y en las rutas de
@@ -56,9 +58,20 @@ function Invoke-Step([string]$title, [scriptblock]$action) {
 }
 
 if (-not $Version) {
-    [xml]$csproj = Get-Content $project
-    $node = $csproj.SelectSingleNode('//Version')
-    $Version = if ($node) { $node.InnerText } else { '' }
+    # Los tags viven en los merges de main, que no estan en la historia de
+    # DEV ni de sus ramas: por eso se toma el tag de version mas alto del
+    # repositorio en lugar de usar git describe.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $tag = git -C $root tag --list 'v*.*.*' --sort=-v:refname 2>$null | Select-Object -First 1
+    $ErrorActionPreference = $previousPreference
+
+    if (-not $tag) {
+        throw 'No hay ningun tag vX.Y.Z en el repositorio. Pasar la version con -Version 1.2.3.'
+    }
+
+    $Version = "$tag".Trim()
+    Write-Host "Version tomada del tag $Version"
 }
 
 $Version = $Version.TrimStart('v', 'V')

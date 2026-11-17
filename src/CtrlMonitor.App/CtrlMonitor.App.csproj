@@ -11,7 +11,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\fan.ico</ApplicationIcon>
     <PlatformTarget>x64</PlatformTarget>
-    <Version>2.7.0</Version>
+    <!-- Versión fija para compilaciones locales: la real la pone el tag vX.Y.Z
+         al publicar (build/package.ps1 pasa -p:Version). No hace falta tocarla. -->
+    <Version>0.0.0</Version>
     <Product>Ctrl Monitor</Product>
     <Description>Monitor de temperaturas, ventiladores, memoria y red. Solo lectura.</Description>
   </PropertyGroup>
