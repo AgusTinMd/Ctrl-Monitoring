@@ -140,6 +140,10 @@ public sealed partial class ChartPanelViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasTertiary;
 
+    /// <summary>La tarjeta se está arrastrando para cambiarla de lugar.</summary>
+    [ObservableProperty]
+    private bool _isDragging;
+
     partial void OnSelectedMetricChanged(ChartMetric value) => ApplyMetric();
 
     /// <summary>Vuelve a leer los valores actuales del monitor sin cambiar la métrica.</summary>
