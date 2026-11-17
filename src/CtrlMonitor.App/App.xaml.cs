@@ -143,6 +143,11 @@ public partial class App : Application
             AppLog.Warn($"No se pudo recrear la tarea de inicio: {startupError}");
         }
 
+        // Si la app se instaló en otra carpeta o se movió, la tarea de inicio
+        // puede seguir apuntando al exe anterior.
+        if (_config.RunAtStartup)
+            StartupService.EnsureTaskPointsHere();
+
         _hardware = new HardwareService();
         _hardware.Open();
 

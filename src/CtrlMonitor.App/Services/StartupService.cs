@@ -21,6 +21,36 @@ public static class StartupService
     }
 
     /// <summary>
+    /// Si la tarea de inicio existe pero ejecuta otro exe (la app se instaló en
+    /// otra carpeta, se movió o quedó una copia vieja), la vuelve a crear
+    /// apuntando al ejecutable actual.
+    /// </summary>
+    /// <returns><c>true</c> si la tarea se corrigió.</returns>
+    public static bool EnsureTaskPointsHere()
+    {
+        string? executable = AppLaunch.ExecutablePath;
+
+        if (string.IsNullOrWhiteSpace(executable))
+            return false;
+
+        ProcessResult query = Run("/Query", "/TN", TaskName, "/XML");
+
+        if (query.ExitCode != 0 || ScheduledTaskXml.PointsTo(query.Output, executable))
+            return false;
+
+        string previous = ScheduledTaskXml.GetCommand(query.Output) ?? "(desconocido)";
+
+        if (!SetEnabled(true, out string? error))
+        {
+            AppLog.Warn($"La tarea de inicio apunta a {previous} y no se pudo corregir: {error}");
+            return false;
+        }
+
+        AppLog.Info($"Tarea de inicio corregida: {previous} -> {executable}");
+        return true;
+    }
+
+    /// <summary>
     /// Borra la tarea «FanCtrl» de versiones anteriores, que apunta a un
     /// FanCtrl.exe que ya no existe.
     /// </summary>

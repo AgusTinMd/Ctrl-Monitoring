@@ -32,10 +32,28 @@ La interfaz está en español, vive en la bandeja del sistema y puede arrancar c
 
 El PWM que aparece en la pestaña **Sensores** es una lectura del valor que está aplicando el BIOS en ese momento.
 
+## Instalación
+
+Descargá la última versión desde [Releases](https://github.com/AgusTinMd/Ctrl-Monitoring/releases/latest):
+
+| Archivo | Para qué |
+|---|---|
+| `CtrlMonitorSetup-X.Y.Z.exe` | **Instalador (recomendado).** Instala en `C:\Program Files\Ctrl Monitor`, crea el acceso directo en el menú Inicio (y opcionalmente en el escritorio) y se desinstala desde *Agregar o quitar programas*. |
+| `CtrlMonitor-X.Y.Z-win-x64-portable.zip` | Versión portable. Descomprimí la carpeta donde quieras y ejecutá `CtrlMonitor.exe`. |
+| `SHA256SUMS.txt` | Hashes para verificar que los archivos descargados no se modificaron. |
+
+No hace falta instalar .NET: el ejecutable ya lo incluye.
+
+Antes o después de instalar, instalá **[PawnIO](https://pawnio.eu/)**: es el driver que permite leer los sensores de la placa madre. El instalador avisa si no lo encuentra y ofrece abrir la página de descarga.
+
+> **Aviso de Windows SmartScreen.** El ejecutable no está firmado digitalmente, así que Windows puede mostrar *«Windows protegió su PC»*. Para continuar tocá **Más información → Ejecutar de todas formas**. Algunos antivirus también desconfían de las apps que leen sensores a bajo nivel; si te preocupa, compará el archivo con `SHA256SUMS.txt` o compilalo vos mismo.
+
+Al desinstalar se cierra la app y se borra la tarea de inicio automático. Tu configuración queda en `%APPDATA%\CtrlMonitor` por si volvés a instalarla; podés borrar esa carpeta a mano.
+
 ## Requisitos
 
 - Windows 10/11 de 64 bits.
-- [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0) (para ejecutar) o .NET 10 SDK (para compilar).
+- Para compilar: .NET 10 SDK. Las versiones de Releases ya incluyen el runtime; un build propio con `dotnet build` necesita el [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 - **PawnIO 2.2** instalado. Es el driver firmado que usa LibreHardwareMonitor para acceder al Super I/O. Sin él, la app no detecta el Nuvoton y muestra menos sensores.
 - Permisos de administrador. El manifiesto de la app exige elevación (`requireAdministrator`); si se inicia sin privilegios, se relanza sola y pide UAC.
 
@@ -58,6 +76,27 @@ dotnet test tests\CtrlMonitor.Core.Tests\CtrlMonitor.Core.Tests.csproj -c Releas
 ```
 
 Los tests cubren la persistencia y normalización de la configuración, incluida la lectura de un archivo legacy con campos de control que ya no se usan, el layout de gráficos, la migración desde FanCtrl, la escala de los ejes y la conversión de velocidades de red.
+
+### Empaquetar y publicar una versión
+
+`build\package.ps1` genera en `artifacts\` el exe autocontenido, el zip portable, el instalador y `SHA256SUMS.txt`. El instalador necesita [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`); sin él, el script arma el resto y avisa.
+
+```powershell
+# Versión del csproj
+powershell -ExecutionPolicy Bypass -File build\package.ps1
+
+# Otra versión
+powershell -ExecutionPolicy Bypass -File build\package.ps1 -Version 2.7.0
+```
+
+Para publicar en GitHub, subí un tag con la versión. El workflow [`release.yml`](.github/workflows/release.yml) corre los tests, empaqueta con el mismo script y crea la Release con los archivos:
+
+```powershell
+git tag v2.7.0
+git push origin v2.7.0
+```
+
+El workflow también se puede lanzar a mano desde **Actions → Release → Run workflow**: genera los archivos como artefactos descargables sin publicar una Release. El script del instalador está en [`installer/CtrlMonitor.iss`](installer/CtrlMonitor.iss).
 
 ## Uso
 
@@ -127,6 +166,9 @@ src/CtrlMonitor.App/       WPF
   Assets/asus.png          Logo de ASUS para identificar la placa
 tests/CtrlMonitor.Core.Tests/  Tests xUnit
 tools/CtrlMonitor.Probe/   Sonda de solo lectura para diagnóstico elevado
+build/package.ps1          Empaquetado: exe autocontenido, zip, instalador y hashes
+installer/CtrlMonitor.iss  Instalador de Inno Setup
+.github/workflows/         Release automática al subir un tag vX.Y.Z
 ```
 
 ## Sonda de diagnóstico

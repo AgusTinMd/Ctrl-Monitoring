@@ -1,0 +1,108 @@
+# Publica una versión de Ctrl Monitor.
+#
+# - Al subir un tag vX.Y.Z (por ejemplo `git tag v2.7.0 && git push origin v2.7.0`)
+#   compila, corre los tests, arma el instalador y el zip portable y los
+#   publica en una Release de GitHub.
+# - Desde la pestaña Actions («Run workflow») genera los mismos archivos como
+#   artefactos descargables, sin crear ninguna Release.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión a empaquetar (X.Y.Z). Vacío = la del csproj."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Instalar Inno Setup si falta
+        shell: pwsh
+        run: |
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup --yes --no-progress
+          }
+          if (-not (Test-Path $iscc)) { throw "No se encontró ISCC.exe" }
+          "ISCC=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Definir versión
+        id: version
+        shell: pwsh
+        run: |
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            $version = $env:GITHUB_REF_NAME.TrimStart('v')
+          } else {
+            $version = '${{ github.event.inputs.version }}'
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+
+      - name: Empaquetar
+        shell: pwsh
+        run: |
+          $arguments = @{ Iscc = $env:ISCC }
+          if ('${{ steps.version.outputs.version }}') {
+            $arguments.Version = '${{ steps.version.outputs.version }}'
+          }
+          ./build/package.ps1 @arguments
+
+      - name: Subir artefactos del workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: CtrlMonitor-${{ steps.version.outputs.version || 'csproj' }}
+          path: |
+            artifacts/*.exe
+            artifacts/*.zip
+            artifacts/SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Publicar Release
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          $notes = @"
+          ## Ctrl Monitor $version
+
+          Monitor de hardware de solo lectura para Windows 10/11 (64 bits): temperaturas, ventiladores, potencia, RAM, VRAM y red.
+
+          ### Descarga
+          - **CtrlMonitorSetup-$version.exe**: instalador (recomendado). Instala en Program Files, crea el acceso directo y se desinstala desde «Agregar o quitar programas».
+          - **CtrlMonitor-$version-win-x64-portable.zip**: versión portable, sin instalar. Descomprimir y ejecutar ``CtrlMonitor.exe``.
+
+          No hace falta instalar .NET: viene incluido.
+
+          ### Requisitos
+          - Permisos de administrador (la app los pide al abrir).
+          - [PawnIO](https://pawnio.eu/) para leer los sensores de la placa madre. El instalador avisa si falta.
+
+          ### Aviso de Windows SmartScreen
+          El ejecutable no está firmado digitalmente, así que Windows puede mostrar «Windows protegió su PC». Para continuar: **Más información → Ejecutar de todas formas**. Podés verificar los archivos con ``SHA256SUMS.txt``.
+          "@
+          Set-Content -Path release-notes.md -Value $notes -Encoding utf8
+
+          gh release create $env:GITHUB_REF_NAME `
+            (Get-ChildItem artifacts -File | Where-Object { $_.Extension -in '.exe', '.zip', '.txt' }).FullName `
+            --title "Ctrl Monitor $version" `
+            --notes-file release-notes.md
