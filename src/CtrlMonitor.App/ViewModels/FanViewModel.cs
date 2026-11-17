@@ -1,6 +1,7 @@
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CtrlMonitor.Core.Hardware;
+using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.ViewModels;
 
@@ -32,9 +33,9 @@ public sealed partial class FanViewModel : ObservableObject
 
     public string HardwareText => HardwareType switch
     {
-        "SuperIO" => "Super I/O",
-        "GpuAmd" or "GpuNvidia" => "Tarjeta gráfica",
-        "Cpu" => "Procesador",
+        "SuperIO" => Loc.T("hw.superio"),
+        "GpuAmd" or "GpuNvidia" => Loc.T("hw.gpu"),
+        "Cpu" => Loc.T("hw.cpu"),
         _ => HardwareName
     };
 
@@ -59,7 +60,7 @@ public sealed partial class FanViewModel : ObservableObject
     private bool _hasPwm;
 
     [ObservableProperty]
-    private string _statusText = "Detenido";
+    private string _statusText = Loc.T("fan.stopped");
 
     [ObservableProperty]
     private Brush _statusBrush = UiBrushes.Muted;
@@ -78,15 +79,23 @@ public sealed partial class FanViewModel : ObservableObject
 
         if (Rpm > 0)
         {
-            StatusText = "Girando";
             StatusBrush = UiBrushes.Success;
             RpmBrush = UiBrushes.TextPrimary;
         }
         else
         {
-            StatusText = "Detenido";
             StatusBrush = UiBrushes.Muted;
             RpmBrush = UiBrushes.Muted;
         }
+
+        StatusText = Loc.T(Rpm > 0 ? "fan.spinning" : "fan.stopped");
+    }
+
+    /// <summary>Vuelve a traducir los textos fijos después de cambiar de idioma.</summary>
+    public void RefreshLanguage()
+    {
+        StatusText = Loc.T(Rpm > 0 ? "fan.spinning" : "fan.stopped");
+        OnPropertyChanged(nameof(HardwareText));
+        OnPropertyChanged(nameof(DetailText));
     }
 }

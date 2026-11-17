@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CtrlMonitor.Core.Hardware;
+using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.ViewModels;
 
@@ -14,21 +15,20 @@ public sealed partial class SensorGroupViewModel : ObservableObject
         HardwareId = hardwareId;
         Name = name;
         HardwareType = hardwareType;
-        TypeText = hardwareType switch
-        {
-            "Cpu" => "Procesador",
-            "GpuAmd" or "GpuNvidia" => "Tarjeta gráfica",
-            "Motherboard" => "Placa madre",
-            "SuperIO" => "Super I/O",
-            _ => hardwareType
-        };
     }
 
     public string HardwareId { get; }
 
     public string Name { get; }
 
-    public string TypeText { get; }
+    public string TypeText => HardwareType switch
+    {
+        "Cpu" => Loc.T("hw.cpu"),
+        "GpuAmd" or "GpuNvidia" => Loc.T("hw.gpu"),
+        "Motherboard" => Loc.T("hw.board"),
+        "SuperIO" => Loc.T("hw.superio"),
+        _ => HardwareType
+    };
 
     public string HardwareType { get; }
 
@@ -41,7 +41,14 @@ public sealed partial class SensorGroupViewModel : ObservableObject
 
     public ObservableCollection<SensorRowViewModel> Rows { get; } = new();
 
-    public string CountText => $"{Rows.Count} sensores";
+    public string CountText => Loc.F("sensors.count", Rows.Count);
+
+    /// <summary>Vuelve a traducir los textos después de cambiar de idioma.</summary>
+    public void RefreshLanguage()
+    {
+        OnPropertyChanged(nameof(TypeText));
+        OnPropertyChanged(nameof(CountText));
+    }
 
     /// <summary>Indica si la tarjeta del grupo muestra sus filas de sensores.</summary>
     [ObservableProperty]

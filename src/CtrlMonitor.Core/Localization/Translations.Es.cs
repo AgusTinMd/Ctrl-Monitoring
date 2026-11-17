@@ -1,0 +1,156 @@
+namespace CtrlMonitor.Core.Localization;
+
+public static partial class Translations
+{
+    private static readonly IReadOnlyDictionary<string, string> Es = new Dictionary<string, string>
+    {
+        // App y diálogos
+        ["app.subtitle"] = "Monitor de hardware",
+        ["app.startFailed"] = "No se pudo iniciar Ctrl Monitor.\n\n{0}\n\nVerificá que PawnIO esté instalado y que la app se ejecute como administrador.",
+        ["app.needsAdmin"] = "Ctrl Monitor necesita ejecutarse como administrador para leer la temperatura del CPU, los ventiladores y el Super I/O de la placa.\n\n{0}",
+        ["app.elevation.denied"] = "Windows no otorgó los permisos solicitados.",
+        ["app.elevation.cancelled"] = "Se canceló la solicitud de permisos.",
+        ["app.elevation.unavailable"] = "No se encontró CtrlMonitor.exe para relanzar la app.",
+        ["app.elevation.failed"] = "Windows rechazó la solicitud de elevación.",
+        ["app.crash"] = "Ctrl Monitor encontró un error y se cerrará.\n\n{0}",
+
+        // Navegación
+        ["nav.summary"] = "Resumen",
+        ["nav.chart"] = "Gráfico",
+        ["nav.fans"] = "Ventiladores",
+        ["nav.sensors"] = "Sensores",
+        ["nav.settings"] = "Ajustes",
+        ["nav.hide"] = "Ocultar la navegación (Ctrl+B)",
+        ["nav.show"] = "Mostrar la navegación (Ctrl+B)",
+
+        // Componentes
+        ["hw.cpu"] = "Procesador",
+        ["hw.gpu"] = "Tarjeta gráfica",
+        ["hw.board"] = "Placa madre",
+        ["hw.superio"] = "Super I/O",
+
+        // Resumen
+        ["summary.subtitle"] = "Temperaturas, potencia y ventiladores en tiempo real.",
+        ["summary.cpuTemp"] = "TEMPERATURA CPU",
+        ["summary.gpuTemp"] = "TEMPERATURA GPU",
+        ["summary.cpuPower"] = "POTENCIA CPU",
+        ["summary.gpuPower"] = "POTENCIA GPU",
+        ["summary.temperature"] = "Temperatura",
+        ["summary.coreMax"] = "Máxima de núcleos",
+        ["summary.power"] = "Potencia",
+        ["summary.fan"] = "Ventilador",
+        ["summary.boardCaption"] = "PLACA MADRE",
+        ["summary.boardTemp"] = "TEMPERATURA DE PLACA",
+        ["summary.status"] = "ESTADO",
+
+        // Gráfico
+        ["chart.title"] = "Modo gráfico",
+        ["chart.subtitle"] = "Elegí qué métrica muestra cada gráfico; la escala se ajusta sola.",
+        ["chart.clear"] = "Limpiar",
+        ["chart.add"] = "Agregar",
+        ["chart.addTooltip"] = "Elegí la métrica del gráfico que querés agregar",
+        ["chart.hint"] = "Se conservan los últimos 10 minutos en memoria. Usá el selector de cada tarjeta para cambiar la métrica y arrastrá las tarjetas para ordenarlas; la escala vertical se ajusta a la serie.",
+        ["chart.empty"] = "No hay gráficos. Elegí una métrica y usá Agregar.",
+        ["chart.dragTooltip"] = "Arrastrá la tarjeta para cambiarla de lugar",
+        ["chart.metricTooltip"] = "Elegí qué métrica muestra este gráfico",
+        ["chart.removeTooltip"] = "Quitar este gráfico",
+        ["chart.waiting"] = "Esperando datos…",
+        ["chart.noData"] = "Sin datos todavía",
+        ["chart.now"] = "ahora",
+
+        // Métricas del gráfico
+        ["metric.cpu.subtitle"] = "Paquete del procesador",
+        ["metric.gpu.subtitle"] = "Núcleo de la tarjeta gráfica",
+        ["metric.board.title"] = "Placa",
+        ["metric.board.subtitle"] = "Sensor del Super I/O",
+        ["metric.hotspot.subtitle"] = "Punto caliente de la GPU",
+        ["metric.ram.subtitle"] = "Memoria física en uso",
+        ["metric.vram.subtitle"] = "Memoria de la tarjeta gráfica",
+        ["metric.network.title"] = "Red",
+        ["metric.network.subtitle"] = "Bajada y subida de la red física",
+        ["metric.label.fan"] = "VENTILADOR",
+        ["metric.label.inUse"] = "EN USO",
+        ["metric.label.down"] = "BAJADA",
+        ["metric.label.up"] = "SUBIDA",
+        ["unit.gbOf"] = " GB de {0} GB",
+        ["vram.text"] = "{0:0.0} GB de {1:0.0} GB · {2:0} %",
+
+        // Ventiladores
+        ["fans.subtitle"] = "RPM y PWM de cada canal detectado. Ctrl Monitor solo lee; la curva la aplica el BIOS.",
+        ["fans.onlyActive"] = "Solo activos",
+        ["fans.onlyActiveTooltip"] = "Mostrar únicamente los canales con RPM mayores que cero",
+        ["fans.pwmByBios"] = "PWM aplicado por el BIOS",
+        ["fans.noPwm"] = "Sin lectura de PWM en este canal.",
+        ["fans.noneSpinning"] = "Ningún ventilador está girando ahora mismo. Desmarcá «Solo activos» para ver todos los canales.",
+        ["fans.noChannelsHint"] = "Si no aparece ningún canal, ejecutá Ctrl Monitor como administrador para habilitar la lectura del Super I/O.",
+        ["fans.initial"] = "Sin ventiladores detectados",
+        ["fans.summary.none"] = "Sin canales de ventilador detectados.",
+        ["fans.summary.one"] = "{0} de {1} canal girando · máximo {2} RPM",
+        ["fans.summary.many"] = "{0} de {1} canales girando · máximo {2} RPM",
+        ["fan.spinning"] = "Girando",
+        ["fan.stopped"] = "Detenido",
+
+        // Sensores
+        ["sensors.subtitle"] = "Todas las lecturas detectadas, agrupadas por componente.",
+        ["sensors.toggleTooltip"] = "Mostrar u ocultar los sensores",
+        ["sensors.count"] = "{0} sensores",
+
+        // Ajustes
+        ["settings.subtitle"] = "Refresco, inicio automático, idioma y diagnóstico del hardware.",
+        ["settings.monitoring"] = "Monitorización",
+        ["settings.readOnly"] = "La app solo lee sensores; nunca escribe PWM ni cambia el BIOS.",
+        ["settings.refresh"] = "Intervalo de refresco",
+        ["settings.refreshHint"] = "Entre 0,5 y 10 segundos. Más rápido consume un poco más de CPU.",
+        ["settings.language"] = "Idioma",
+        ["settings.languageHint"] = "«Automático» usa el idioma de Windows.",
+        ["settings.runAtStartup"] = "Iniciar con Windows",
+        ["settings.runAtStartupHint"] = "Crea una tarea programada con permisos altos para evitar el cartel de UAC.",
+        ["settings.startMinimized"] = "Iniciar minimizado en la bandeja",
+        ["settings.minimizeToTray"] = "Minimizar a la bandeja al cerrar la ventana",
+        ["settings.exitHint"] = "Para salir del todo usá «Salir» en el menú del icono de bandeja.",
+        ["settings.saveNow"] = "Guardar ahora",
+        ["settings.hardware"] = "Hardware detectado",
+        ["settings.ram"] = "Memoria RAM",
+        ["settings.disks"] = "Discos",
+        ["settings.driver"] = "Driver",
+        ["settings.admin"] = "Administrador",
+        ["settings.diagnostics"] = "Datos y diagnóstico",
+        ["settings.config"] = "Configuración:",
+        ["settings.openConfig"] = "Abrir configuración",
+        ["settings.openLogs"] = "Abrir logs",
+        ["settings.biosNote"] = "El control de los ventiladores queda a cargo del BIOS.",
+        ["language.auto"] = "Automático (idioma de Windows)",
+
+        // Valores comunes
+        ["common.yes"] = "Sí",
+        ["common.no"] = "No",
+        ["common.notAvailable"] = "No disponible",
+        ["common.detecting"] = "Detectando…",
+        ["driver.ready"] = "PawnIO listo",
+        ["driver.missing"] = "PawnIO no detectado",
+        ["ram.module.one"] = "{0} módulo",
+        ["ram.module.many"] = "{0} módulos",
+        ["disks.unit.one"] = "{0} unidad",
+        ["disks.unit.many"] = "{0} unidades",
+
+        // Estado y guardado
+        ["status.starting"] = "Iniciando",
+        ["status.readingSensors"] = "Leyendo sensores…",
+        ["status.noData"] = "Sin datos",
+        ["status.noDataDetail"] = "No se pudieron leer los sensores. Verificá PawnIO y los permisos.",
+        ["status.monitoring"] = "Monitorizando",
+        ["status.groups"] = "{0} grupos",
+        ["update.noSensors"] = "Sin sensores disponibles",
+        ["update.updated"] = "Actualizado {0}",
+        ["save.loaded"] = "Configuración cargada",
+        ["save.saved"] = "Guardado {0}",
+        ["save.error"] = "Error al guardar: {0}",
+        ["save.pending"] = "Cambios sin guardar",
+        ["save.startupError"] = "No se pudo configurar el inicio automático: {0}",
+        ["save.folderError"] = "No se pudo abrir la carpeta: {0}",
+
+        // Bandeja
+        ["tray.open"] = "Abrir Ctrl Monitor",
+        ["tray.exit"] = "Salir"
+    };
+}

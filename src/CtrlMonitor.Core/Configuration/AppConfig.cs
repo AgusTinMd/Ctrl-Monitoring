@@ -1,3 +1,5 @@
+using CtrlMonitor.Core.Localization;
+
 namespace CtrlMonitor.Core.Configuration;
 
 /// <summary>
@@ -23,9 +25,15 @@ public sealed class AppConfig
     /// <summary>Métricas visibles en el modo gráfico, en orden.</summary>
     public List<string> ChartMetrics { get; set; } = new() { "Cpu", "Gpu", "Ram" };
 
+    /// <summary>
+    /// Idioma de la interfaz: «auto» (el de Windows) o «es», «en», «pt-BR».
+    /// </summary>
+    public string Language { get; set; } = AppLanguage.Auto;
+
     public void Normalize()
     {
         RefreshIntervalMs = Math.Clamp(RefreshIntervalMs, 500, 10000);
+        Language = AppLanguage.NormalizeSetting(Language);
 
         ChartMetrics = (ChartMetrics ?? new List<string>())
             .Where(key => !string.IsNullOrWhiteSpace(key))

@@ -2,7 +2,7 @@
 
 Aplicación de escritorio para Windows que **muestra en tiempo real** las temperaturas, la velocidad de los ventiladores, la potencia, los voltajes, la carga, el PWM, el uso de RAM y VRAM y el tráfico de red. Es **estrictamente de solo lectura**: no escribe PWM, no aplica curvas y no modifica el BIOS.
 
-La interfaz está en español, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el logo de ASUS. El **control de los ventiladores queda a cargo del BIOS**.
+La interfaz está en **español, inglés y portugués (Brasil)**, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el logo de ASUS. El **control de los ventiladores queda a cargo del BIOS**.
 
 > **Hardware de referencia:** ASUS PRIME B560M-A · Intel Core i5-10400F · AMD Radeon RX 6700 XT.
 
@@ -21,7 +21,8 @@ La interfaz está en español, vive en la bandeja del sistema y puede arrancar c
 - **Iconos vectoriales** de CPU, GPU y placa madre, más el logo de ASUS en las tarjetas de hardware.
 - **Bandeja del sistema** con tooltip de CPU/GPU y menú para abrir o salir.
 - **Inicio con Windows** mediante tarea programada con permisos altos.
-- **Persistencia** de las preferencias de refresco, arranque, bandeja, barra lateral y el layout de los gráficos.
+- **Multilenguaje**: español, inglés y portugués (Brasil). Por defecto sigue el idioma de Windows (inglés si no está soportado) y se cambia al instante desde **Ajustes → Idioma**.
+- **Persistencia** de las preferencias de refresco, arranque, bandeja, barra lateral, idioma y el layout de los gráficos.
 
 ## Qué no hace
 
@@ -127,6 +128,7 @@ Claves de configuración:
 | `RunAtStartup` | `false` | Crea la tarea programada de inicio. |
 | `ShowNavigation` | `true` | Muestra la barra lateral de navegación. |
 | `ChartMetrics` | `["Cpu","Gpu","Ram"]` | Métricas visibles del modo gráfico, en orden. Se agregan y quitan desde la interfaz. |
+| `Language` | `"auto"` | Idioma de la interfaz: `auto` (el de Windows), `es`, `en` o `pt-BR`. |
 
 Si el archivo se corrompe, la app lo respalda como `config.json.bak-*` y vuelve a los valores por defecto.
 
@@ -155,6 +157,7 @@ src/CtrlMonitor.Core/      Lógica sin UI
   Inventory/               Lectura WMI de RAM y discos, uso de memoria y tráfico de red
   Configuration/           Modelo y persistencia
   Diagnostics/             Logs
+  Localization/            Idiomas y textos traducidos (es, en, pt-BR)
 src/CtrlMonitor.App/       WPF
   Themes/Theme.xaml        Paleta, estilos, iconos vectoriales y navegación
   Controls/LiveChart.cs    Gráfico en vivo por serie o combinado

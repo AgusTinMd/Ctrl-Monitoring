@@ -54,12 +54,15 @@ CloseApplications=no
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [CustomMessages]
 spanish.PawnIoMissing=No se detectó PawnIO.%n%nCtrl Monitor usa el driver PawnIO para leer la placa madre (ventiladores, voltajes y temperaturas del Super I/O). Sin él la app funciona, pero muestra menos sensores.%n%nAl terminar la instalación podés abrir la página de descarga de PawnIO.
 english.PawnIoMissing=PawnIO was not detected.%n%nCtrl Monitor uses the PawnIO driver to read the motherboard (fans, voltages and Super I/O temperatures). Without it the app still works but shows fewer sensors.%n%nWhen setup finishes you can open the PawnIO download page.
 spanish.OpenPawnIo=Abrir la página de descarga de PawnIO (recomendado)
 english.OpenPawnIo=Open the PawnIO download page (recommended)
+brazilianportuguese.PawnIoMissing=O PawnIO não foi detectado.%n%nO Ctrl Monitor usa o driver PawnIO para ler a placa-mãe (ventoinhas, tensões e temperaturas do Super I/O). Sem ele o app funciona, mas mostra menos sensores.%n%nAo terminar a instalação você pode abrir a página de download do PawnIO.
+brazilianportuguese.OpenPawnIo=Abrir a página de download do PawnIO (recomendado)
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
