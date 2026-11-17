@@ -1,0 +1,555 @@
+using System.Collections;
+using System.Collections.Specialized;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Media;
+using FanCtrl.App.Models;
+
+namespace FanCtrl.App.Controls;
+
+/// <summary>
+/// Gráfico de líneas en vivo al estilo de MSI Afterburner. Puede dibujar una
+/// serie independiente con escala automática o varias superpuestas sobre una
+/// ventana temporal. Se redibuja cuando cambia la colección de muestras.
+/// </summary>
+public sealed class LiveChart : FrameworkElement
+{
+    private const double PlotLeft = 46;
+    private const double PlotTop = 14;
+    private const double PlotRight = 14;
+    private const double PlotBottom = 28;
+
+    private INotifyCollectionChanged? _observable;
+
+    public static readonly DependencyProperty SamplesProperty = DependencyProperty.Register(
+        nameof(Samples),
+        typeof(IEnumerable),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnSamplesChanged));
+
+    public static readonly DependencyProperty WindowMinutesProperty = DependencyProperty.Register(
+        nameof(WindowMinutes),
+        typeof(double),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(5d, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty SeriesProperty = DependencyProperty.Register(
+        nameof(Series),
+        typeof(string),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(string.Empty, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty AutoScaleProperty = DependencyProperty.Register(
+        nameof(AutoScale),
+        typeof(bool),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty ShowCpuProperty = DependencyProperty.Register(
+        nameof(ShowCpu),
+        typeof(bool),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty ShowGpuProperty = DependencyProperty.Register(
+        nameof(ShowGpu),
+        typeof(bool),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty ShowBoardProperty = DependencyProperty.Register(
+        nameof(ShowBoard),
+        typeof(bool),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty ShowHotspotProperty = DependencyProperty.Register(
+        nameof(ShowHotspot),
+        typeof(bool),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty AxisMinProperty = DependencyProperty.Register(
+        nameof(AxisMin),
+        typeof(double),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(0d, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty AxisMaxProperty = DependencyProperty.Register(
+        nameof(AxisMax),
+        typeof(double),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(100d, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty AxisStepProperty = DependencyProperty.Register(
+        nameof(AxisStep),
+        typeof(double),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(10d, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty UnitProperty = DependencyProperty.Register(
+        nameof(Unit),
+        typeof(string),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata("°", FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public IEnumerable? Samples
+    {
+        get => (IEnumerable?)GetValue(SamplesProperty);
+        set => SetValue(SamplesProperty, value);
+    }
+
+    public double WindowMinutes
+    {
+        get => (double)GetValue(WindowMinutesProperty);
+        set => SetValue(WindowMinutesProperty, value);
+    }
+
+    /// <summary>
+    /// Serie única a dibujar: «Cpu», «Gpu», «Board», «Hotspot», «Ram», «Vram»
+    /// o «Network» (bajada y subida). Vacío dibuja todas las series superpuestas.
+    /// </summary>
+    public string Series
+    {
+        get => (string)GetValue(SeriesProperty);
+        set => SetValue(SeriesProperty, value);
+    }
+
+    /// <summary>Ajusta el eje vertical al rango de la serie en la ventana visible.</summary>
+    public bool AutoScale
+    {
+        get => (bool)GetValue(AutoScaleProperty);
+        set => SetValue(AutoScaleProperty, value);
+    }
+
+    public bool ShowCpu
+    {
+        get => (bool)GetValue(ShowCpuProperty);
+        set => SetValue(ShowCpuProperty, value);
+    }
+
+    public bool ShowGpu
+    {
+        get => (bool)GetValue(ShowGpuProperty);
+        set => SetValue(ShowGpuProperty, value);
+    }
+
+    public bool ShowBoard
+    {
+        get => (bool)GetValue(ShowBoardProperty);
+        set => SetValue(ShowBoardProperty, value);
+    }
+
+    public bool ShowHotspot
+    {
+        get => (bool)GetValue(ShowHotspotProperty);
+        set => SetValue(ShowHotspotProperty, value);
+    }
+
+    /// <summary>Valor mínimo del eje cuando no hay datos o al recortar la escala.</summary>
+    public double AxisMin
+    {
+        get => (double)GetValue(AxisMinProperty);
+        set => SetValue(AxisMinProperty, value);
+    }
+
+    /// <summary>Valor máximo del eje cuando no hay datos o al recortar la escala.</summary>
+    public double AxisMax
+    {
+        get => (double)GetValue(AxisMaxProperty);
+        set => SetValue(AxisMaxProperty, value);
+    }
+
+    /// <summary>Separación entre líneas del eje vertical (temperatura, vatios o %).</summary>
+    public double AxisStep
+    {
+        get => (double)GetValue(AxisStepProperty);
+        set => SetValue(AxisStepProperty, value);
+    }
+
+    /// <summary>Sufijo de las etiquetas del eje: «°», «%» o «W».</summary>
+    public string Unit
+    {
+        get => (string)GetValue(UnitProperty);
+        set => SetValue(UnitProperty, value);
+    }
+
+    protected override void OnRender(DrawingContext dc)
+    {
+        base.OnRender(dc);
+
+        double width = ActualWidth;
+        double height = ActualHeight;
+
+        if (width < 120 || height < 100)
+            return;
+
+        Brush gridBrush = Resource("BorderBrush", Brushes.DimGray);
+        Brush textBrush = Resource("TextMutedBrush", Brushes.Gray);
+        var typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+
+        // La red usa etiquetas más anchas («125 MB/s»); el margen se adapta
+        // para que no se recorten contra el borde izquierdo.
+        double axisLabelWidth = Text($"8888{Unit}", typeface, 10.5, textBrush, dpi).Width;
+        double plotLeft = Math.Max(PlotLeft, axisLabelWidth + 10);
+
+        var plot = new Rect(
+            plotLeft,
+            PlotTop,
+            Math.Max(20, width - plotLeft - PlotRight),
+            Math.Max(20, height - PlotTop - PlotBottom));
+
+        double windowMinutes = Math.Clamp(WindowMinutes, 0.5, 60);
+        var samples = Samples?.OfType<ChartSample>().ToList() ?? new List<ChartSample>();
+        DateTime end = samples.Count > 0 ? samples[^1].TimestampUtc : DateTime.UtcNow;
+        DateTime start = end - TimeSpan.FromMinutes(windowMinutes);
+
+        List<ChartSeries> series = GetActiveSeries();
+
+        double step = Math.Max(1, AxisStep);
+        double min = Math.Min(AxisMin, AxisMax - step);
+        double max = Math.Max(AxisMax, min + step);
+
+        if (AutoScale)
+            (min, max) = GetAutoScaleRange(samples, series, start);
+
+        DrawGrid(dc, plot, gridBrush, textBrush, typeface, dpi, min, max, windowMinutes, step, Unit ?? string.Empty);
+
+        bool hasData = samples.Any(sample =>
+            sample.TimestampUtc >= start
+            && series.Any(item => item.Selector(sample) is not null));
+
+        if (!hasData)
+        {
+            FormattedText waiting = Text(
+                samples.Count == 0 ? "Esperando datos…" : "Sin datos todavía",
+                typeface,
+                12,
+                textBrush,
+                dpi);
+
+            dc.DrawText(waiting, new Point(
+                plot.Left + (plot.Width - waiting.Width) / 2,
+                plot.Top + (plot.Height - waiting.Height) / 2));
+            return;
+        }
+
+        dc.PushClip(new RectangleGeometry(plot));
+
+        foreach (ChartSeries item in series)
+            DrawSeries(dc, samples, item.Selector, item.Brush, plot, start, end, min, max);
+
+        dc.Pop();
+    }
+
+    private List<ChartSeries> GetActiveSeries()
+    {
+        var result = new List<ChartSeries>(5);
+        string series = Series?.Trim() ?? string.Empty;
+
+        if (series.Length > 0)
+        {
+            switch (series.ToLowerInvariant())
+            {
+                case "cpu":
+                    result.Add(new ChartSeries(s => s.Cpu, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
+                    break;
+                case "gpu":
+                    result.Add(new ChartSeries(s => s.Gpu, Resource("ChartGpuBrush", Brushes.MediumSeaGreen)));
+                    break;
+                case "board":
+                    result.Add(new ChartSeries(s => s.Board, Resource("ChartBoardBrush", Brushes.Goldenrod)));
+                    break;
+                case "hotspot":
+                    result.Add(new ChartSeries(s => s.Hotspot, Resource("ChartHotspotBrush", Brushes.IndianRed)));
+                    break;
+                case "ram":
+                    result.Add(new ChartSeries(s => s.RamPercent, Resource("ChartRamBrush", Brushes.MediumPurple)));
+                    break;
+                case "vram":
+                    result.Add(new ChartSeries(s => s.VramPercent, Resource("ChartVramBrush", Brushes.HotPink)));
+                    break;
+                case "network":
+                    result.Add(new ChartSeries(s => s.NetDownMbs, Resource("ChartNetDownBrush", Brushes.DeepSkyBlue)));
+                    result.Add(new ChartSeries(s => s.NetUpMbs, Resource("ChartNetUpBrush", Brushes.Orange)));
+                    break;
+            }
+
+            return result;
+        }
+
+        if (ShowCpu)
+            result.Add(new ChartSeries(s => s.Cpu, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
+
+        if (ShowGpu)
+            result.Add(new ChartSeries(s => s.Gpu, Resource("ChartGpuBrush", Brushes.MediumSeaGreen)));
+
+        if (ShowBoard)
+            result.Add(new ChartSeries(s => s.Board, Resource("ChartBoardBrush", Brushes.Goldenrod)));
+
+        if (ShowHotspot)
+            result.Add(new ChartSeries(s => s.Hotspot, Resource("ChartHotspotBrush", Brushes.IndianRed)));
+
+        return result;
+    }
+
+    private (double Min, double Max) GetAutoScaleRange(
+        IReadOnlyList<ChartSample> samples,
+        IReadOnlyList<ChartSeries> series,
+        DateTime start)
+    {
+        double step = Math.Max(1, AxisStep);
+        double floor = Math.Min(AxisMin, AxisMax - step);
+        double ceiling = Math.Max(AxisMax, floor + step);
+
+        double lowest = double.MaxValue;
+        double highest = double.MinValue;
+        bool any = false;
+
+        foreach (ChartSample sample in samples)
+        {
+            if (sample.TimestampUtc < start)
+                continue;
+
+            foreach (ChartSeries item in series)
+            {
+                if (item.Selector(sample) is not { } value)
+                    continue;
+
+                lowest = Math.Min(lowest, value);
+                highest = Math.Max(highest, value);
+                any = true;
+            }
+        }
+
+        if (!any)
+            return (floor, ceiling);
+
+        double min = Math.Floor((lowest - step * 0.2) / step) * step;
+        double max = Math.Ceiling((highest + step * 0.2) / step) * step;
+
+        // Nunca mostramos menos de dos divisiones: un gráfico demasiado plano
+        // exagera el ruido y parece que hay picos que no existen.
+        if (max - min < step * 2)
+        {
+            double middle = (highest + lowest) / 2;
+            min = Math.Floor((middle - step) / step) * step;
+            max = min + step * 2;
+        }
+
+        min = Math.Max(floor, min);
+        max = Math.Min(ceiling, max);
+
+        if (max - min < step * 2)
+        {
+            if (min <= floor)
+                max = Math.Min(ceiling, floor + step * 2);
+            else
+                min = Math.Max(floor, max - step * 2);
+        }
+
+        return (min, max);
+    }
+
+    private static void DrawGrid(
+        DrawingContext dc,
+        Rect plot,
+        Brush gridBrush,
+        Brush textBrush,
+        Typeface typeface,
+        double dpi,
+        double min,
+        double max,
+        double windowMinutes,
+        double step,
+        string unit)
+    {
+        double labelStep = max - min <= step * 4 ? step : step * 2;
+
+        for (double value = Math.Ceiling(min / step) * step;
+             value <= max + 0.01;
+             value += step)
+        {
+            double y = plot.Bottom - (value - min) / (max - min) * plot.Height;
+            bool isLabel = Math.Abs(value % labelStep) < 0.01;
+            var pen = new Pen(gridBrush, isLabel ? 0.9 : 0.45);
+
+            if (pen.CanFreeze)
+                pen.Freeze();
+
+            dc.DrawLine(pen, new Point(plot.Left, y), new Point(plot.Right, y));
+
+            if (isLabel)
+            {
+                FormattedText label = Text($"{value:0}{unit}", typeface, 10.5, textBrush, dpi);
+                dc.DrawText(label, new Point(plot.Left - label.Width - 8, y - label.Height / 2));
+            }
+        }
+
+        int divisions = windowMinutes >= 8 ? 5 : windowMinutes >= 3 ? 5 : 4;
+
+        for (int i = 0; i <= divisions; i++)
+        {
+            double fraction = (double)i / divisions;
+            double x = plot.Left + fraction * plot.Width;
+            var pen = new Pen(gridBrush, i == 0 || i == divisions ? 0.9 : 0.45);
+
+            if (pen.CanFreeze)
+                pen.Freeze();
+
+            dc.DrawLine(pen, new Point(x, plot.Top), new Point(x, plot.Bottom));
+
+            double minutesAgo = windowMinutes * (1 - fraction);
+            string labelText = i == divisions
+                ? "ahora"
+                : minutesAgo >= 0.95
+                    ? $"-{minutesAgo:0.#} min"
+                    : $"-{minutesAgo * 60:0} s";
+
+            FormattedText label = Text(labelText, typeface, 10, textBrush, dpi);
+            double labelX = i == divisions ? x - label.Width : x - label.Width / 2;
+
+            if (labelX < 2)
+                labelX = 2;
+
+            if (labelX + label.Width > plot.Right)
+                labelX = plot.Right - label.Width;
+
+            dc.DrawText(label, new Point(labelX, plot.Bottom + 7));
+        }
+
+        var axisPen = new Pen(gridBrush, 1);
+
+        if (axisPen.CanFreeze)
+            axisPen.Freeze();
+
+        dc.DrawLine(axisPen, new Point(plot.Left, plot.Top), new Point(plot.Left, plot.Bottom));
+        dc.DrawLine(axisPen, new Point(plot.Left, plot.Bottom), new Point(plot.Right, plot.Bottom));
+    }
+
+    private static void DrawSeries(
+        DrawingContext dc,
+        IReadOnlyList<ChartSample> samples,
+        Func<ChartSample, double?> selector,
+        Brush brush,
+        Rect plot,
+        DateTime start,
+        DateTime end,
+        double min,
+        double max)
+    {
+        double totalSeconds = Math.Max(1, (end - start).TotalSeconds);
+        var geometry = new StreamGeometry();
+        bool hasPoint = false;
+
+        using (StreamGeometryContext context = geometry.Open())
+        {
+            bool figureOpen = false;
+
+            foreach (ChartSample sample in samples)
+            {
+                if (sample.TimestampUtc < start)
+                    continue;
+
+                double? value = selector(sample);
+
+                if (value is null)
+                {
+                    figureOpen = false;
+                    continue;
+                }
+
+                Point point = ToPoint(sample.TimestampUtc, value.Value, start, totalSeconds, plot, min, max);
+
+                if (!figureOpen)
+                {
+                    context.BeginFigure(point, isFilled: false, isClosed: false);
+                    figureOpen = true;
+                }
+                else
+                {
+                    context.LineTo(point, isStroked: true, isSmoothJoin: true);
+                }
+
+                hasPoint = true;
+            }
+        }
+
+        if (!hasPoint)
+            return;
+
+        if (geometry.CanFreeze)
+            geometry.Freeze();
+
+        var pen = new Pen(brush, 1.8)
+        {
+            LineJoin = PenLineJoin.Round,
+            StartLineCap = PenLineCap.Round,
+            EndLineCap = PenLineCap.Round
+        };
+
+        if (pen.CanFreeze)
+            pen.Freeze();
+
+        dc.DrawGeometry(null, pen, geometry);
+
+        for (int i = samples.Count - 1; i >= 0; i--)
+        {
+            if (samples[i].TimestampUtc < start)
+                break;
+
+            double? value = selector(samples[i]);
+
+            if (value is null)
+                continue;
+
+            Point last = ToPoint(samples[i].TimestampUtc, value.Value, start, totalSeconds, plot, min, max);
+            dc.DrawEllipse(brush, null, last, 3, 3);
+            break;
+        }
+    }
+
+    private static Point ToPoint(
+        DateTime timestamp,
+        double value,
+        DateTime start,
+        double totalSeconds,
+        Rect plot,
+        double min,
+        double max)
+    {
+        double x = plot.Left + (timestamp - start).TotalSeconds / totalSeconds * plot.Width;
+        double y = plot.Bottom - (Math.Clamp(value, min, max) - min) / (max - min) * plot.Height;
+
+        return new Point(x, y);
+    }
+
+    private Brush Resource(string key, Brush fallback) =>
+        TryFindResource(key) as Brush ?? fallback;
+
+    private static FormattedText Text(string text, Typeface typeface, double size, Brush brush, double dpi) =>
+        new(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, typeface, size, brush, dpi);
+
+    private static void OnSamplesChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        var chart = (LiveChart)d;
+
+        if (chart._observable is not null)
+            chart._observable.CollectionChanged -= chart.OnCollectionChanged;
+
+        chart._observable = e.NewValue as INotifyCollectionChanged;
+
+        if (chart._observable is not null)
+            chart._observable.CollectionChanged += chart.OnCollectionChanged;
+
+        chart.InvalidateVisual();
+    }
+
+    private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
+        InvalidateVisual();
+
+    private readonly record struct ChartSeries(
+        Func<ChartSample, double?> Selector,
+        Brush Brush);
+}
