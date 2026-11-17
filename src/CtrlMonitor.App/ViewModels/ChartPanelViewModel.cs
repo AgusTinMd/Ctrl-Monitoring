@@ -144,6 +144,13 @@ public sealed partial class ChartPanelViewModel : ObservableObject
     [ObservableProperty]
     private bool _isDragging;
 
+    /// <summary>
+    /// Se hizo clic en la tarjeta y puede empezar a arrastrarse; se resalta
+    /// para que quede claro cuál se va a mover.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isDragArmed;
+
     partial void OnSelectedMetricChanged(ChartMetric value) => ApplyMetric();
 
     /// <summary>Vuelve a leer los valores actuales del monitor sin cambiar la métrica.</summary>

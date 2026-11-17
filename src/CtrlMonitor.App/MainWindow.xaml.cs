@@ -6,6 +6,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
+using CtrlMonitor.App.Controls;
 using CtrlMonitor.App.ViewModels;
 
 namespace CtrlMonitor.App;
@@ -19,6 +20,8 @@ public partial class MainWindow : Window
     // recién cuando el mouse se mueve más que el umbral del sistema.
     private ChartPanelViewModel? _dragCandidate;
     private Point _dragStart;
+    private Point _grabOffset;
+    private DragGhostAdorner? _dragGhost;
 
     public MainWindow(MainViewModel viewModel)
     {
@@ -30,6 +33,12 @@ public partial class MainWindow : Window
             viewModel.ToggleNavigationCommand,
             Key.B,
             ModifierKeys.Control));
+
+        // La ventana entera recibe el arrastre para que la copia flotante siga
+        // al cursor también entre tarjetas y sobre los márgenes.
+        AllowDrop = true;
+        PreviewDragOver += OnWindowPreviewDragOver;
+        DragOver += OnWindowDragOver;
 
         FitToWorkArea();
     }
@@ -96,22 +105,35 @@ public partial class MainWindow : Window
 
     private void ChartCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        _dragCandidate = null;
+        DisarmDrag();
 
         if (IsInteractiveControl(e.OriginalSource as DependencyObject))
             return;
 
-        if ((sender as FrameworkElement)?.DataContext is ChartPanelViewModel panel)
-        {
-            _dragCandidate = panel;
-            _dragStart = e.GetPosition(this);
-        }
+        if (sender is not FrameworkElement card || card.DataContext is not ChartPanelViewModel panel)
+            return;
+
+        _dragCandidate = panel;
+        _dragStart = e.GetPosition(this);
+        _grabOffset = e.GetPosition(card);
+
+        // Resalta la tarjeta tomada y captura el mouse para enterarnos de que
+        // se soltó aunque el puntero ya no esté sobre ella.
+        panel.IsDragArmed = true;
+        card.CaptureMouse();
+        e.Handled = true;
     }
 
     private void ChartCard_MouseMove(object sender, MouseEventArgs e)
     {
-        if (_dragCandidate is not { } panel || e.LeftButton != MouseButtonState.Pressed)
+        if (_dragCandidate is not { } panel || sender is not FrameworkElement card)
             return;
+
+        if (e.LeftButton != MouseButtonState.Pressed)
+        {
+            DisarmDrag();
+            return;
+        }
 
         Vector moved = e.GetPosition(this) - _dragStart;
 
@@ -122,25 +144,75 @@ public partial class MainWindow : Window
         }
 
         _dragCandidate = null;
+
+        // La captura se toma con la tarjeta todavía resaltada; recién después
+        // la tarjeta real pasa a ser el hueco tenue donde va a caer.
+        UIElement? host = Content as UIElement;
+        _dragGhost = host is null ? null : DragGhostAdorner.Show(host, card, _grabOffset);
+        _dragGhost?.MoveTo(e.GetPosition(host));
+
+        card.ReleaseMouseCapture();
+        panel.IsDragArmed = false;
         panel.IsDragging = true;
 
         try
         {
             // DoDragDrop bloquea hasta soltar; mientras tanto DragOver va
-            // reordenando las tarjetas en vivo.
+            // reordenando las tarjetas en vivo y moviendo la copia flotante.
             DragDrop.DoDragDrop(
-                (DependencyObject)sender,
+                card,
                 new DataObject(typeof(ChartPanelViewModel), panel),
                 DragDropEffects.Move);
         }
         finally
         {
             panel.IsDragging = false;
+            _dragGhost?.Remove();
+            _dragGhost = null;
         }
     }
 
-    private void ChartCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e) =>
+    private void ChartCard_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        bool wasArmed = _dragCandidate is not null;
+        DisarmDrag();
+        (sender as UIElement)?.ReleaseMouseCapture();
+
+        if (wasArmed)
+            e.Handled = true;
+    }
+
+    private void ChartCard_LostMouseCapture(object sender, MouseEventArgs e)
+    {
+        // Alt+Tab o un diálogo pueden robar la captura antes de soltar.
+        if (_dragCandidate is not null && !ReferenceEquals(Mouse.Captured, sender))
+            DisarmDrag();
+    }
+
+    private void DisarmDrag()
+    {
+        if (_dragCandidate is { } panel)
+            panel.IsDragArmed = false;
+
         _dragCandidate = null;
+    }
+
+    /// <summary>Mueve la copia flotante con el cursor en cualquier parte de la ventana.</summary>
+    private void OnWindowPreviewDragOver(object sender, DragEventArgs e)
+    {
+        if (_dragGhost is not null && Content is UIElement host)
+            _dragGhost.MoveTo(e.GetPosition(host));
+    }
+
+    /// <summary>Fuera de las tarjetas no se puede soltar: el cursor lo indica.</summary>
+    private void OnWindowDragOver(object sender, DragEventArgs e)
+    {
+        if (e.Handled)
+            return;
+
+        e.Effects = DragDropEffects.None;
+        e.Handled = true;
+    }
 
     private void ChartCard_DragOver(object sender, DragEventArgs e)
     {

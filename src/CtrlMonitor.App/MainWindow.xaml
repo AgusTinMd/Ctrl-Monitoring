@@ -23,14 +23,29 @@
                     MouseLeftButtonDown="ChartCard_MouseLeftButtonDown"
                     MouseMove="ChartCard_MouseMove"
                     MouseLeftButtonUp="ChartCard_MouseLeftButtonUp"
+                    LostMouseCapture="ChartCard_LostMouseCapture"
                     DragOver="ChartCard_DragOver"
                     Drop="ChartCard_Drop">
                 <Border.Style>
                     <Style TargetType="Border" BasedOn="{StaticResource Card}">
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsDragging}" Value="True">
-                                <Setter Property="Opacity" Value="0.45" />
+                            <!-- Clic sobre la tarjeta: se «levanta» con borde y sombra de acento. -->
+                            <DataTrigger Binding="{Binding IsDragArmed}" Value="True">
                                 <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Effect">
+                                    <Setter.Value>
+                                        <DropShadowEffect Color="#3B82F6" BlurRadius="22"
+                                                          ShadowDepth="0" Opacity="0.55" />
+                                    </Setter.Value>
+                                </Setter>
+                            </DataTrigger>
+                            <!-- Durante el arrastre la tarjeta real marca el hueco donde
+                                 va a caer; la copia flotante sigue al cursor. -->
+                            <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                <Setter Property="Opacity" Value="0.35" />
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                                <Setter Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                <Setter Property="Effect" Value="{x:Null}" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
