@@ -1,0 +1,926 @@
+﻿<Window x:Class="CtrlMonitor.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:CtrlMonitor.App.Controls"
+        Title="Ctrl Monitor"
+        Width="1220" Height="820" MinWidth="620" MinHeight="460"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Assets/fan.ico"
+        Background="{StaticResource BackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="{StaticResource AppFont}"
+        FontSize="13"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextRenderingMode="ClearType">
+
+    <Window.Resources>
+        <DataTemplate x:Key="ChartCardTemplate">
+            <Border Style="{StaticResource Card}" Padding="16,14,14,10" Margin="5" MinHeight="190">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="9" Height="9" Fill="{Binding Color}"
+                                         VerticalAlignment="Center" />
+                                <ComboBox ItemsSource="{Binding Options}"
+                                          SelectedItem="{Binding SelectedMetric, Mode=TwoWay}"
+                                          DisplayMemberPath="Title"
+                                          Width="110" Height="26" MinWidth="0" FontSize="11.5"
+                                          Margin="9,0,0,0"
+                                          ToolTip="Elegí qué métrica muestra este gráfico" />
+                                <Button Content="✕" Style="{StaticResource GhostButton}"
+                                        Width="24" Height="24" Padding="0" FontSize="11"
+                                        Margin="4,0,0,0"
+                                        Command="{Binding DataContext.RemoveChartPanelCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        ToolTip="Quitar este gráfico" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MutedText}"
+                                       Margin="18,4,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel Margin="0,0,12,0" VerticalAlignment="Center"
+                                        Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding SecondaryLabel}" Style="{StaticResource CaptionText}"
+                                           HorizontalAlignment="Right" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                            Margin="0,2,0,0">
+                                    <TextBlock Text="{Binding SecondaryValue}"
+                                               FontSize="12.5" FontWeight="SemiBold"
+                                               Foreground="{Binding SecondaryValueBrush}" />
+                                    <TextBlock Text="{Binding SecondaryUnit}" FontSize="10"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <Border Width="1" Height="34" Margin="0,0,12,0"
+                                    Background="{StaticResource BorderBrush}"
+                                    VerticalAlignment="Center"
+                                    Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVis}}" />
+
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding PrimaryLabel}" Style="{StaticResource CaptionText}"
+                                           HorizontalAlignment="Right" Margin="0,0,0,2"
+                                           Visibility="{Binding HasPrimaryLabel, Converter={StaticResource BoolToVis}}" />
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding PrimaryValue}"
+                                               FontSize="19" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding PrimaryUnit}" Style="{StaticResource UnitText}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                            Margin="0,-2,0,0"
+                                            Visibility="{Binding HasTertiary, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding TertiaryValue}"
+                                               FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{Binding TertiaryUnit}" FontSize="9.5"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+                    </Grid>
+
+                    <controls:LiveChart Grid.Row="1" Margin="0,8,0,0"
+                                        Samples="{Binding DataContext.ChartSamples, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        WindowMinutes="{Binding DataContext.ChartWindowMinutes, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        Series="{Binding SeriesKey}"
+                                        Unit="{Binding AxisUnit}"
+                                        AxisMin="{Binding AxisMin}"
+                                        AxisMax="{Binding AxisMax}"
+                                        AxisStep="{Binding AxisStep}"
+                                        AutoScale="True" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <TabControl Style="{StaticResource NavTabControl}" SelectedIndex="0" TabStripPlacement="Left">
+
+        <!-- ============================================================ -->
+        <!-- Resumen                                                      -->
+        <!-- ============================================================ -->
+        <TabItem Header="Resumen" Style="{StaticResource NavTabItem}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="24,20,24,24">
+
+                    <TextBlock Text="Resumen" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="Temperaturas, potencia y ventiladores en tiempo real."
+                               Style="{StaticResource PageSubtitle}" />
+
+                    <controls:ResponsiveGrid Margin="0,22,0,0" MinItemWidth="205" MaxColumns="4" Gap="12"
+                                            BalancedRows="True">
+                        <Border Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource AccentBrush}"
+                                          Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                    <TextBlock Text="TEMPERATURA CPU" Style="{StaticResource CaptionText}"
+                                               Margin="7,0,0,0" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock Style="{StaticResource BigValue}"
+                                               Text="{Binding CpuTemperature, StringFormat={}{0:0}, TargetNullValue=—}" />
+                                    <TextBlock Text="°C" Style="{StaticResource UnitText}" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource MutedText}" Margin="0,1,0,0"
+                                           Text="{Binding CpuMaxTemperature, StringFormat={}Máx {0:0} °C, TargetNullValue=Máx —}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource AccentBrush}"
+                                          Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                    <TextBlock Text="TEMPERATURA GPU" Style="{StaticResource CaptionText}"
+                                               Margin="7,0,0,0" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock Style="{StaticResource BigValue}"
+                                               Text="{Binding GpuTemperature, StringFormat={}{0:0}, TargetNullValue=—}" />
+                                    <TextBlock Text="°C" Style="{StaticResource UnitText}" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource MutedText}" Margin="0,1,0,0"
+                                           Text="{Binding GpuHotspot, StringFormat={}Hotspot {0:0} °C, TargetNullValue=Hotspot —}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource StatCard}">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource SuccessBrush}"
+                                          Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                    <TextBlock Text="POTENCIA CPU" Style="{StaticResource CaptionText}"
+                                               Margin="7,0,0,0" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock Style="{StaticResource BigValue}"
+                                               Text="{Binding CpuPower, StringFormat={}{0:0.0}, TargetNullValue=—}" />
+                                    <TextBlock Text="W" Style="{StaticResource UnitText}" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource MutedText}" Margin="0,1,0,0"
+                                           Text="{Binding CpuLoad, StringFormat={}Carga {0:0} %, TargetNullValue=Carga —}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource StatCard}" Margin="0">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource SuccessBrush}"
+                                          Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
+                                    <TextBlock Text="POTENCIA GPU" Style="{StaticResource CaptionText}"
+                                               Margin="7,0,0,0" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                    <TextBlock Style="{StaticResource BigValue}"
+                                               Text="{Binding GpuPower, StringFormat={}{0:0.0}, TargetNullValue=—}" />
+                                    <TextBlock Text="W" Style="{StaticResource UnitText}" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource MutedText}" Margin="0,1,0,0"
+                                           Text="{Binding GpuLoad, StringFormat={}Carga {0:0} %, TargetNullValue=Carga —}" />
+                            </StackPanel>
+                        </Border>
+                    </controls:ResponsiveGrid>
+
+                    <!-- CPU y GPU -->
+                    <controls:ResponsiveGrid Margin="0,16,0,0" MinItemWidth="380" MaxColumns="2" Gap="16">
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Style="{StaticResource IconBadge}">
+                                        <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource AccentBrush}"
+                                              Width="21" Height="21" Stretch="Uniform" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Procesador" Style="{StaticResource SectionTitle}" />
+                                            <Border Style="{StaticResource Chip}" Margin="10,0,0,0"
+                                                    Background="{StaticResource AccentSoftBrush}" Padding="9,3">
+                                                <TextBlock Text="CPU" Foreground="{StaticResource AccentHoverBrush}"
+                                                           FontSize="10" FontWeight="SemiBold" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding CpuName}" Style="{StaticResource MutedText}"
+                                                   Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,18,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Text="Temperatura" Style="{StaticResource SecondaryText}" />
+                                    <TextBlock Grid.Column="1" Style="{StaticResource SensorValueText}">
+                                        <Run Text="{Binding CpuTemperature, Mode=OneWay, StringFormat={}{0:0}, TargetNullValue=—}" />
+                                        <Run Text=" °C" Foreground="{StaticResource TextMutedBrush}" />
+                                    </TextBlock>
+
+                                    <TextBlock Grid.Row="1" Text="Máxima de núcleos" Style="{StaticResource SecondaryText}"
+                                               Margin="0,8,0,0" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource SensorValueText}"
+                                               Margin="0,8,0,0">
+                                        <Run Text="{Binding CpuMaxTemperature, Mode=OneWay, StringFormat={}{0:0}, TargetNullValue=—}" />
+                                        <Run Text=" °C" Foreground="{StaticResource TextMutedBrush}" />
+                                    </TextBlock>
+
+                                    <TextBlock Grid.Row="2" Text="Potencia" Style="{StaticResource SecondaryText}"
+                                               Margin="0,8,0,0" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource SensorValueText}"
+                                               Margin="0,8,0,0">
+                                        <Run Text="{Binding CpuPower, Mode=OneWay, StringFormat={}{0:0.0}, TargetNullValue=—}" />
+                                        <Run Text=" W" Foreground="{StaticResource TextMutedBrush}" />
+                                    </TextBlock>
+
+                                    <TextBlock Grid.Row="3" Text="Ventilador" Style="{StaticResource SecondaryText}"
+                                               Margin="0,8,0,0" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource SensorValueText}"
+                                               Margin="0,8,0,0">
+                                        <Run Text="{Binding CpuFanRpm, Mode=OneWay, StringFormat={}{0:0}, TargetNullValue=—}" />
+                                        <Run Text=" RPM" Foreground="{StaticResource TextMutedBrush}" />
+                                    </TextBlock>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border Style="{StaticResource IconBadge}" Background="{StaticResource SuccessSoftBrush}">
+                                        <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource SuccessBrush}"
+                                              Width="21" Height="21" Stretch="Uniform" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Tarjeta gráfica" Style="{StaticResource SectionTitle}" />
+                                            <Border Style="{StaticResource Chip}" Margin="10,0,0,0"
+                                                    Background="{StaticResource SuccessSoftBrush}" Padding="9,3">
+                                                <TextBlock Text="GPU" Foreground="{StaticResource SuccessBrush}"
+                                                           FontSize="10" FontWeight="SemiBold" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock Text="{Binding GpuName}" Style="{StaticResource MutedText}"
+                                                   Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,18,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Text="Temperatura" Style="{StaticResource SecondaryText}" />
+                                    <TextBlock Grid.Column="1" Style="{StaticResource SensorValueText}">
+                                        <Run Text="{Binding GpuTemperature, Mode=OneWay, StringFormat={}{0:0}, TargetNullValue=—}" />
+                                        <Run Text=" °C" Foreground="{StaticResource TextMutedBrush}" />
+                                    </TextBlock>
+
+                                    <TextBlock Grid.Row="1" Text="Hotspot" Style="{StaticResource SecondaryText}"
+                                               Margin="0,8,0,0" />
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource SensorValueText}"
+                                               Margin="0,8,0,0">
+                                        <Run Text="{Binding GpuHotspot, Mode=OneWay, StringFormat={}{0:0}, TargetNullValue=—}" />
+                                        <Run Text=" °C" Foreground="{StaticResource TextMutedBrush}" />
+                                    </TextBlock>
+
+                                    <TextBlock Grid.Row="2" Text="Potencia" Style="{StaticResource SecondaryText}"
+                                               Margin="0,8,0,0" />
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource SensorValueText}"
+                                               Margin="0,8,0,0">
+                                        <Run Text="{Binding GpuPower, Mode=OneWay, StringFormat={}{0:0.0}, TargetNullValue=—}" />
+                                        <Run Text=" W" Foreground="{StaticResource TextMutedBrush}" />
+                                    </TextBlock>
+
+                                    <TextBlock Grid.Row="3" Text="Ventilador" Style="{StaticResource SecondaryText}"
+                                               Margin="0,8,0,0" />
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource SensorValueText}"
+                                               Margin="0,8,0,0">
+                                        <Run Text="{Binding GpuFanRpm, Mode=OneWay, StringFormat={}{0:0}, TargetNullValue=—}" />
+                                        <Run Text=" RPM" Foreground="{StaticResource TextMutedBrush}" />
+                                    </TextBlock>
+
+                                    <TextBlock Grid.Row="4" Text="VRAM" Style="{StaticResource SecondaryText}"
+                                               Margin="0,8,0,0" />
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource SensorValueText}"
+                                               Margin="0,8,0,0"
+                                               Text="{Binding VramText}"
+                                               ToolTip="{Binding VramText}" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </controls:ResponsiveGrid>
+
+                    <!-- Sistema -->
+                    <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                        <controls:ResponsiveGrid MinItemWidth="230" MaxColumns="3" Gap="24">
+                            <StackPanel>
+                                <Grid>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border Style="{StaticResource IconBadge}" Width="30" Height="30"
+                                                Background="{StaticResource WarningSoftBrush}">
+                                            <Path Data="{StaticResource BoardIconGeometry}"
+                                                  Fill="{StaticResource WarningBrush}"
+                                                  Width="18" Height="18" Stretch="Uniform" />
+                                        </Border>
+                                        <TextBlock Text="PLACA MADRE" Style="{StaticResource CaptionText}"
+                                                   Margin="9,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <Image Source="/Assets/asus.png" Height="14" HorizontalAlignment="Right"
+                                           VerticalAlignment="Center" Opacity="0.85" />
+                                </Grid>
+                                <TextBlock Text="{Binding MotherboardName}" Style="{StaticResource SectionTitle}"
+                                           Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding SuperIoName}" Style="{StaticResource MutedText}"
+                                           Margin="0,3,0,0" />
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="TEMPERATURA DE PLACA" Style="{StaticResource CaptionText}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                    <TextBlock Style="{StaticResource BigValue}"
+                                               Text="{Binding BoardTemperature, StringFormat={}{0:0.0}, TargetNullValue=—}" />
+                                    <TextBlock Text="°C" Style="{StaticResource UnitText}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Text="ESTADO" Style="{StaticResource CaptionText}" />
+                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                    <Ellipse Width="7" Height="7" Fill="{Binding StatusBrush}"
+                                             VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding StatusTitle}" FontSize="13" FontWeight="SemiBold"
+                                               Margin="8,0,0,0" Foreground="{Binding StatusBrush}" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding StatusDetail}" Style="{StaticResource MutedText}"
+                                           Margin="0,4,0,0" />
+                            </StackPanel>
+                        </controls:ResponsiveGrid>
+                    </Border>
+
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ============================================================ -->
+        <!-- Gráfico                                                      -->
+        <!-- ============================================================ -->
+        <TabItem Header="Gráfico" Style="{StaticResource NavTabItem}">
+            <ScrollViewer x:Name="ChartScroll" Margin="24,20,24,24"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <Grid x:Name="ChartRoot"
+                      MinHeight="{Binding ViewportHeight, ElementName=ChartScroll}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Modo gráfico" Style="{StaticResource PageTitle}" />
+                        <TextBlock Text="Elegí qué métrica muestra cada gráfico; la escala se ajusta sola."
+                                   Style="{StaticResource PageSubtitle}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"
+                                VerticalAlignment="Center" Margin="0,12,0,0">
+                        <Border Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1" CornerRadius="9" Padding="2" Margin="0,0,12,0">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="1 min" Style="{StaticResource SegmentButton}"
+                                             GroupName="ChartWindow"
+                                             IsChecked="{Binding ChartWindowMinutes, Mode=TwoWay, Converter={StaticResource IntEquals}, ConverterParameter=1}" />
+                                <RadioButton Content="5 min" Style="{StaticResource SegmentButton}"
+                                             GroupName="ChartWindow"
+                                             IsChecked="{Binding ChartWindowMinutes, Mode=TwoWay, Converter={StaticResource IntEquals}, ConverterParameter=5}" />
+                                <RadioButton Content="10 min" Style="{StaticResource SegmentButton}"
+                                             GroupName="ChartWindow"
+                                             IsChecked="{Binding ChartWindowMinutes, Mode=TwoWay, Converter={StaticResource IntEquals}, ConverterParameter=10}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Button Content="Limpiar" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding ClearChartCommand}" />
+
+                        <StackPanel Orientation="Horizontal" Margin="12,0,0,0"
+                                    Visibility="{Binding HasAvailableChartMetrics, Converter={StaticResource BoolToVis}}">
+                            <ComboBox Width="140" Height="34" MinWidth="0"
+                                      ItemsSource="{Binding AvailableChartMetrics}"
+                                      SelectedItem="{Binding NewChartMetric, Mode=TwoWay}"
+                                      DisplayMemberPath="Title"
+                                      ToolTip="Elegí la métrica del gráfico que querés agregar" />
+                            <Button Content="Agregar" Style="{StaticResource AccentButton}"
+                                    Command="{Binding AddChartPanelCommand}"
+                                    Margin="8,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Grid.Row="1" Margin="0,14,0,0"
+                           Text="Se conservan los últimos 10 minutos en memoria. Usá el selector de cada tarjeta para cambiar la métrica; la escala vertical se ajusta a la serie."
+                           Style="{StaticResource MutedText}" />
+
+                <ItemsControl Grid.Row="2" Margin="-5,2,-5,-5"
+                              ItemsSource="{Binding ChartPanels}"
+                              ItemTemplate="{StaticResource ChartCardTemplate}">
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                            <Setter Property="VerticalAlignment" Value="Stretch" />
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid>
+                                <UniformGrid.Columns>
+                                    <MultiBinding Converter="{StaticResource ChartColumns}">
+                                        <Binding Path="ViewportWidth" RelativeSource="{RelativeSource AncestorType=ScrollViewer}" />
+                                        <Binding Path="ViewportHeight" RelativeSource="{RelativeSource AncestorType=ScrollViewer}" />
+                                    </MultiBinding>
+                                </UniformGrid.Columns>
+                            </UniformGrid>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+
+                <TextBlock Grid.Row="2" Margin="0,40,0,0"
+                           Text="No hay gráficos. Elegí una métrica y usá Agregar."
+                           Style="{StaticResource MutedText}"
+                           HorizontalAlignment="Center" VerticalAlignment="Top"
+                           Visibility="{Binding IsChartPanelsEmpty, Converter={StaticResource BoolToVis}}" />
+                </Grid>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ============================================================ -->
+        <!-- Ventiladores                                                 -->
+        <!-- ============================================================ -->
+        <TabItem Header="Ventiladores" Style="{StaticResource NavTabItem}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="FansRoot" Margin="24,20,24,24">
+
+                    <TextBlock Text="Ventiladores" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="RPM y PWM de cada canal detectado. Ctrl Monitor solo lee; la curva la aplica el BIOS."
+                               Style="{StaticResource PageSubtitle}" />
+
+                    <Border Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="14,10" Margin="0,16,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="/Assets/fan.png" Width="18" Height="18"
+                                       VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding FanSummaryText}" Style="{StaticResource SecondaryText}"
+                                           Margin="10,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <CheckBox Grid.Column="1" Content="Solo activos" Margin="16,0,0,0"
+                                      VerticalAlignment="Center"
+                                      IsChecked="{Binding ShowOnlyActiveFans, Mode=TwoWay}"
+                                      ToolTip="Mostrar únicamente los canales con RPM mayores que cero" />
+                        </Grid>
+                    </Border>
+
+                    <ItemsControl ItemsSource="{Binding VisibleFans}" Margin="0,16,0,0">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource WidthToColumns}, ConverterParameter='760:1,1200:2,3'}" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Card}" Margin="6" Padding="16,14">
+                                    <StackPanel>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+
+                                            <Border Style="{StaticResource IconBadge}" Width="34" Height="34"
+                                                    Background="{StaticResource TrackBrush}">
+                                                <Image Source="/Assets/fan.png" Width="19" Height="19" />
+                                            </Border>
+
+                                            <StackPanel Grid.Column="1" Margin="11,0,12,0" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding ChannelText}"
+                                                               Style="{StaticResource SectionTitle}" />
+                                                    <Border Style="{StaticResource Chip}" Margin="8,0,0,0" Padding="7,2"
+                                                            Background="{StaticResource SurfaceBrush}">
+                                                        <TextBlock Text="{Binding StatusText}" FontSize="10"
+                                                                   FontWeight="SemiBold"
+                                                                   Foreground="{Binding StatusBrush}" />
+                                                    </Border>
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding DetailText}" Style="{StaticResource MutedText}"
+                                                           Margin="0,3,0,0" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding RpmText}" FontSize="23" FontWeight="SemiBold"
+                                                           Foreground="{Binding RpmBrush}" />
+                                                <TextBlock Text="RPM" Style="{StaticResource UnitText}" />
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <Grid Margin="0,14,0,0">
+                                            <TextBlock Text="PWM aplicado por el BIOS"
+                                                       Style="{StaticResource CaptionText}" />
+                                            <TextBlock Text="{Binding PwmText}" HorizontalAlignment="Right"
+                                                       FontSize="11.5" FontWeight="SemiBold"
+                                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                                        </Grid>
+                                        <ProgressBar Style="{StaticResource MeterBar}" Minimum="0" Maximum="100"
+                                                     Value="{Binding PwmPercent}" Margin="0,6,0,0"
+                                                     Visibility="{Binding HasPwm, Converter={StaticResource BoolToVis}}" />
+                                        <TextBlock Text="Sin lectura de PWM en este canal."
+                                                   Margin="0,6,0,0">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding HasPwm}" Value="False">
+                                                            <Setter Property="Visibility" Value="Visible" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Border Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="10" Padding="14,10" Margin="0,10,0,0"
+                            Visibility="{Binding ShowActiveFilterEmpty, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="Ningún ventilador está girando ahora mismo. Desmarcá «Solo activos» para ver todos los canales."
+                                   Style="{StaticResource SecondaryText}" />
+                    </Border>
+
+                    <TextBlock Text="Si no aparece ningún canal, ejecutá Ctrl Monitor como administrador para habilitar la lectura del Super I/O."
+                               Style="{StaticResource MutedText}" Margin="6,10,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ============================================================ -->
+        <!-- Sensores                                                     -->
+        <!-- ============================================================ -->
+        <TabItem Header="Sensores" Style="{StaticResource NavTabItem}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="24,20,24,24">
+
+                    <TextBlock Text="Sensores" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="Todas las lecturas detectadas, agrupadas por componente."
+                               Style="{StaticResource PageSubtitle}" />
+
+                    <ItemsControl ItemsSource="{Binding Groups}" Margin="0,18,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <ToggleButton IsChecked="{Binding IsExpanded, Mode=TwoWay}"
+                                                      Background="Transparent" BorderThickness="0" Padding="0"
+                                                      HorizontalContentAlignment="Stretch" Cursor="Hand"
+                                                      FocusVisualStyle="{x:Null}"
+                                                      ToolTip="Mostrar u ocultar los sensores">
+                                            <ToggleButton.Template>
+                                                <ControlTemplate TargetType="ToggleButton">
+                                                    <Border Background="Transparent">
+                                                        <ContentPresenter />
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </ToggleButton.Template>
+
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+
+                                                <Border Style="{StaticResource IconBadge}" Width="32" Height="32">
+                                                    <Path Width="19" Height="19" Stretch="Uniform">
+                                                        <Path.Style>
+                                                            <Style TargetType="Path">
+                                                                <Setter Property="Data" Value="{StaticResource CpuIconGeometry}" />
+                                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IconKey}" Value="Gpu">
+                                                                        <Setter Property="Data" Value="{StaticResource GpuIconGeometry}" />
+                                                                        <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IconKey}" Value="Board">
+                                                                        <Setter Property="Data" Value="{StaticResource BoardIconGeometry}" />
+                                                                        <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Path.Style>
+                                                    </Path>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding TypeText}" Style="{StaticResource CaptionText}" />
+                                                    <TextBlock Text="{Binding Name}" Style="{StaticResource SectionTitle}"
+                                                               Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+
+                                                <TextBlock Grid.Column="2" Text="{Binding CountText}" Style="{StaticResource MutedText}"
+                                                           HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                           Margin="12,0,0,0" />
+
+                                                <Path Grid.Column="3" Width="9" Height="6" Margin="12,0,0,0"
+                                                      Stretch="Uniform"
+                                                      Stroke="{StaticResource TextMutedBrush}"
+                                                      StrokeThickness="1.6"
+                                                      StrokeStartLineCap="Round"
+                                                      StrokeEndLineCap="Round"
+                                                      Data="M 1,1 L 5,5 L 9,1"
+                                                      VerticalAlignment="Center"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                    <Path.Style>
+                                                        <Style TargetType="Path">
+                                                            <Setter Property="RenderTransform">
+                                                                <Setter.Value>
+                                                                    <RotateTransform Angle="0" />
+                                                                </Setter.Value>
+                                                            </Setter>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsExpanded}" Value="False">
+                                                                    <Setter Property="RenderTransform">
+                                                                        <Setter.Value>
+                                                                            <RotateTransform Angle="180" />
+                                                                        </Setter.Value>
+                                                                    </Setter>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Path.Style>
+                                                </Path>
+                                            </Grid>
+                                        </ToggleButton>
+
+                                        <ItemsControl ItemsSource="{Binding Rows}" Margin="0,10,0,0"
+                                                      Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="0,7,0,0">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Name}"
+                                                                       Style="{StaticResource SecondaryText}"
+                                                                       VerticalAlignment="Center" />
+                                                            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                                                        HorizontalAlignment="Right" Margin="16,0,0,0">
+                                                                <TextBlock Text="{Binding ValueText}"
+                                                                           FontSize="13" FontWeight="SemiBold"
+                                                                           Foreground="{Binding ValueBrush}" />
+                                                                <TextBlock Text="{Binding UnitText}"
+                                                                           Style="{StaticResource MutedText}"
+                                                                           Margin="5,0,0,2" VerticalAlignment="Bottom" />
+                                                            </StackPanel>
+                                                        </Grid>
+                                                        <ProgressBar Style="{StaticResource MeterBar}"
+                                                                     Minimum="0" Maximum="100"
+                                                                     Value="{Binding Percent}"
+                                                                     Margin="0,5,0,0"
+                                                                     Visibility="{Binding ShowsBar, Converter={StaticResource BoolToVis}}" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ============================================================ -->
+        <!-- Ajustes                                                      -->
+        <!-- ============================================================ -->
+        <TabItem Header="Ajustes" Style="{StaticResource NavTabItem}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="24,20,24,24">
+
+                    <TextBlock Text="Ajustes" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="Refresco, inicio automático y diagnóstico del hardware."
+                               Style="{StaticResource PageSubtitle}" />
+
+                    <controls:ResponsiveGrid Margin="0,18,0,0" MinItemWidth="400" MaxColumns="2" Gap="18">
+                        <StackPanel>
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="Monitorización" Style="{StaticResource SectionTitle}" />
+                                    <TextBlock Text="La app solo lee sensores; nunca escribe PWM ni cambia el BIOS."
+                                               Style="{StaticResource MutedText}" Margin="0,4,0,18" />
+
+                                    <Grid>
+                                        <TextBlock Text="Intervalo de refresco" Style="{StaticResource SecondaryText}" />
+                                        <TextBlock HorizontalAlignment="Right"
+                                                   Text="{Binding RefreshIntervalText}"
+                                                   FontSize="11.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Slider Minimum="500" Maximum="10000"
+                                            SmallChange="500" LargeChange="500"
+                                            TickFrequency="500" IsSnapToTickEnabled="True"
+                                            Value="{Binding RefreshIntervalMs, Mode=TwoWay}"
+                                            Margin="0,7,0,0" />
+                                    <TextBlock Text="Entre 0,5 y 10 segundos. Más rápido consume un poco más de CPU."
+                                               Style="{StaticResource MutedText}" Margin="0,4,0,0" />
+
+                                    <CheckBox Content="Iniciar con Windows" Margin="0,18,0,0"
+                                              IsChecked="{Binding RunAtStartup, Mode=TwoWay}" />
+                                    <TextBlock Text="Crea una tarea programada con permisos altos para evitar el cartel de UAC."
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0" />
+
+                                    <CheckBox Content="Iniciar minimizado en la bandeja" Margin="0,16,0,0"
+                                              IsChecked="{Binding StartMinimized, Mode=TwoWay}" />
+
+                                    <CheckBox Content="Minimizar a la bandeja al cerrar la ventana" Margin="0,16,0,0"
+                                              IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
+                                    <TextBlock Text="Para salir del todo usá «Salir» en el menú del icono de bandeja."
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0" />
+
+                                    <Separator Margin="0,18,0,14" />
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Guardar ahora" Style="{StaticResource AccentButton}"
+                                                Command="{Binding SaveNowCommand}" />
+                                        <TextBlock Text="{Binding SaveStatus}" Style="{StaticResource MutedText}"
+                                                   VerticalAlignment="Center" Margin="14,0,0,0" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel>
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid>
+                                        <TextBlock Text="Hardware detectado" Style="{StaticResource SectionTitle}" />
+                                        <Image Source="/Assets/asus.png" Height="14" HorizontalAlignment="Right"
+                                               VerticalAlignment="Center" Opacity="0.85" />
+                                    </Grid>
+
+                                    <Grid Margin="0,16,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Text="Procesador" Style="{StaticResource CaptionText}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding CpuName}"
+                                                   Style="{StaticResource SecondaryText}" Margin="0,0,0,11"
+                                                   TextTrimming="CharacterEllipsis" />
+
+                                        <TextBlock Grid.Row="1" Text="Tarjeta gráfica" Style="{StaticResource CaptionText}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding GpuName}"
+                                                   Style="{StaticResource SecondaryText}" Margin="0,0,0,11"
+                                                   TextTrimming="CharacterEllipsis" />
+
+                                        <TextBlock Grid.Row="2" Text="Placa madre" Style="{StaticResource CaptionText}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding MotherboardName}"
+                                                   Style="{StaticResource SecondaryText}" Margin="0,0,0,11"
+                                                   TextTrimming="CharacterEllipsis" />
+
+                                        <TextBlock Grid.Row="3" Text="Super I/O" Style="{StaticResource CaptionText}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SuperIoName}"
+                                                   Style="{StaticResource SecondaryText}" Margin="0,0,0,11" />
+
+                                        <TextBlock Grid.Row="4" Text="Memoria RAM" Style="{StaticResource CaptionText}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding RamText}"
+                                                   Style="{StaticResource SecondaryText}" Margin="0,0,0,11"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding RamText}" />
+
+                                        <TextBlock Grid.Row="5" Text="Discos" Style="{StaticResource CaptionText}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding DisksText}"
+                                                   Style="{StaticResource SecondaryText}" Margin="0,0,0,11"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   ToolTip="{Binding DisksTooltip}" />
+
+                                        <TextBlock Grid.Row="6" Text="Driver" Style="{StaticResource CaptionText}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="6" Grid.Column="1"
+                                                   Text="{Binding DriverVersion, StringFormat={}PawnIO {0}}"
+                                                   Style="{StaticResource SecondaryText}" Margin="0,0,0,11" />
+
+                                        <TextBlock Grid.Row="7" Text="Administrador" Style="{StaticResource CaptionText}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding AdminText}"
+                                                   Style="{StaticResource SecondaryText}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="Datos y diagnóstico" Style="{StaticResource SectionTitle}" />
+                                    <TextBlock Text="Configuración:" Style="{StaticResource SecondaryText}"
+                                               Margin="0,10,0,0" />
+                                    <TextBlock Text="{Binding ConfigPath}" FontFamily="{StaticResource MonoFont}"
+                                               FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"
+                                               TextWrapping="Wrap" Margin="0,3,0,0" />
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,14,0,0">
+                                        <Button Content="Abrir configuración" Style="{StaticResource SecondaryButton}"
+                                                Command="{Binding OpenConfigFolderCommand}" />
+                                        <Button Content="Abrir logs" Style="{StaticResource SecondaryButton}"
+                                                Margin="10,0,0,0"
+                                                Command="{Binding OpenLogFolderCommand}" />
+                                    </StackPanel>
+
+                                    <Separator Margin="0,18,0,14" />
+
+                                    <TextBlock Text="{Binding VersionText}" Style="{StaticResource MutedText}" />
+                                    <TextBlock Text="Ctrl Monitor · WPF + LibreHardwareMonitor + PawnIO"
+                                               Style="{StaticResource MutedText}" Margin="0,3,0,0" />
+                                    <TextBlock Text="El control de los ventiladores queda a cargo del BIOS."
+                                               Style="{StaticResource MutedText}" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </controls:ResponsiveGrid>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+    </TabControl>
+</Window>

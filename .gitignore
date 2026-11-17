@@ -481,7 +481,7 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
-# FanCtrl local
+# Ctrl Monitor local
 tools/opencode-monitor/
 probe-output.txt
 *.log
