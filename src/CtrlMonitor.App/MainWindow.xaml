@@ -254,7 +254,12 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
+                                    <Image Grid.Column="2" Source="{Binding CpuLogoUri}" Height="18" Opacity="0.9"
+                                           Margin="12,0,0,0" VerticalAlignment="Center"
+                                           RenderOptions.BitmapScalingMode="HighQuality"
+                                           Visibility="{Binding HasCpuLogo, Converter={StaticResource BoolToVis}}" />
                                     <Border Style="{StaticResource IconBadge}">
                                         <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource AccentBrush}"
                                               Width="21" Height="21" Stretch="Uniform" />
@@ -412,8 +417,14 @@
                                         <TextBlock Text="{l:Tr summary.boardCaption}" Style="{StaticResource CaptionText}"
                                                    Margin="9,0,0,0" VerticalAlignment="Center" />
                                     </StackPanel>
-                                    <Image Source="/Assets/asus.png" Height="14" HorizontalAlignment="Right"
-                                           VerticalAlignment="Center" Opacity="0.85" />
+                                    <Grid HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Image Source="{Binding BoardLogoUri}" Height="14" RenderOptions.BitmapScalingMode="HighQuality" Opacity="0.85"
+                                               Visibility="{Binding HasBoardLogo, Converter={StaticResource BoolToVis}}" />
+                                        <Border Style="{StaticResource BrandBadge}"
+                                                Visibility="{Binding HasBoardBrandText, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="{Binding BoardBrandText}" Style="{StaticResource BrandBadgeText}" />
+                                        </Border>
+                                    </Grid>
                                 </Grid>
                                 <TextBlock Text="{Binding MotherboardName}" Style="{StaticResource SectionTitle}"
                                            Margin="0,7,0,0" TextTrimming="CharacterEllipsis" />
@@ -885,8 +896,14 @@
                                 <StackPanel>
                                     <Grid>
                                         <TextBlock Text="{l:Tr settings.hardware}" Style="{StaticResource SectionTitle}" />
-                                        <Image Source="/Assets/asus.png" Height="14" HorizontalAlignment="Right"
-                                               VerticalAlignment="Center" Opacity="0.85" />
+                                        <Grid HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <Image Source="{Binding BoardLogoUri}" Height="14" RenderOptions.BitmapScalingMode="HighQuality" Opacity="0.85"
+                                                   Visibility="{Binding HasBoardLogo, Converter={StaticResource BoolToVis}}" />
+                                            <Border Style="{StaticResource BrandBadge}"
+                                                    Visibility="{Binding HasBoardBrandText, Converter={StaticResource BoolToVis}}">
+                                                <TextBlock Text="{Binding BoardBrandText}" Style="{StaticResource BrandBadgeText}" />
+                                            </Border>
+                                        </Grid>
                                     </Grid>
 
                                     <Grid Margin="0,16,0,0">

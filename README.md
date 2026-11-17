@@ -6,7 +6,7 @@
 
 Windows desktop app that **shows in real time** temperatures, fan speeds, power, voltages, load, PWM, RAM and VRAM usage and network traffic. It is **strictly read-only**: it never writes PWM, never applies fan curves and never changes the BIOS.
 
-The interface is available in **English, Spanish and Portuguese (Brazil)**, lives in the system tray and can start with Windows. It includes **configurable chart panels**, a **fan view with RPM and PWM**, CPU/GPU/motherboard icons and the ASUS logo. **Fan control is left to the BIOS.**
+The interface is available in **English, Spanish and Portuguese (Brazil)**, lives in the system tray and can start with Windows. It includes **configurable chart panels**, a **fan view with RPM and PWM**, CPU/GPU/motherboard icons and the **logo of the detected brand**. **Fan control is left to the BIOS.**
 
 > **Reference hardware:** ASUS PRIME B560M-A · Intel Core i5-10400F · AMD Radeon RX 6700 XT.
 
@@ -22,7 +22,8 @@ The interface is available in **English, Spanish and Portuguese (Brazil)**, live
 - **Live refresh** every 0.5–10 seconds.
 - **Resizable, responsive window**: cards and charts switch between one and two columns depending on the width, designed with vertical 1080p monitors in mind.
 - **Collapsible sidebar** with its own button or `Ctrl+B`; when hidden, a button brings it back.
-- **Vector icons** for CPU, GPU and motherboard, plus the ASUS logo on the hardware cards.
+- **Vector icons** for CPU, GPU and motherboard.
+- **Brand detection:** shows the motherboard logo (ASUS, GIGABYTE, MSI, ASRock) and the CPU logo (Intel, AMD). Other known brands (BIOSTAR, EVGA, Dell, HP, Lenovo…) appear as a text badge.
 - **System tray** icon with a CPU/GPU tooltip and a menu to open or exit.
 - **Start with Windows** through a scheduled task with elevated permissions.
 - **Multilingual**: English, Spanish and Portuguese (Brazil). It follows the Windows display language by default (English if that language isn't supported) and can be switched instantly from **Settings → Language**.
@@ -175,7 +176,7 @@ src/CtrlMonitor.App/       WPF
   Converters/              Time window, columns and UI converters
   ViewModels/              MainViewModel, chart panels, sensor groups and fans
   Services/                Tray, start with Windows and elevation
-  Assets/asus.png          ASUS logo to identify the motherboard
+  Assets/*.png             Brand logos (ASUS, GIGABYTE, MSI, ASRock, Intel, AMD)
 tests/CtrlMonitor.Core.Tests/  xUnit tests
 tools/CtrlMonitor.Probe/   Read-only probe for elevated diagnostics
 build/package.ps1          Packaging: self-contained exe, zip, installer and hashes
@@ -209,7 +210,7 @@ It writes `probe-output.txt` next to the executable. It never writes PWM or touc
 
 ## Trademarks
 
-ASUS is a registered trademark of ASUSTeK Computer Inc. The logo included in the app is used only to identify the detected hardware.
+ASUS, GIGABYTE, MSI, ASRock, Intel and AMD are trademarks of their respective owners. Ctrl Monitor is not affiliated with or endorsed by any of them. Their logos are used only to identify the detected hardware.
 
 ---
 
@@ -221,7 +222,7 @@ ASUS is a registered trademark of ASUSTeK Computer Inc. The logo included in the
 
 Aplicación de escritorio para Windows que **muestra en tiempo real** las temperaturas, la velocidad de los ventiladores, la potencia, los voltajes, la carga, el PWM, el uso de RAM y VRAM y el tráfico de red. Es **estrictamente de solo lectura**: no escribe PWM, no aplica curvas y no modifica el BIOS.
 
-La interfaz está en **español, inglés y portugués (Brasil)**, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el logo de ASUS. El **control de los ventiladores queda a cargo del BIOS**.
+La interfaz está en **español, inglés y portugués (Brasil)**, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el **logo de la marca detectada**. El **control de los ventiladores queda a cargo del BIOS**.
 
 > **Hardware de referencia:** ASUS PRIME B560M-A · Intel Core i5-10400F · AMD Radeon RX 6700 XT.
 
@@ -235,7 +236,8 @@ La interfaz está en **español, inglés y portugués (Brasil)**, vive en la ban
 - **Actualización en vivo** cada 0,5–10 segundos.
 - **Ventana redimensionable y adaptable**: las tarjetas y los gráficos pasan a una o dos columnas según el ancho, pensado para monitores verticales de 1080p.
 - **Barra lateral colapsable** con el botón integrado en su cabecera o `Ctrl+B`; al ocultarla queda un botón para reabrirla.
-- **Iconos vectoriales** de CPU, GPU y placa madre, más el logo de ASUS en las tarjetas de hardware.
+- **Iconos vectoriales** de CPU, GPU y placa madre.
+- **Detección de marca:** muestra el logo de la placa (ASUS, GIGABYTE, MSI, ASRock) y el del CPU (Intel, AMD). Otras marcas conocidas (BIOSTAR, EVGA, Dell, HP, Lenovo…) aparecen como una insignia de texto.
 - **Bandeja del sistema** con tooltip de CPU/GPU y menú para abrir o salir.
 - **Inicio con Windows** mediante tarea programada con permisos altos.
 - **Multilenguaje**: español, inglés y portugués (Brasil). Por defecto sigue el idioma de Windows (inglés si no está soportado) y se cambia al instante desde **Ajustes → Idioma**.
@@ -388,7 +390,7 @@ src/CtrlMonitor.App/       WPF
   Converters/              Ventana temporal, columnas y conversores de UI
   ViewModels/              MainViewModel, paneles de gráfico, grupos y ventiladores
   Services/                Bandeja, inicio con Windows y elevación
-  Assets/asus.png          Logo de ASUS para identificar la placa
+  Assets/*.png             Logos de marcas (ASUS, GIGABYTE, MSI, ASRock, Intel, AMD)
 tests/CtrlMonitor.Core.Tests/  Tests xUnit
 tools/CtrlMonitor.Probe/   Sonda de solo lectura para diagnóstico elevado
 build/package.ps1          Empaquetado: exe autocontenido, zip, instalador y hashes
@@ -422,4 +424,4 @@ Escribe `probe-output.txt` junto al ejecutable. No escribe PWM ni toca el BIOS. 
 
 ## Marcas
 
-ASUS es una marca registrada de ASUSTeK Computer Inc. El logo incluido en la app se usa únicamente para identificar el hardware detectado.
+ASUS, GIGABYTE, MSI, ASRock, Intel y AMD son marcas registradas de sus respectivos dueños. Ctrl Monitor no está afiliado ni respaldado por ninguna de ellas. Sus logos se usan únicamente para identificar el hardware detectado.
