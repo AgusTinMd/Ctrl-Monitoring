@@ -15,7 +15,7 @@ public sealed class HardwareService : IDisposable
 
     private Timer? _timer;
     private int _tickInProgress;
-    private bool _disposed;
+    private volatile bool _disposed;
     private HardwareSnapshot _latest = HardwareSnapshot.Empty;
 
     public HardwareService()
@@ -85,6 +85,9 @@ public sealed class HardwareService : IDisposable
 
     public void StartMonitoring(TimeSpan interval)
     {
+        if (_disposed)
+            return;
+
         _timer?.Dispose();
         _timer = new Timer(_ => Tick(), null, TimeSpan.Zero, interval);
     }
@@ -106,6 +109,11 @@ public sealed class HardwareService : IDisposable
 
             lock (_gate)
             {
+                // Dispose puede haber cerrado el Computer mientras esperábamos
+                // el lock: leer sensores cerrados toca el Super I/O sin driver.
+                if (_disposed)
+                    return;
+
                 UpdateAllLocked();
                 snapshot = BuildSnapshotLocked();
                 _latest = snapshot;
@@ -265,13 +273,19 @@ public sealed class HardwareService : IDisposable
         _disposed = true;
         StopMonitoring();
 
-        try
+        // Timer.Dispose no espera al callback en curso. Tomar el mismo lock
+        // que Tick garantiza que ninguna lectura esté usando el hardware
+        // mientras se cierra, y Tick revisa _disposed antes de volver a leer.
+        lock (_gate)
         {
-            _computer.Close();
-        }
-        catch
-        {
-            // best effort
+            try
+            {
+                _computer.Close();
+            }
+            catch
+            {
+                // best effort
+            }
         }
     }
 }
