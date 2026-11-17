@@ -16,6 +16,16 @@
         TextOptions.TextRenderingMode="ClearType">
 
     <Window.Resources>
+        <!-- Plantillas explícitas en lugar de DisplayMemberPath: el estilo del
+             ComboBox muestra la opción elegida con ItemTemplate, y así el texto
+             también se actualiza al cambiar de idioma. -->
+        <DataTemplate x:Key="MetricTitleTemplate">
+            <TextBlock Text="{Binding Title}" />
+        </DataTemplate>
+        <DataTemplate x:Key="LanguageNameTemplate">
+            <TextBlock Text="{Binding DisplayName}" />
+        </DataTemplate>
+
         <DataTemplate x:Key="ChartCardTemplate">
             <!-- Toda la tarjeta se puede arrastrar para reordenarla; el selector
                  y la ✕ manejan sus propios clics y no inician el arrastre. -->
@@ -74,7 +84,7 @@
                                          VerticalAlignment="Center" />
                                 <ComboBox ItemsSource="{Binding Options}"
                                           SelectedItem="{Binding SelectedMetric, Mode=TwoWay}"
-                                          DisplayMemberPath="Title"
+                                          ItemTemplate="{StaticResource MetricTitleTemplate}"
                                           Width="110" Height="26" MinWidth="0" FontSize="11.5"
                                           Margin="9,0,0,0"
                                           ToolTip="{l:Tr chart.metricTooltip}" />
@@ -491,7 +501,7 @@
                             <ComboBox Width="140" Height="34" MinWidth="0"
                                       ItemsSource="{Binding AvailableChartMetrics}"
                                       SelectedItem="{Binding NewChartMetric, Mode=TwoWay}"
-                                      DisplayMemberPath="Title"
+                                      ItemTemplate="{StaticResource MetricTitleTemplate}"
                                       ToolTip="{l:Tr chart.addTooltip}" />
                             <Button Content="{l:Tr chart.add}" Style="{StaticResource AccentButton}"
                                     Command="{Binding AddChartPanelCommand}"
@@ -838,7 +848,7 @@
                                                    VerticalAlignment="Center" />
                                         <ComboBox Grid.Column="1" Width="230" Height="30" MinWidth="0"
                                                   ItemsSource="{Binding LanguageOptions}"
-                                                  DisplayMemberPath="DisplayName"
+                                                  ItemTemplate="{StaticResource LanguageNameTemplate}"
                                                   SelectedValuePath="Code"
                                                   SelectedValue="{Binding Language, Mode=TwoWay}" />
                                     </Grid>

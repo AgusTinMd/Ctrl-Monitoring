@@ -15,7 +15,7 @@ public static partial class Translations
         ["app.crash"] = "O Ctrl Monitor encontrou um erro e será fechado.\n\n{0}",
 
         // Navegação
-        ["nav.summary"] = "Resumo",
+        ["nav.summary"] = "Início",
         ["nav.chart"] = "Gráficos",
         ["nav.fans"] = "Ventoinhas",
         ["nav.sensors"] = "Sensores",

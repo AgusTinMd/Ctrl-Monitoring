@@ -10,7 +10,7 @@ La interfaz está en **español, inglés y portugués (Brasil)**, vive en la ban
 
 ## Qué hace
 
-- **Resumen** con los valores destacados de CPU, GPU y placa: temperatura, máxima de núcleos, hotspot, potencia, carga, RPM y VRAM de la GPU.
+- **Inicio** con los valores destacados de CPU, GPU y placa: temperatura, máxima de núcleos, hotspot, potencia, carga, RPM y VRAM de la GPU.
 - **Gráfico en vivo** con paneles independientes y un selector de métrica en cada uno: CPU, GPU, placa, hotspot, RAM, VRAM y red. Por defecto se muestran CPU, GPU y RAM; el resto se agrega desde la barra superior, cualquier tarjeta se puede quitar con la **✕** y se reordenan **arrastrándolas** (el orden se guarda). Cada panel ajusta su escala vertical y comparte las ventanas de 1, 5 o 10 minutos. Las RPM del ventilador y el consumo actual en vatios aparecen junto a la temperatura; RAM y VRAM muestran GB en uso sobre el total y porcentaje; la red muestra bajada y subida en MB/s.
 - **Ventiladores** con cada canal detectado, sus RPM y el PWM que está aplicando el BIOS. La casilla **Solo activos** oculta los canales detenidos.
 - **Sensores** con todas las lecturas detectadas, agrupadas por componente: temperaturas, ventiladores, potencia, voltajes, carga, PWM y memoria de la GPU. Cada grupo se puede plegar o desplegar.
@@ -102,7 +102,7 @@ El workflow también se puede lanzar a mano desde **Actions → Release → Run 
 ## Uso
 
 1. Abrí Ctrl Monitor y aceptá el cartel de UAC.
-2. En **Resumen** revisá las tarjetas de CPU, GPU, potencia y el estado general.
+2. En **Inicio** revisá las tarjetas de CPU, GPU, potencia y el estado general.
 3. En **Gráfico** seguí la evolución de las temperaturas, la memoria y la red. Cada tarjeta tiene su propio selector de métrica y escala automática; elegí 1, 5 o 10 minutos y usá **Limpiar** para reiniciar el trazado. Las RPM del ventilador y el consumo en vatios se muestran junto a la temperatura en CPU, GPU y hotspot; las tarjetas de RAM y VRAM muestran los GB en uso sobre el total y el porcentaje; la de red muestra bajada y subida. Usá **Agregar** para sumar otra métrica y la **✕** de una tarjeta para quitarla.
 4. En **Ventiladores** está cada canal detectado con sus RPM y el PWM aplicado por el BIOS. Los canales en cero se muestran atenuados; activá **Solo activos** para ocultarlos.
 5. En **Sensores** está el volcado completo agrupado por componente. Las filas con barra son porcentajes (carga y PWM). Tocá la cabecera de un grupo para plegarlo o desplegarlo.
