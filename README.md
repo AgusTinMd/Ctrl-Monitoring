@@ -1,6 +1,6 @@
-# FanCtrl Monitor
+# Ctrl Monitor
 
-Aplicación de escritorio para Windows que **muestra en tiempo real** las temperaturas, la velocidad de los ventiladores, la potencia, los voltajes, la carga y el PWM del hardware. Es **estrictamente de solo lectura**: no escribe PWM, no aplica curvas y no modifica el BIOS.
+Aplicación de escritorio para Windows que **muestra en tiempo real** las temperaturas, la velocidad de los ventiladores, la potencia, los voltajes, la carga, el PWM, el uso de RAM y VRAM y el tráfico de red. Es **estrictamente de solo lectura**: no escribe PWM, no aplica curvas y no modifica el BIOS.
 
 La interfaz está en español, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el logo de ASUS. El **control de los ventiladores queda a cargo del BIOS**.
 
@@ -43,25 +43,25 @@ El PWM que aparece en la pestaña **Sensores** es una lectura del valor que est�
 
 ```powershell
 # Compilar toda la solución
-dotnet build FanCtrl.slnx -c Release
+dotnet build CtrlMonitor.slnx -c Release
 
 # Ejecutar (pide UAC)
-Start-Process "src\FanCtrl.App\bin\Release\net10.0-windows\FanCtrl.exe" -Verb RunAs
+Start-Process "src\CtrlMonitor.App\bin\Release\net10.0-windows\CtrlMonitor.exe" -Verb RunAs
 ```
 
-La app **siempre** se ejecuta como administrador. `FanCtrl.exe` lo exige desde el manifiesto y, si se inicia con `dotnet FanCtrl.dll`, detecta que no está elevada y se relanza sola con UAC a través de `FanCtrl.exe`. Si se cancela el cartel, la app se cierra: no queda un modo sin privilegios.
+La app **siempre** se ejecuta como administrador. `CtrlMonitor.exe` lo exige desde el manifiesto y, si se inicia con `dotnet CtrlMonitor.dll`, detecta que no está elevada y se relanza sola con UAC a través de `CtrlMonitor.exe`. Si se cancela el cartel, la app se cierra: no queda un modo sin privilegios.
 
 ### Tests
 
 ```powershell
-dotnet test tests\FanCtrl.Core.Tests\FanCtrl.Core.Tests.csproj -c Release
+dotnet test tests\CtrlMonitor.Core.Tests\CtrlMonitor.Core.Tests.csproj -c Release
 ```
 
-Los tests cubren la persistencia y normalización de la configuración, incluida la lectura de un archivo legacy con campos de control que ya no se usan, el layout de gráficos y la conversión de velocidades de red.
+Los tests cubren la persistencia y normalización de la configuración, incluida la lectura de un archivo legacy con campos de control que ya no se usan, el layout de gráficos, la migración desde FanCtrl, la escala de los ejes y la conversión de velocidades de red.
 
 ## Uso
 
-1. Abrí FanCtrl Monitor y aceptá el cartel de UAC.
+1. Abrí Ctrl Monitor y aceptá el cartel de UAC.
 2. En **Resumen** revisá las tarjetas de CPU, GPU, potencia y el estado general.
 3. En **Gráfico** seguí la evolución de las temperaturas, la memoria y la red. Cada tarjeta tiene su propio selector de métrica y escala automática; elegí 1, 5 o 10 minutos y usá **Limpiar** para reiniciar el trazado. Las RPM del ventilador y el consumo en vatios se muestran junto a la temperatura en CPU, GPU y hotspot; las tarjetas de RAM y VRAM muestran los GB en uso sobre el total y el porcentaje; la de red muestra bajada y subida. Usá **Agregar** para sumar otra métrica y la **✕** de una tarjeta para quitarla.
 4. En **Ventiladores** está cada canal detectado con sus RPM y el PWM aplicado por el BIOS. Los canales en cero se muestran atenuados; activá **Solo activos** para ocultarlos.
@@ -74,8 +74,8 @@ El botón ☰ de la cabecera de la barra lateral (o `Ctrl+B`) la oculta. Cuando 
 
 | Dato | Ruta |
 |---|---|
-| Configuración | `%APPDATA%\FanCtrl\config.json` |
-| Logs | `%APPDATA%\FanCtrl\logs\fanctrl-AAAA-MM-DD.log` |
+| Configuración | `%APPDATA%\CtrlMonitor\config.json` |
+| Logs | `%APPDATA%\CtrlMonitor\logs\ctrlmonitor-AAAA-MM-DD.log` |
 
 Claves de configuración:
 
@@ -93,21 +93,30 @@ Si el archivo se corrompe, la app lo respalda como `config.json.bak-*` y vuelve 
 
 ## Inicio con Windows
 
-La opción **Iniciar con Windows** crea una tarea programada llamada `FanCtrl` con `/RL HIGHEST` y 20 segundos de retraso. Así se evita el cartel de UAC en cada inicio. Se elimina desde la misma opción o con:
+La opción **Iniciar con Windows** crea una tarea programada llamada `CtrlMonitor` con `/RL HIGHEST` y 20 segundos de retraso. Así se evita el cartel de UAC en cada inicio. Se elimina desde la misma opción o con:
 
 ```powershell
-schtasks /Delete /TN FanCtrl /F
+schtasks /Delete /TN CtrlMonitor /F
 ```
+
+## Actualizar desde FanCtrl
+
+Hasta la versión 2.5.0 la app se llamaba **FanCtrl Monitor** (`FanCtrl.exe`). El nombre cambió porque dejó de ser una herramienta de ventiladores y pasó a ser un monitor general. Al abrir Ctrl Monitor por primera vez:
+
+- Si no existe `%APPDATA%\CtrlMonitor\config.json`, se copia `%APPDATA%\FanCtrl\config.json`. La carpeta vieja no se borra.
+- Si existe la tarea programada `FanCtrl`, se elimina y, si el inicio con Windows estaba activo, se crea `CtrlMonitor` apuntando al ejecutable nuevo.
+
+Los logs viejos quedan en `%APPDATA%\FanCtrl\logs`. Cuando ya no los necesites, podés borrar esa carpeta a mano.
 
 ## Estructura del proyecto
 
 ```
-src/FanCtrl.Core/          Lógica sin UI
+src/CtrlMonitor.Core/      Lógica sin UI
   Hardware/                LibreHardwareMonitor, lecturas y snapshots
   Inventory/               Lectura WMI de RAM y discos, uso de memoria y tráfico de red
   Configuration/           Modelo y persistencia
   Diagnostics/             Logs
-src/FanCtrl.App/           WPF
+src/CtrlMonitor.App/       WPF
   Themes/Theme.xaml        Paleta, estilos, iconos vectoriales y navegación
   Controls/LiveChart.cs    Gráfico en vivo por serie o combinado
   Controls/ResponsiveGrid.cs  Panel adaptable de tarjetas
@@ -116,17 +125,17 @@ src/FanCtrl.App/           WPF
   ViewModels/              MainViewModel, paneles de gráfico, grupos y ventiladores
   Services/                Bandeja e inicio con Windows
   Assets/asus.png          Logo de ASUS para identificar la placa
-tests/FanCtrl.Core.Tests/  Tests xUnit
-tools/FanCtrl.Probe/       Sonda de solo lectura para diagnóstico elevado
+tests/CtrlMonitor.Core.Tests/  Tests xUnit
+tools/CtrlMonitor.Probe/   Sonda de solo lectura para diagnóstico elevado
 ```
 
 ## Sonda de diagnóstico
 
-`tools/FanCtrl.Probe` vuelca todos los sensores que ve LibreHardwareMonitor, con la misma configuración de hardware que la app. Sirve para comparar lecturas cuando falta algún dato:
+`tools/CtrlMonitor.Probe` vuelca todos los sensores que ve LibreHardwareMonitor, con la misma configuración de hardware que la app. Sirve para comparar lecturas cuando falta algún dato:
 
 ```powershell
 # Desde una terminal elevada (la sonda pide administrador)
-dotnet run --project tools\FanCtrl.Probe -c Release
+dotnet run --project tools\CtrlMonitor.Probe -c Release
 ```
 
 Escribe `probe-output.txt` junto al ejecutable. No escribe PWM ni toca el BIOS. Agregá `--pause` para que la consola espere un ENTER antes de cerrarse.
