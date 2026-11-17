@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CtrlMonitor.App/CtrlMonitor.App.csproj" />
+    <Project Path="src/CtrlMonitor.Core/CtrlMonitor.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/CtrlMonitor.Core.Tests/CtrlMonitor.Core.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/CtrlMonitor.Probe/CtrlMonitor.Probe.csproj" />
+  </Folder>
+</Solution>
