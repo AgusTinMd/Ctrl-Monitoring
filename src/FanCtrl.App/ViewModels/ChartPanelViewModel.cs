@@ -322,7 +322,9 @@ internal static class ChartMetrics
         Color = UiBrushes.ChartNetDown,
         AxisUnit = " MB/s",
         AxisMin = 0,
-        AxisMax = 100,
+        // Techo amplio: 1 Gbps ronda 119 MB/s y 10 Gbps, 1190 MB/s. Con 100
+        // una descarga a velocidad plena quedaba recortada contra el borde.
+        AxisMax = 1250,
         AxisStep = 1,
         Primary = vm => vm.NetDownMbs,
         PrimaryFormat = "0.00",
