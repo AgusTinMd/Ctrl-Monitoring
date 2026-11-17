@@ -11,7 +11,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\fan.ico</ApplicationIcon>
     <PlatformTarget>x64</PlatformTarget>
-    <Version>2.6.0</Version>
+    <Version>2.7.0</Version>
     <Product>Ctrl Monitor</Product>
     <Description>Monitor de temperaturas, ventiladores, memoria y red. Solo lectura.</Description>
   </PropertyGroup>
