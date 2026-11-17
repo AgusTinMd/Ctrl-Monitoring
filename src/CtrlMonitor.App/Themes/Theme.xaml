@@ -2,6 +2,10 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:l="clr-namespace:CtrlMonitor.App.Localization">
 
+    <!-- Va acá y no en App.xaml: las plantillas de este diccionario no ven los
+         recursos de App.xaml (por ejemplo, el pie de la barra lateral). -->
+    <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
     <!-- ===================== Paleta ===================== -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="#080E1A" />
     <SolidColorBrush x:Key="SidebarBrush" Color="#0B1424" />
