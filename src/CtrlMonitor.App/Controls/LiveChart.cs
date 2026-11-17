@@ -273,6 +273,12 @@ public sealed class LiveChart : FrameworkElement
                 case "gpu":
                     result.Add(new ChartSeries(s => s.Gpu, Resource("ChartGpuBrush", Brushes.MediumSeaGreen)));
                     break;
+                case "cpuload":
+                    result.Add(new ChartSeries(s => s.CpuLoad, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
+                    break;
+                case "gpuload":
+                    result.Add(new ChartSeries(s => s.GpuLoad, Resource("ChartGpuBrush", Brushes.MediumSeaGreen)));
+                    break;
                 case "board":
                     result.Add(new ChartSeries(s => s.Board, Resource("ChartBoardBrush", Brushes.Goldenrod)));
                     break;

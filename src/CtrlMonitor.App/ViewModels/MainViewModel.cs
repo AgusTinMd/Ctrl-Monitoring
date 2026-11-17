@@ -676,7 +676,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             RamPercent,
             VramPercent,
             NetDownMbs,
-            NetUpMbs));
+            NetUpMbs,
+            CpuLoad,
+            GpuLoad));
 
         // El gráfico permite ventanas de hasta 10 minutos; conservamos ese
         // margen y descartamos lo más viejo para no crecer sin límite.
