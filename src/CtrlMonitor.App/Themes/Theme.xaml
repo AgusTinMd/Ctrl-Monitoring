@@ -369,8 +369,11 @@
                                             <DataTrigger.EnterActions>
                                                 <BeginStoryboard>
                                                     <Storyboard>
+                                                        <!-- From explícito: si la app arranca con la barra
+                                                             oculta, la animación corre antes de que el Width
+                                                             del template esté aplicado y el origen sería NaN. -->
                                                         <DoubleAnimation Storyboard.TargetProperty="Width"
-                                                                         To="0" Duration="0:0:0.24">
+                                                                         From="226" To="0" Duration="0:0:0.24">
                                                             <DoubleAnimation.EasingFunction>
                                                                 <CubicEase EasingMode="EaseInOut" />
                                                             </DoubleAnimation.EasingFunction>
@@ -384,7 +387,7 @@
                                                 <BeginStoryboard>
                                                     <Storyboard>
                                                         <DoubleAnimation Storyboard.TargetProperty="Width"
-                                                                         To="226" Duration="0:0:0.28">
+                                                                         From="0" To="226" Duration="0:0:0.28">
                                                             <DoubleAnimation.EasingFunction>
                                                                 <CubicEase EasingMode="EaseInOut" />
                                                             </DoubleAnimation.EasingFunction>
