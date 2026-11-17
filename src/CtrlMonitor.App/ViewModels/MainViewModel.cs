@@ -129,7 +129,20 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public string LogDirectory => AppPaths.LogDirectory;
 
-    public string VersionText => "Ctrl Monitor 2.6.0";
+    /// <summary>
+    /// Versión del ejecutable (la que fija el csproj o el tag de la release),
+    /// para no tener que actualizar este texto a mano en cada versión.
+    /// </summary>
+    public string VersionText { get; } = BuildVersionText();
+
+    private static string BuildVersionText()
+    {
+        Version? version = typeof(MainViewModel).Assembly.GetName().Version;
+
+        return version is null
+            ? "Ctrl Monitor"
+            : $"Ctrl Monitor {version.Major}.{version.Minor}.{Math.Max(0, version.Build)}";
+    }
 
     [ObservableProperty]
     private double? _cpuTemperature;
