@@ -91,6 +91,7 @@ public static partial class Translations
         ["disks.issue.toolkit"] = "Los valores S.M.A.R.T. superan los umbrales de alerta.",
         ["disks.issuesTitle"] = "Por qué",
         ["disks.toggleTooltip"] = "Mostrar u ocultar los datos del disco",
+        ["disks.spaceSummary"] = "{0:0} % usado · {1:0} % libre",
         ["disks.space"] = "ESPACIO USADO",
         ["storage.disk"] = "Disco {0}",
         ["storage.otherDrives"] = "Otras unidades",
