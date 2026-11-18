@@ -71,6 +71,22 @@ public class HardwareBrandTests
     }
 
     [Theory]
+    [InlineData("AMD Radeon RX 6700 XT", "amd.png")]
+    [InlineData("NVIDIA GeForce RTX 4070", "nvidia.png")]
+    [InlineData("GeForce GTX 1060 6GB", "nvidia.png")]
+    [InlineData("Intel(R) Arc(TM) A770 Graphics", "intel.png")]
+    [InlineData("Intel UHD Graphics 630", "intel.png")]
+    public void Gpu_KnownBrands(string gpuName, string logo) =>
+        Assert.Equal(logo, GpuBrands.Detect(gpuName)?.LogoFile);
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("GPU")]
+    [InlineData("Microsoft Basic Display Adapter")]
+    public void Gpu_Unknown_ReturnsNull(string? gpuName) =>
+        Assert.Null(GpuBrands.Detect(gpuName));
+
+    [Theory]
     [InlineData("WDC WD10EZEX-22MFCA0", "Western Digital", "wd.png")]
     [InlineData("WDC PC SN530 SDBPNPZ-256G-1002", "Western Digital", "wd.png")]
     [InlineData("WD_BLACK SN850X 1000GB", "Western Digital", "wd.png")]

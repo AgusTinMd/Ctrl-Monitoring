@@ -91,6 +91,21 @@ public static class CpuBrands
 }
 
 /// <summary>
+/// Marca de la placa de video a partir de su nombre («AMD Radeon RX 6700 XT»,
+/// «NVIDIA GeForce RTX 4070», «Intel Arc A770»…).
+/// </summary>
+public static class GpuBrands
+{
+    private static readonly BrandMatcher Matcher = new(
+        (new HardwareBrand("NVIDIA", "nvidia.png"), new[] { "NVIDIA", "GeForce", "Quadro", "Tesla", "TITAN" }),
+        (new HardwareBrand("AMD", "amd.png"), new[] { "AMD", "Radeon", "ATI", "FirePro" }),
+        (new HardwareBrand("Intel", "intel.png"), new[] { "Intel", "Arc", "Iris" }));
+
+    /// <summary>Marca de la GPU, o <c>null</c> si no se reconoce.</summary>
+    public static HardwareBrand? Detect(string? gpuName) => Matcher.Detect(gpuName);
+}
+
+/// <summary>
 /// Marca de un disco a partir de su modelo («WDC WD10EZEX-22MFCA0»,
 /// «Samsung SSD 970 EVO», «ST1000DM010-2EP102», «KINGSTON SNV2S500G»…).
 /// </summary>

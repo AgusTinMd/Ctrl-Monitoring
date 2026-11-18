@@ -36,6 +36,7 @@
     <Resource Include="Assets\asrock.png" />
     <Resource Include="Assets\intel.png" />
     <Resource Include="Assets\amd.png" />
+    <Resource Include="Assets\nvidia.png" />
     <Resource Include="Assets\wd.png" />
     <Resource Include="Assets\samsung.png" />
     <Resource Include="Assets\seagate.png" />
