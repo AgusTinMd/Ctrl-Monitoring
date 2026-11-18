@@ -874,7 +874,44 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             ChartListItems.Add(new ChartPanelViewModel(this, AllChartMetrics, metric));
         }
 
+        // Aplica el orden guardado; las métricas sin posición guardada (por
+        // ejemplo, un disco nuevo) quedan al final en su orden natural.
+        List<string> order = _config.ChartListOrder ?? new List<string>();
+        List<ChartPanelViewModel> sorted = ChartListItems
+            .Select((item, index) => (item, index))
+            .OrderBy(entry => OrderIndex(order, entry.item.SelectedMetric.Key))
+            .ThenBy(entry => entry.index)
+            .Select(entry => entry.item)
+            .ToList();
+
+        for (int i = 0; i < sorted.Count; i++)
+        {
+            int current = ChartListItems.IndexOf(sorted[i]);
+
+            if (current != i)
+                ChartListItems.Move(current, i);
+        }
+
         SelectedChartListItem ??= ChartListItems.FirstOrDefault();
+    }
+
+    private static int OrderIndex(List<string> order, string key)
+    {
+        int index = order.FindIndex(item => item.Equals(key, StringComparison.OrdinalIgnoreCase));
+        return index < 0 ? int.MaxValue : index;
+    }
+
+    /// <summary>Mueve una métrica de la vista de lista al arrastrarla y guarda el orden.</summary>
+    public void MoveChartListItem(ChartPanelViewModel item, int newIndex)
+    {
+        int oldIndex = ChartListItems.IndexOf(item);
+
+        if (oldIndex < 0 || newIndex < 0 || newIndex >= ChartListItems.Count || oldIndex == newIndex)
+            return;
+
+        ChartListItems.Move(oldIndex, newIndex);
+        _config.ChartListOrder = ChartListItems.Select(entry => entry.SelectedMetric.Key).ToList();
+        SaveSoon();
     }
 
     private void RefreshChartPanels()

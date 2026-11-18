@@ -49,6 +49,7 @@ public static partial class Translations
         ["chart.clear"] = "Limpiar",
         ["chart.view.cards"] = "Tarjetas",
         ["chart.view.list"] = "Lista",
+        ["chart.listDragTooltip"] = "Arrastrá para cambiar el orden",
         ["chart.add"] = "Agregar",
         ["chart.addTooltip"] = "Elegí la métrica del gráfico que querés agregar",
         ["chart.hint"] = "Se conservan los últimos 10 minutos en memoria. Usá el selector de cada tarjeta para cambiar la métrica y arrastrá las tarjetas para ordenarlas; la escala vertical se ajusta a la serie.",

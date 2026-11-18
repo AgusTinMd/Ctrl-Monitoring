@@ -90,10 +90,58 @@
             </StackPanel>
         </DataTemplate>
 
+        <!-- Los mismos valores en columna, para la izquierda de las tarjetas. -->
+        <DataTemplate x:Key="ChartValuesColumnTemplate">
+            <StackPanel MinWidth="92">
+                <TextBlock Text="{Binding PrimaryLabel}" Style="{StaticResource CaptionText}"
+                           Visibility="{Binding HasPrimaryLabel, Converter={StaticResource BoolToVis}}" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding PrimaryValue}" FontSize="22" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding PrimaryUnit}" Style="{StaticResource UnitText}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,-2,0,0"
+                            Visibility="{Binding HasTertiary, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding TertiaryValue}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                    <TextBlock Text="{Binding TertiaryUnit}" FontSize="10"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                </StackPanel>
+
+                <StackPanel Margin="0,12,0,0"
+                            Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVis}}">
+                    <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,8" />
+                    <TextBlock Text="{Binding SecondaryLabel}" Style="{StaticResource CaptionText}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding SecondaryInline}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,5,1" />
+                        <TextBlock Text="{Binding SecondaryValue}" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{Binding SecondaryValueBrush}" />
+                        <TextBlock Text="{Binding SecondaryUnit}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding HasQuaternary, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding QuaternaryInline}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,5,1" />
+                        <TextBlock Text="{Binding QuaternaryValue}" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{Binding QuaternaryValueBrush}" />
+                        <TextBlock Text="{Binding QuaternaryUnit}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+
         <DataTemplate x:Key="ChartCardTemplate">
             <!-- Toda la tarjeta se puede arrastrar para reordenarla; el selector
                  y la ✕ manejan sus propios clics y no inician el arrastre. -->
-            <Border Padding="16,14,14,10" Margin="5" MinHeight="190"
+            <Border Padding="16,12,14,10" Margin="5" MinHeight="250"
                     AllowDrop="True"
                     MouseLeftButtonDown="ChartCard_MouseLeftButtonDown"
                     MouseMove="ChartCard_MouseMove"
@@ -131,14 +179,10 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
+                    <!-- Encabezado en una sola línea; los valores van a la izquierda del
+                         gráfico para dejarle todo el alto al eje vertical. -->
+                    <DockPanel LastChildFill="True">
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                                 <TextBlock Text="⠿" FontFamily="Segoe UI Symbol" FontSize="14"
                                            Foreground="{StaticResource TextMutedBrush}"
                                            VerticalAlignment="Center" Margin="-4,0,6,0"
@@ -160,15 +204,21 @@
                                         ToolTip="{l:Tr chart.removeTooltip}" />
                             </StackPanel>
                             <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MutedText}"
-                                       Margin="32,4,0,0" TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
+                                       Margin="10,0,0,0" VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
 
-                        <ContentControl Grid.Column="1" Content="{Binding}" Focusable="False"
-                                        ContentTemplate="{StaticResource ChartValuesTemplate}"
-                                        VerticalAlignment="Center" />
-                    </Grid>
+                    <Grid Grid.Row="1" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                    <controls:LiveChart Grid.Row="1" Margin="0,8,0,0"
+                        <ContentControl Content="{Binding}" Focusable="False"
+                                        ContentTemplate="{StaticResource ChartValuesColumnTemplate}"
+                                        VerticalAlignment="Top" Margin="0,10,4,0" />
+
+                    <controls:LiveChart Grid.Column="1"
                                         Samples="{Binding DataContext.ChartSamples, RelativeSource={RelativeSource AncestorType=Window}}"
                                         WindowMinutes="{Binding DataContext.ChartWindowMinutes, RelativeSource={RelativeSource AncestorType=Window}}"
                                         Series="{Binding SeriesKey}"
@@ -177,6 +227,7 @@
                                         AxisMax="{Binding AxisMax}"
                                         AxisStep="{Binding AxisStep}"
                                         AutoScale="True" />
+                    </Grid>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -209,7 +260,24 @@
         </Style>
 
         <DataTemplate x:Key="ChartListItemTemplate">
-            <Grid>
+            <!-- Se arrastra para ordenar la lista, con los mismos manejadores que las tarjetas. -->
+            <Grid Background="Transparent" AllowDrop="True"
+                  ToolTip="{l:Tr chart.listDragTooltip}"
+                  MouseLeftButtonDown="ChartCard_MouseLeftButtonDown"
+                  MouseMove="ChartCard_MouseMove"
+                  MouseLeftButtonUp="ChartCard_MouseLeftButtonUp"
+                  LostMouseCapture="ChartCard_LostMouseCapture"
+                  DragOver="ChartCard_DragOver"
+                  Drop="ChartCard_Drop">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                <Setter Property="Opacity" Value="0.3" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -668,6 +736,7 @@
                              ItemContainerStyle="{StaticResource ChartListItem}"
                              ItemTemplate="{StaticResource ChartListItemTemplate}"
                              Background="Transparent" BorderThickness="0" Padding="0"
+                             ScrollViewer.CanContentScroll="False"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
 
                     <Border Grid.Column="1" Style="{StaticResource Card}" Margin="14,0,0,0"

@@ -49,6 +49,7 @@ public static partial class Translations
         ["chart.clear"] = "Clear",
         ["chart.view.cards"] = "Cards",
         ["chart.view.list"] = "List",
+        ["chart.listDragTooltip"] = "Drag to reorder",
         ["chart.add"] = "Add",
         ["chart.addTooltip"] = "Choose the metric of the chart you want to add",
         ["chart.hint"] = "The last 10 minutes are kept in memory. Use each card's selector to change its metric and drag the cards to reorder them; the vertical scale adjusts to the series.",

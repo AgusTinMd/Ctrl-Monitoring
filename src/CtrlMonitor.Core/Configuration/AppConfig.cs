@@ -31,6 +31,9 @@ public sealed class AppConfig
     /// </summary>
     public bool ChartListView { get; set; }
 
+    /// <summary>Orden de las métricas en la vista de lista; las que faltan van al final.</summary>
+    public List<string> ChartListOrder { get; set; } = new();
+
     /// <summary>
     /// Idioma de la interfaz: «auto» (el de Windows) o «es», «en», «pt-BR».
     /// </summary>
@@ -46,6 +49,12 @@ public sealed class AppConfig
             .Select(key => key.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(32)
+            .ToList();
+
+        ChartListOrder = (ChartListOrder ?? new List<string>())
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(64)
             .ToList();
     }
 }
