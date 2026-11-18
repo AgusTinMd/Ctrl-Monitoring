@@ -89,3 +89,52 @@ public static class CpuBrands
     /// <summary>Marca del CPU, o <c>null</c> si no se reconoce.</summary>
     public static HardwareBrand? Detect(string? cpuName) => Matcher.Detect(cpuName);
 }
+
+/// <summary>
+/// Marca de un disco a partir de su modelo («WDC WD10EZEX-22MFCA0»,
+/// «Samsung SSD 970 EVO», «ST1000DM010-2EP102», «KINGSTON SNV2S500G»…).
+/// </summary>
+public static class DiskBrands
+{
+    private static readonly HardwareBrand Seagate = new("Seagate", "seagate.png");
+    private static readonly HardwareBrand Crucial = new("Crucial", null);
+
+    private static readonly BrandMatcher Matcher = new(
+        (new HardwareBrand("Western Digital", "wd.png"), new[] { "WDC", "WD", "Western Digital", "WD_BLACK", "WD Blue", "WD Green" }),
+        (new HardwareBrand("Samsung", "samsung.png"), new[] { "Samsung" }),
+        (Seagate, new[] { "Seagate" }),
+        (new HardwareBrand("Toshiba", "toshiba.png"), new[] { "Toshiba" }),
+        (new HardwareBrand("SanDisk", "sandisk.png"), new[] { "SanDisk" }),
+        (new HardwareBrand("Kingston", null), new[] { "Kingston" }),
+        (Crucial, new[] { "Crucial" }),
+        (new HardwareBrand("KIOXIA", null), new[] { "KIOXIA" }),
+        (new HardwareBrand("Intel", "intel.png"), new[] { "Intel", "INTEL SSD" }),
+        (new HardwareBrand("ADATA", null), new[] { "ADATA", "XPG" }),
+        (new HardwareBrand("Corsair", null), new[] { "Corsair" }),
+        (new HardwareBrand("SK hynix", null), new[] { "SK hynix", "SKHynix", "HFM" }),
+        (new HardwareBrand("Micron", null), new[] { "Micron" }),
+        (new HardwareBrand("HGST", null), new[] { "HGST", "Hitachi" }),
+        (new HardwareBrand("Lexar", null), new[] { "Lexar" }),
+        (new HardwareBrand("Teamgroup", null), new[] { "TEAM", "T-FORCE" }),
+        (new HardwareBrand("Patriot", null), new[] { "Patriot" }),
+        (new HardwareBrand("PNY", null), new[] { "PNY" }));
+
+    /// <summary>Marca del disco, o <c>null</c> si el modelo no la deja ver.</summary>
+    public static HardwareBrand? Detect(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return null;
+
+        // Algunas marcas no ponen su nombre en el modelo, solo el prefijo:
+        // Seagate «ST1000DM010», Crucial «CT500MX500SSD1».
+        string trimmed = model.Trim();
+
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^ST\d", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return Seagate;
+
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^CT\d", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return Crucial;
+
+        return Matcher.Detect(trimmed);
+    }
+}

@@ -70,6 +70,20 @@ public sealed partial class DiskDetailViewModel : ObservableObject
     [ObservableProperty]
     private string _subtitle = string.Empty;
 
+    /// <summary>Logo de la marca del disco, si hay uno en Assets.</summary>
+    [ObservableProperty]
+    private string? _logoUri;
+
+    [ObservableProperty]
+    private bool _hasLogo;
+
+    /// <summary>Marca reconocida sin logo (Kingston, Crucial…): se muestra como insignia.</summary>
+    [ObservableProperty]
+    private string? _brandText;
+
+    [ObservableProperty]
+    private bool _hasBrandText;
+
     [ObservableProperty]
     private string _conditionText = string.Empty;
 
@@ -123,6 +137,12 @@ public sealed partial class DiskDetailViewModel : ObservableObject
 
         Title = Loc.F("storage.disk", smart.Number);
         Model = smart.Model;
+
+        HardwareBrand? brand = DiskBrands.Detect(smart.Model);
+        LogoUri = brand?.LogoFile is { } file ? $"pack://application:,,,/Assets/{file}" : null;
+        HasLogo = LogoUri is not null;
+        BrandText = brand is { LogoFile: null } ? brand.Name.ToUpperInvariant() : null;
+        HasBrandText = BrandText is not null;
         Subtitle = string.Join(" · ", new[]
         {
             string.Join(" ", new[] { smart.IsSsd ? "SSD" : "HDD", smart.Interface }.Where(part => part.Length > 0)),

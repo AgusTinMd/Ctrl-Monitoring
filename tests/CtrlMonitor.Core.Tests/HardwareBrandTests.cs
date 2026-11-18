@@ -69,4 +69,28 @@ public class HardwareBrandTests
     {
         Assert.Null(CpuBrands.Detect(cpuName));
     }
+
+    [Theory]
+    [InlineData("WDC WD10EZEX-22MFCA0", "Western Digital", "wd.png")]
+    [InlineData("WDC PC SN530 SDBPNPZ-256G-1002", "Western Digital", "wd.png")]
+    [InlineData("WD_BLACK SN850X 1000GB", "Western Digital", "wd.png")]
+    [InlineData("Samsung SSD 970 EVO Plus 1TB", "Samsung", "samsung.png")]
+    [InlineData("ST1000DM010-2EP102", "Seagate", "seagate.png")]
+    [InlineData("TOSHIBA DT01ACA100", "Toshiba", "toshiba.png")]
+    [InlineData("SanDisk SDSSDA240G", "SanDisk", "sandisk.png")]
+    [InlineData("KINGSTON SNV2S500G", "Kingston", null)]
+    [InlineData("CT500MX500SSD1", "Crucial", null)]
+    public void Disk_KnownBrands(string model, string name, string? logo)
+    {
+        HardwareBrand? brand = DiskBrands.Detect(model);
+        Assert.Equal(name, brand?.Name);
+        Assert.Equal(logo, brand?.LogoFile);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("Generic SSD 256GB")]
+    [InlineData("STORAGE DEVICE")]
+    public void Disk_Unknown_ReturnsNull(string? model) =>
+        Assert.Null(DiskBrands.Detect(model));
 }

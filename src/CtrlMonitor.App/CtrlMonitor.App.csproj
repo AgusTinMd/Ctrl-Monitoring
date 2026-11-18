@@ -36,6 +36,11 @@
     <Resource Include="Assets\asrock.png" />
     <Resource Include="Assets\intel.png" />
     <Resource Include="Assets\amd.png" />
+    <Resource Include="Assets\wd.png" />
+    <Resource Include="Assets\samsung.png" />
+    <Resource Include="Assets\seagate.png" />
+    <Resource Include="Assets\toshiba.png" />
+    <Resource Include="Assets\sandisk.png" />
   </ItemGroup>
 
 </Project>
