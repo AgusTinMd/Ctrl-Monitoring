@@ -46,7 +46,7 @@ public class BoardIdentityTests
     public void FindsTheBrandInTheSystemDataWhenTheBoardHasNone()
     {
         var identity = new SystemIdentity("Positivo BGH", "BGH C-550", "Notebook", "Default string");
-        Assert.Equal("Positivo BGH", BoardBrands.Detect(BoardIdentity.BrandText("Notebook", identity))?.Name);
+        Assert.Equal("Positivo", BoardBrands.Detect(BoardIdentity.BrandText("Notebook", identity))?.Name);
     }
 
     [Fact]
@@ -54,5 +54,27 @@ public class BoardIdentityTests
     {
         var identity = new SystemIdentity("ASUS", "System Product Name", "ASUSTeK COMPUTER INC.", "PRIME B560M-A");
         Assert.Equal("ASUS PRIME B560M-A ASUSTeK COMPUTER INC.", BoardIdentity.BrandText("ASUS PRIME B560M-A", identity));
+    }
+
+    [Theory]
+    [InlineData("Alienware", "Alienware m15 R7", "Alienware")]
+    [InlineData("Dell Inc.", "XPS 15 9520", "Dell")]
+    [InlineData("Apple Inc.", "MacBookPro15,1", "Apple")]
+    [InlineData("Microsoft Corporation", "Surface Laptop 4", "Microsoft")]
+    [InlineData("SAMSUNG ELECTRONICS CO., LTD.", "550XDA", "Samsung")]
+    [InlineData("Dynabook Inc.", "dynabook Satellite Pro", "Dynabook")]
+    [InlineData("TOSHIBA", "Satellite L45", "Toshiba")]
+    [InlineData("VAIO Corporation", "VJFE51F11W", "VAIO")]
+    [InlineData("Sony Corporation", "VPCEH1M1E", "Sony")]
+    [InlineData("TIMI", "RedmiBook Pro 15", "Xiaomi")]
+    [InlineData("LG Electronics", "15Z90P", "LG")]
+    [InlineData("Framework", "Laptop (13th Gen Intel Core)", "Framework")]
+    [InlineData("Positivo Tecnologia SA", "C4128B", "Positivo")]
+    [InlineData("BGH", "C-550", "BGH")]
+    [InlineData("EXO S.A.", "Smart Q4", "EXO")]
+    public void DetectsTheBrandFromTheSystemManufacturer(string manufacturer, string model, string brand)
+    {
+        var identity = new SystemIdentity(manufacturer, model, "Notebook", "Default string");
+        Assert.Equal(brand, BoardBrands.Detect(BoardIdentity.BrandText("Notebook", identity))?.Name);
     }
 }
