@@ -89,3 +89,68 @@ public static class CpuBrands
     /// <summary>Marca del CPU, o <c>null</c> si no se reconoce.</summary>
     public static HardwareBrand? Detect(string? cpuName) => Matcher.Detect(cpuName);
 }
+
+/// <summary>
+/// Marca de la placa de video a partir de su nombre («AMD Radeon RX 6700 XT»,
+/// «NVIDIA GeForce RTX 4070», «Intel Arc A770»…).
+/// </summary>
+public static class GpuBrands
+{
+    private static readonly BrandMatcher Matcher = new(
+        (new HardwareBrand("NVIDIA", "nvidia.png"), new[] { "NVIDIA", "GeForce", "Quadro", "Tesla", "TITAN" }),
+        (new HardwareBrand("AMD", "amd.png"), new[] { "AMD", "Radeon", "ATI", "FirePro" }),
+        (new HardwareBrand("Intel", "intel.png"), new[] { "Intel", "Arc", "Iris" }));
+
+    /// <summary>Marca de la GPU, o <c>null</c> si no se reconoce.</summary>
+    public static HardwareBrand? Detect(string? gpuName) => Matcher.Detect(gpuName);
+}
+
+/// <summary>
+/// Marca de un disco a partir de su modelo («WDC WD10EZEX-22MFCA0»,
+/// «Samsung SSD 970 EVO», «ST1000DM010-2EP102», «KINGSTON SNV2S500G»…).
+/// </summary>
+public static class DiskBrands
+{
+    private static readonly HardwareBrand Seagate = new("Seagate", "seagate.png");
+    private static readonly HardwareBrand Crucial = new("Crucial", "crucial.png");
+
+    private static readonly BrandMatcher Matcher = new(
+        (new HardwareBrand("Western Digital", "wd.png"), new[] { "WDC", "WD", "Western Digital", "WD_BLACK", "WD Blue", "WD Green" }),
+        (new HardwareBrand("Samsung", "samsung.png"), new[] { "Samsung" }),
+        (Seagate, new[] { "Seagate" }),
+        (new HardwareBrand("Toshiba", "toshiba.png"), new[] { "Toshiba" }),
+        (new HardwareBrand("SanDisk", "sandisk.png"), new[] { "SanDisk" }),
+        (new HardwareBrand("Kingston", "kingston.png"), new[] { "Kingston" }),
+        (Crucial, new[] { "Crucial" }),
+        (new HardwareBrand("KIOXIA", "kioxia.png"), new[] { "KIOXIA" }),
+        (new HardwareBrand("Intel", "intel.png"), new[] { "Intel", "INTEL SSD" }),
+        (new HardwareBrand("ADATA", "adata.png"), new[] { "ADATA", "XPG" }),
+        (new HardwareBrand("Corsair", "corsair.png"), new[] { "Corsair" }),
+        (new HardwareBrand("SK hynix", "skhynix.png"), new[] { "SK hynix", "SKHynix", "HFM" }),
+        (new HardwareBrand("Micron", "micron.png"), new[] { "Micron" }),
+        (new HardwareBrand("HGST", "hgst.png"), new[] { "HGST" }),
+        (new HardwareBrand("Hitachi", "hitachi.png"), new[] { "Hitachi" }),
+        (new HardwareBrand("Lexar", "lexar.png"), new[] { "Lexar" }),
+        (new HardwareBrand("Teamgroup", "teamgroup.png"), new[] { "TEAM", "T-FORCE" }),
+        (new HardwareBrand("Patriot", "patriot.png"), new[] { "Patriot" }),
+        (new HardwareBrand("PNY", "pny.png"), new[] { "PNY" }));
+
+    /// <summary>Marca del disco, o <c>null</c> si el modelo no la deja ver.</summary>
+    public static HardwareBrand? Detect(string? model)
+    {
+        if (string.IsNullOrWhiteSpace(model))
+            return null;
+
+        // Algunas marcas no ponen su nombre en el modelo, solo el prefijo:
+        // Seagate «ST1000DM010», Crucial «CT500MX500SSD1».
+        string trimmed = model.Trim();
+
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^ST\d", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return Seagate;
+
+        if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^CT\d", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+            return Crucial;
+
+        return Matcher.Detect(trimmed);
+    }
+}

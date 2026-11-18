@@ -25,6 +25,8 @@ internal static class UiBrushes
     public static readonly Brush ChartVram = Frozen("#F472B6");
     public static readonly Brush ChartNetDown = Frozen("#22D3EE");
     public static readonly Brush ChartNetUp = Frozen("#FB923C");
+    public static readonly Brush ChartDiskRead = Frozen("#4ADE80");
+    public static readonly Brush ChartDiskWrite = Frozen("#FACC15");
 
     private static Brush Frozen(string hex)
     {
