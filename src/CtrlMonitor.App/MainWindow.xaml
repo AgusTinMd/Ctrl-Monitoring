@@ -1414,32 +1414,34 @@
                             <ColumnDefinition Width="{Binding DataContext.Processes.DiskWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}" MinWidth="56" />
                             <ColumnDefinition Width="{Binding DataContext.Processes.NetworkWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}" MinWidth="56" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal" Margin="{Binding NameIndent}" VerticalAlignment="Center"
-                                    ToolTip="{Binding Details}">
-                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,9,0"
+                        <!-- Nombre recortable: ícono fijo y el texto se corta con «…» al achicar la columna. -->
+                        <DockPanel Margin="{Binding NameIndent}" VerticalAlignment="Center" LastChildFill="True"
+                                   ToolTip="{Binding Details}">
+                            <Image DockPanel.Dock="Left" Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,9,0"
                                    Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}}" />
-                            <TextBlock Text="{Binding Description}" FontSize="12.5" VerticalAlignment="Center"
-                                       Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-                            <TextBlock Text="{Binding CountText}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
-                            <TextBlock Text=" 🔒" FontSize="11" VerticalAlignment="Center"
+                            <TextBlock DockPanel.Dock="Right" Text=" 🔒" FontSize="11" VerticalAlignment="Center"
                                        ToolTip="{l:Tr processes.protectedTooltip}"
                                        Visibility="{Binding IsProtected, Converter={StaticResource BoolToVis}}" />
-                        </StackPanel>
+                            <TextBlock FontSize="12.5" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                                       Foreground="{StaticResource TextPrimaryBrush}">
+                                <Run Text="{Binding Description, Mode=OneWay}" /><Run Text="{Binding CountText, Mode=OneWay}" Foreground="{StaticResource TextMutedBrush}" />
+                            </TextBlock>
+                        </DockPanel>
                         <Border Grid.Column="1" Background="{Binding CpuHeat}" Padding="8,0">
                     <TextBlock Text="{Binding CpuText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
-                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                               HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 </Border>
                         <Border Grid.Column="2" Background="{Binding MemoryHeat}" Padding="8,0">
                     <TextBlock Text="{Binding MemoryText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
-                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                               HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 </Border>
                         <Border Grid.Column="3" Background="{Binding DiskHeat}" Padding="8,0">
                     <TextBlock Text="{Binding DiskText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
-                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                               HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 </Border>
                         <Border Grid.Column="4" Background="{Binding NetworkHeat}" Padding="8,0">
                     <TextBlock Text="{Binding NetworkText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
-                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                               HorizontalAlignment="Right" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 </Border>
                     </Grid>
                 </DataTemplate>
