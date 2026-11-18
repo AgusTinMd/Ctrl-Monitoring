@@ -44,6 +44,16 @@
     <Resource Include="Assets\kingston.png" />
     <Resource Include="Assets\micron.png" />
     <Resource Include="Assets\crucial.png" />
+    <Resource Include="Assets\kioxia.png" />
+    <Resource Include="Assets\adata.png" />
+    <Resource Include="Assets\corsair.png" />
+    <Resource Include="Assets\skhynix.png" />
+    <Resource Include="Assets\hgst.png" />
+    <Resource Include="Assets\hitachi.png" />
+    <Resource Include="Assets\lexar.png" />
+    <Resource Include="Assets\teamgroup.png" />
+    <Resource Include="Assets\patriot.png" />
+    <Resource Include="Assets\pny.png" />
   </ItemGroup>
 
 </Project>

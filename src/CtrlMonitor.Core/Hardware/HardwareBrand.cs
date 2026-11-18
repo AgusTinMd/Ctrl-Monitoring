@@ -107,17 +107,18 @@ public static class DiskBrands
         (new HardwareBrand("SanDisk", "sandisk.png"), new[] { "SanDisk" }),
         (new HardwareBrand("Kingston", "kingston.png"), new[] { "Kingston" }),
         (Crucial, new[] { "Crucial" }),
-        (new HardwareBrand("KIOXIA", null), new[] { "KIOXIA" }),
+        (new HardwareBrand("KIOXIA", "kioxia.png"), new[] { "KIOXIA" }),
         (new HardwareBrand("Intel", "intel.png"), new[] { "Intel", "INTEL SSD" }),
-        (new HardwareBrand("ADATA", null), new[] { "ADATA", "XPG" }),
-        (new HardwareBrand("Corsair", null), new[] { "Corsair" }),
-        (new HardwareBrand("SK hynix", null), new[] { "SK hynix", "SKHynix", "HFM" }),
+        (new HardwareBrand("ADATA", "adata.png"), new[] { "ADATA", "XPG" }),
+        (new HardwareBrand("Corsair", "corsair.png"), new[] { "Corsair" }),
+        (new HardwareBrand("SK hynix", "skhynix.png"), new[] { "SK hynix", "SKHynix", "HFM" }),
         (new HardwareBrand("Micron", "micron.png"), new[] { "Micron" }),
-        (new HardwareBrand("HGST", null), new[] { "HGST", "Hitachi" }),
-        (new HardwareBrand("Lexar", null), new[] { "Lexar" }),
-        (new HardwareBrand("Teamgroup", null), new[] { "TEAM", "T-FORCE" }),
-        (new HardwareBrand("Patriot", null), new[] { "Patriot" }),
-        (new HardwareBrand("PNY", null), new[] { "PNY" }));
+        (new HardwareBrand("HGST", "hgst.png"), new[] { "HGST" }),
+        (new HardwareBrand("Hitachi", "hitachi.png"), new[] { "Hitachi" }),
+        (new HardwareBrand("Lexar", "lexar.png"), new[] { "Lexar" }),
+        (new HardwareBrand("Teamgroup", "teamgroup.png"), new[] { "TEAM", "T-FORCE" }),
+        (new HardwareBrand("Patriot", "patriot.png"), new[] { "Patriot" }),
+        (new HardwareBrand("PNY", "pny.png"), new[] { "PNY" }));
 
     /// <summary>Marca del disco, o <c>null</c> si el modelo no la deja ver.</summary>
     public static HardwareBrand? Detect(string? model)

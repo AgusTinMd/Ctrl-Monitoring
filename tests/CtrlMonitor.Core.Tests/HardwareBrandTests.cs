@@ -80,6 +80,17 @@ public class HardwareBrandTests
     [InlineData("SanDisk SDSSDA240G", "SanDisk", "sandisk.png")]
     [InlineData("KINGSTON SNV2S500G", "Kingston", "kingston.png")]
     [InlineData("CT500MX500SSD1", "Crucial", "crucial.png")]
+    [InlineData("KIOXIA EXCERIA PLUS G3 SSD", "KIOXIA", "kioxia.png")]
+    [InlineData("ADATA SU800", "ADATA", "adata.png")]
+    [InlineData("XPG GAMMIX S70 BLADE", "ADATA", "adata.png")]
+    [InlineData("Corsair MP600 PRO", "Corsair", "corsair.png")]
+    [InlineData("SK hynix P41", "SK hynix", "skhynix.png")]
+    [InlineData("HGST HTS721010A9E630", "HGST", "hgst.png")]
+    [InlineData("Hitachi HDS721010CLA332", "Hitachi", "hitachi.png")]
+    [InlineData("Lexar SSD NM790 1TB", "Lexar", "lexar.png")]
+    [InlineData("T-FORCE TM8FP7001T", "Teamgroup", "teamgroup.png")]
+    [InlineData("Patriot P300 512GB", "Patriot", "patriot.png")]
+    [InlineData("PNY CS900 1TB SSD", "PNY", "pny.png")]
     public void Disk_KnownBrands(string model, string name, string? logo)
     {
         HardwareBrand? brand = DiskBrands.Detect(model);
