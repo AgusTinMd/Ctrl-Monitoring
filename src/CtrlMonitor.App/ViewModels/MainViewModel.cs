@@ -285,8 +285,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _fanSummaryText = Loc.T("fans.initial");
 
+    /// <summary>«Solo activos» viene marcado: los canales a 0 RPM suelen ser cabezales vacíos.</summary>
     [ObservableProperty]
-    private bool _showOnlyActiveFans;
+    private bool _showOnlyActiveFans = true;
 
     [ObservableProperty]
     private bool _showActiveFilterEmpty;

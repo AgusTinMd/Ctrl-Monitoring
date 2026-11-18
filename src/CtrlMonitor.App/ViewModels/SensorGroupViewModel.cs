@@ -50,9 +50,12 @@ public sealed partial class SensorGroupViewModel : ObservableObject
         OnPropertyChanged(nameof(CountText));
     }
 
-    /// <summary>Indica si la tarjeta del grupo muestra sus filas de sensores.</summary>
+    /// <summary>
+    /// Indica si la tarjeta del grupo muestra sus filas de sensores. Arranca
+    /// replegada para que la página se vea completa de un vistazo.
+    /// </summary>
     [ObservableProperty]
-    private bool _isExpanded = true;
+    private bool _isExpanded;
 
     /// <summary>
     /// Actualiza las filas existentes por identificador y agrega o quita las que
