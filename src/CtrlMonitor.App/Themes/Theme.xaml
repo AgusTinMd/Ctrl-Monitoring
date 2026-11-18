@@ -2,6 +2,10 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:l="clr-namespace:CtrlMonitor.App.Localization">
 
+    <!-- Va acá y no en App.xaml: las plantillas de este diccionario no ven los
+         recursos de App.xaml (por ejemplo, el pie de la barra lateral). -->
+    <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
     <!-- ===================== Paleta ===================== -->
     <SolidColorBrush x:Key="BackgroundBrush" Color="#080E1A" />
     <SolidColorBrush x:Key="SidebarBrush" Color="#0B1424" />
@@ -127,6 +131,21 @@
 
     <Style x:Key="StatCard" TargetType="Border" BasedOn="{StaticResource Card}">
         <Setter Property="Padding" Value="16,14" />
+    </Style>
+
+    <!-- Insignia con el nombre de la marca de la placa, para marcas sin logo en Assets. -->
+    <Style x:Key="BrandBadge" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{StaticResource BorderStrongBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="5" />
+        <Setter Property="Padding" Value="7,1,7,2" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="BrandBadgeText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10.5" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
     </Style>
 
     <Style x:Key="Chip" TargetType="Border">
@@ -441,9 +460,16 @@
                                         BorderBrush="{StaticResource BorderBrush}"
                                         BorderThickness="1" CornerRadius="11">
                                     <StackPanel>
-                                        <Image Source="/Assets/asus.png" Height="15"
+                                        <!-- Logo de la marca si hay uno en Assets; si no, su nombre. -->
+                                        <Image Source="{Binding BoardLogoUri}" Height="15" RenderOptions.BitmapScalingMode="HighQuality"
                                                HorizontalAlignment="Left" Margin="0,0,0,9"
-                                               Opacity="0.9" />
+                                               Opacity="0.9"
+                                               Visibility="{Binding HasBoardLogo, Converter={StaticResource BoolToVis}}" />
+                                        <Border Style="{StaticResource BrandBadge}" HorizontalAlignment="Left"
+                                                Margin="0,0,0,9"
+                                                Visibility="{Binding HasBoardBrandText, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="{Binding BoardBrandText}" Style="{StaticResource BrandBadgeText}" />
+                                        </Border>
                                         <TextBlock Text="{Binding MotherboardName}" FontSize="11.5"
                                                    FontWeight="SemiBold" TextTrimming="CharacterEllipsis"
                                                    Foreground="{StaticResource TextPrimaryBrush}" />

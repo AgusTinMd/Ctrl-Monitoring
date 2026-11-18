@@ -142,7 +142,29 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public string MotherboardName => _hardware.MotherboardName;
 
+    /// <summary>Marca de la placa detectada a partir de su nombre, o <c>null</c>.</summary>
+    private HardwareBrand? BoardBrand => BoardBrands.Detect(_hardware.MotherboardName);
+
+    /// <summary>Logo de la marca de la placa, si hay uno en Assets.</summary>
+    public string? BoardLogoUri => LogoUri(BoardBrand);
+
+    public bool HasBoardLogo => BoardLogoUri is not null;
+
+    /// <summary>Nombre de la marca cuando no hay logo; así no se muestra el de otra marca.</summary>
+    public string? BoardBrandText => BoardBrand is { LogoFile: null } brand ? brand.Name : null;
+
+    public bool HasBoardBrandText => BoardBrandText is not null;
+
     public string CpuName => _hardware.CpuName;
+
+    /// <summary>Logo de la marca del CPU (Intel o AMD), si se reconoce.</summary>
+    public string? CpuLogoUri => LogoUri(CpuBrands.Detect(_hardware.CpuName));
+
+    public bool HasCpuLogo => CpuLogoUri is not null;
+
+    private static string? LogoUri(HardwareBrand? brand) => brand?.LogoFile is { } file
+        ? $"pack://application:,,,/Assets/{file}"
+        : null;
 
     public string GpuName => _hardware.GpuName;
 
