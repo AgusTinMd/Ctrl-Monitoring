@@ -184,6 +184,37 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Canales de ventilador detectados, con RPM y PWM del BIOS.</summary>
     public ObservableCollection<FanViewModel> Fans { get; } = new();
 
+    /// <summary>Discos físicos con sus unidades, para la tarjeta de almacenamiento de Inicio.</summary>
+    public ObservableCollection<StorageDiskViewModel> StorageDisks { get; } = new();
+
+    private bool _readingVolumes;
+    private bool _volumesRequested = true;
+
+    /// <summary>Pestaña visible; 0 es Inicio.</summary>
+    [ObservableProperty]
+    private int _selectedTabIndex;
+
+    // El espacio en disco cambia poco: se relee solo al volver a Inicio, no en
+    // cada refresco del monitor.
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value == 0)
+            RequestVolumes();
+
+        // Temperatura y desgaste de los discos solo se consultan mientras se
+        // ven: en Inicio y en Sensores.
+        _hardware.StorageUpdatesEnabled = value is HomeTabIndex or SensorsTabIndex;
+    }
+
+    private const int HomeTabIndex = 0;
+    private const int SensorsTabIndex = 3;
+
+    private void RequestVolumes()
+    {
+        _volumesRequested = true;
+        UpdateVolumes();
+    }
+
     /// <summary>Vista filtrada de los ventiladores según «Solo activos».</summary>
     public ListCollectionView VisibleFans { get; private set; } = null!;
 
@@ -595,6 +626,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (ChartPanelViewModel panel in ChartPanels)
             panel.RefreshLanguage();
 
+        foreach (StorageDiskViewModel disk in StorageDisks)
+            disk.RefreshLanguage();
+
         foreach (ChartPanelViewModel item in ChartListItems)
             item.RefreshLanguage();
 
@@ -654,6 +688,116 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             Environment.NewLine,
             inventory.Disks.Select(disk => $"{disk.Model} · {FormatBytes(disk.SizeBytes)}"));
 
+    /// <summary>
+    /// Lee el espacio de las unidades si se pidió (al arrancar o al entrar a
+    /// Inicio), fuera del hilo de la interfaz: una unidad extraíble lenta no
+    /// debe trabar la ventana.
+    /// </summary>
+    private void UpdateVolumes()
+    {
+        if (_readingVolumes || !_volumesRequested)
+            return;
+
+        _readingVolumes = true;
+        _volumesRequested = false;
+
+        Task.Run(ReadStorage).ContinueWith(
+            task => _dispatcher.BeginInvoke(new Action(() =>
+            {
+                _readingVolumes = false;
+
+                if (task.IsCompletedSuccessfully && !_disposed)
+                    ApplyStorage(task.Result.Disks, task.Result.Volumes);
+                else if (task.Exception is { } ex)
+                    AppLog.Warn($"No se pudo leer el almacenamiento: {ex.GetBaseException().Message}");
+            })),
+            TaskScheduler.Default);
+    }
+
+    private static (IReadOnlyList<PhysicalDiskInfo> Disks, IReadOnlyList<VolumeUsage> Volumes) ReadStorage()
+    {
+        IReadOnlyList<PhysicalDiskInfo> disks;
+
+        try
+        {
+            disks = PhysicalDiskReader.Read();
+        }
+        catch (Exception ex)
+        {
+            // Sin la API de almacenamiento se muestran igual las unidades, sin salud.
+            AppLog.Warn($"No se pudo leer la salud de los discos: {ex.Message}");
+            disks = Array.Empty<PhysicalDiskInfo>();
+        }
+
+        return (disks, VolumeUsageReader.Read());
+    }
+
+    /// <summary>
+    /// Agrupa las unidades por disco físico. Las que no aparecen en ningún
+    /// disco (por ejemplo, si falla la API de almacenamiento) van a un grupo aparte.
+    /// </summary>
+    private void ApplyStorage(IReadOnlyList<PhysicalDiskInfo> disks, IReadOnlyList<VolumeUsage> volumes)
+    {
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<StorageDiskViewModel>();
+
+        foreach (PhysicalDiskInfo disk in disks)
+        {
+            List<VolumeViewModel> own = volumes
+                .Where(volume => disk.Letters.Contains(volume.Letter, StringComparer.OrdinalIgnoreCase))
+                .Select(volume => new VolumeViewModel(volume))
+                .ToList();
+
+            own.ForEach(volume => used.Add(volume.Letter));
+            result.Add(new StorageDiskViewModel(disk, own));
+        }
+
+        List<VolumeViewModel> others = volumes
+            .Where(volume => !used.Contains(volume.Letter))
+            .Select(volume => new VolumeViewModel(volume))
+            .ToList();
+
+        if (others.Count > 0)
+            result.Add(new StorageDiskViewModel(null, others));
+
+        StorageDisks.Clear();
+
+        foreach (StorageDiskViewModel disk in result)
+            StorageDisks.Add(disk);
+
+        UpdateStorageSensors(_hardware.Latest.Sensors);
+
+        AppLog.Info("Almacenamiento: " + string.Join(" | ", StorageDisks.Select(disk =>
+            $"{disk.Title} [{disk.Model}] {disk.HealthText} {disk.TemperatureText} {disk.LifeText} ({string.Join(", ", disk.Volumes.Select(v => v.Letter))})")));
+
+        OnPropertyChanged(nameof(HasVolumes));
+    }
+
+    /// <summary>
+    /// Cruza los sensores de disco de LibreHardwareMonitor con los discos de
+    /// Windows por modelo. Con dos discos del mismo modelo se asignan en orden.
+    /// </summary>
+    private void UpdateStorageSensors(IReadOnlyList<SensorReading> sensors)
+    {
+        if (StorageDisks.Count == 0)
+            return;
+
+        var byModel = sensors
+            .Where(s => s.HardwareType == "Storage")
+            .GroupBy(s => s.HardwareId)
+            .GroupBy(group => group.First().HardwareName.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => new Queue<List<SensorReading>>(group.Select(g => g.ToList())),
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (StorageDiskViewModel disk in StorageDisks.Where(d => d.Number >= 0).OrderBy(d => d.Number))
+        {
+            if (byModel.TryGetValue(disk.Model, out Queue<List<SensorReading>>? queue) && queue.Count > 0)
+                disk.UpdateSensors(queue.Dequeue());
+        }
+    }
+
+    public bool HasVolumes => StorageDisks.Count > 0;
+
     private static string FormatBytes(long bytes)
     {
         const double Gigabyte = 1024d * 1024d * 1024d;
@@ -694,6 +838,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private void UpdateFromSnapshot(HardwareSnapshot snapshot)
     {
         UpdateMemory();
+        UpdateVolumes();
+        UpdateStorageSensors(snapshot.Sensors);
         UpdateNetwork();
         UpdateDisks();
 

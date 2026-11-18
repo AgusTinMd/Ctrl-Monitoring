@@ -10,7 +10,10 @@ public enum SensorKind
     Load = 4,
     Pwm = 5,
     Memory = 6,
-    Clock = 7
+    Clock = 7,
+
+    /// <summary>Nivel en %, por ejemplo el desgaste de un SSD.</summary>
+    Level = 8
 }
 
 /// <summary>
@@ -37,6 +40,7 @@ public sealed record SensorReading(
         SensorKind.Voltage => Value.ToString("0.00"),
         SensorKind.Load or SensorKind.Pwm => Value.ToString("0"),
         SensorKind.Memory => Value.ToString("0"),
+        SensorKind.Level => Value.ToString("0"),
         SensorKind.Clock => Value.ToString("0"),
         _ => Value.ToString("0.0")
     };
