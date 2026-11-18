@@ -444,8 +444,7 @@
                                                    Foreground="{StaticResource TextPrimaryBrush}" />
                                         <TextBlock Text="{l:Tr app.subtitle}" FontSize="10"
                                                    TextTrimming="CharacterEllipsis"
-                                                   Foreground="{StaticResource TextMutedBrush}" />
-                                    </StackPanel>
+                                                   Foreground="{StaticResource TextMutedBrush}" />                                    </StackPanel>
 
                                     <ToggleButton Grid.Column="2" Style="{StaticResource NavToggleButton}"
                                                   IsChecked="{Binding ShowNavigation, Mode=TwoWay}"
@@ -545,6 +544,12 @@
                                         <TextBlock Text="{Binding LastUpdateText}"
                                                    Style="{StaticResource MutedText}"
                                                    VerticalAlignment="Center" />
+
+                                        <!-- Versión discreta, al final de la barra superior. -->
+                                        <TextBlock Text="{Binding ShortVersionText}" FontSize="11"
+                                                   Margin="14,0,0,0" VerticalAlignment="Center"
+                                                   ToolTip="{Binding VersionText}"
+                                                   Foreground="{StaticResource TextMutedBrush}" />
                                     </StackPanel>
                                 </Grid>
                             </Border>

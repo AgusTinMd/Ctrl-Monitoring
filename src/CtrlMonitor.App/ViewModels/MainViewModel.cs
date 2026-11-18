@@ -186,16 +186,19 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// Versión del ejecutable. La pone el tag vX.Y.Z al publicar; una
     /// compilación local queda en 0.0.0 y se muestra como «(dev)».
     /// </summary>
-    public string VersionText { get; } = BuildVersionText();
+    public string VersionText { get; } = $"Ctrl Monitor {BuildShortVersion()}";
 
-    private static string BuildVersionText()
+    /// <summary>Versión corta al final de la barra superior: «v2.8.0» o «dev».</summary>
+    public string ShortVersionText { get; } = BuildShortVersion();
+
+    private static string BuildShortVersion()
     {
         Version? version = typeof(MainViewModel).Assembly.GetName().Version;
 
         if (version is null || (version.Major == 0 && version.Minor == 0 && version.Build <= 0))
-            return "Ctrl Monitor (dev)";
+            return "dev";
 
-        return $"Ctrl Monitor {version.Major}.{version.Minor}.{version.Build}";
+        return $"v{version.Major}.{version.Minor}.{version.Build}";
     }
 
     [ObservableProperty]
