@@ -515,12 +515,15 @@
                                                     </Border>
                                                 </StackPanel>
                                             </Grid>
+                                            <!-- Detalle en un renglón y vida siempre presente (vacía en
+                                                 discos sin ese dato): así las unidades de todos los discos
+                                                 empiezan a la misma altura. -->
                                             <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}"
-                                                       Margin="0,3,0,0" TextTrimming="CharacterEllipsis"
+                                                       Margin="0,3,0,0" TextWrapping="NoWrap"
+                                                       TextTrimming="CharacterEllipsis"
                                                        ToolTip="{Binding Detail}" />
                                             <TextBlock Text="{Binding LifeText}" Style="{StaticResource MutedText}"
-                                                       Margin="0,2,0,0"
-                                                       Visibility="{Binding HasLife, Converter={StaticResource BoolToVis}}" />
+                                                       Margin="0,2,0,0" TextWrapping="NoWrap" />
 
                                             <ItemsControl ItemsSource="{Binding Volumes}" Focusable="False">
                                                 <ItemsControl.ItemTemplate>

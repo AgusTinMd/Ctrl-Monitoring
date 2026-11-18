@@ -112,7 +112,8 @@ public sealed partial class StorageDiskViewModel : ObservableObject
         TemperatureBrush = _temperature >= HotTemperature ? UiBrushes.Warning : UiBrushes.TextSecondary;
 
         HasLife = _life is not null;
-        LifeText = _life is { } life ? Loc.F("storage.life", Math.Clamp(life, 0, 100)) : string.Empty;
+        // Un espacio y no vacío: el renglón ocupa su alto y alinea los discos entre sí.
+        LifeText = _life is { } life ? Loc.F("storage.life", Math.Clamp(life, 0, 100)) : " ";
     }
 
     private static string BuildDetail(PhysicalDiskInfo info)
