@@ -1,3 +1,5 @@
+using CtrlMonitor.Core.Inventory;
+
 namespace CtrlMonitor.App.Models;
 
 /// <summary>Una muestra de temperaturas, uso, memoria y red para el modo gráfico.</summary>
@@ -12,4 +14,5 @@ public sealed record ChartSample(
     double? NetDownMbs,
     double? NetUpMbs,
     double? CpuLoad,
-    double? GpuLoad);
+    double? GpuLoad,
+    IReadOnlyDictionary<string, DiskActivity>? Disks);

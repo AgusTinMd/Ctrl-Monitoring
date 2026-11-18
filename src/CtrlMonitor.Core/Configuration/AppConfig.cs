@@ -26,6 +26,15 @@ public sealed class AppConfig
     public List<string> ChartMetrics { get; set; } = new() { "Cpu", "Gpu", "Ram" };
 
     /// <summary>
+    /// Vista del modo gráfico: tarjetas (false) o lista con un gráfico grande,
+    /// al estilo del Administrador de tareas (true).
+    /// </summary>
+    public bool ChartListView { get; set; }
+
+    /// <summary>Orden de las métricas en la vista de lista; las que faltan van al final.</summary>
+    public List<string> ChartListOrder { get; set; } = new();
+
+    /// <summary>
     /// Idioma de la interfaz: «auto» (el de Windows) o «es», «en», «pt-BR».
     /// </summary>
     public string Language { get; set; } = AppLanguage.Auto;
@@ -39,7 +48,13 @@ public sealed class AppConfig
             .Where(key => !string.IsNullOrWhiteSpace(key))
             .Select(key => key.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(7)
+            .Take(32)
+            .ToList();
+
+        ChartListOrder = (ChartListOrder ?? new List<string>())
+            .Where(key => !string.IsNullOrWhiteSpace(key))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Take(64)
             .ToList();
     }
 }

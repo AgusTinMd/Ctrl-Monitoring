@@ -265,6 +265,7 @@ public sealed partial class HardwareService : IDisposable
         SensorType.Control => SensorKind.Pwm,
         SensorType.SmallData => SensorKind.Memory,
         SensorType.Level => SensorKind.Level,
+        SensorType.Clock => SensorKind.Clock,
         _ => null
     };
 
@@ -276,6 +277,7 @@ public sealed partial class HardwareService : IDisposable
         SensorKind.Voltage => "V",
         SensorKind.Load or SensorKind.Pwm or SensorKind.Level => "%",
         SensorKind.Memory => "MB",
+        SensorKind.Clock => "MHz",
         _ => string.Empty
     };
 

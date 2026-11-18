@@ -54,6 +54,17 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly Dictionary<string, SensorGroupViewModel> _groupsById = new(StringComparer.Ordinal);
     private readonly Dictionary<string, FanViewModel> _fansById = new(StringComparer.Ordinal);
     private readonly NetworkUsageReader _networkUsage = new();
+    private readonly DiskUsageReader _diskUsage = new();
+    private IReadOnlyDictionary<string, DiskActivity> _disks = new Dictionary<string, DiskActivity>();
+
+    /// <summary>
+    /// Tarjetas guardadas cuya métrica todavía no existe (discos que se
+    /// detectan unos segundos después de arrancar), con su posición original.
+    /// </summary>
+    private readonly List<(int Index, string Key)> _pendingChartKeys = new();
+
+    /// <summary>Métricas fijas más una por cada disco detectado.</summary>
+    public IReadOnlyList<ChartMetric> AllChartMetrics { get; private set; } = ChartMetrics.Base;
 
     private int _lastActiveFanCount = -1;
 
@@ -124,12 +135,48 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             _availableChartMetrics = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasAvailableChartMetrics));
+            OnPropertyChanged(nameof(CanAddChartPanel));
         }
     }
 
     public bool HasAvailableChartMetrics => AvailableChartMetrics.Count > 0;
 
     public bool IsChartPanelsEmpty => ChartPanels.Count == 0;
+
+    /// <summary>Una entrada por métrica para la vista de lista, como el Administrador de tareas.</summary>
+    public ObservableCollection<ChartPanelViewModel> ChartListItems { get; } = new();
+
+    [ObservableProperty]
+    private ChartPanelViewModel? _selectedChartListItem;
+
+    /// <summary>La sección de gráficos se muestra como lista con un gráfico grande.</summary>
+    public bool IsChartListView
+    {
+        get => _config.ChartListView;
+        set
+        {
+            if (_config.ChartListView == value)
+                return;
+
+            _config.ChartListView = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsChartCardView));
+            OnPropertyChanged(nameof(CanAddChartPanel));
+            OnPropertyChanged(nameof(ShowChartPanelsEmpty));
+            SaveSoon();
+        }
+    }
+
+    public bool IsChartCardView
+    {
+        get => !IsChartListView;
+        set => IsChartListView = !value;
+    }
+
+    /// <summary>El selector para agregar tarjetas solo tiene sentido en la vista de tarjetas.</summary>
+    public bool CanAddChartPanel => IsChartCardView && HasAvailableChartMetrics;
+
+    public bool ShowChartPanelsEmpty => IsChartCardView && IsChartPanelsEmpty;
 
     [ObservableProperty]
     private ChartMetric? _newChartMetric;
@@ -389,6 +436,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private double? _netUpMbs;
 
+    /// <summary>Frecuencia promedio de los núcleos del CPU, en GHz.</summary>
+    [ObservableProperty]
+    private double? _cpuClockGhz;
+
     [ObservableProperty]
     private string _lastUpdateText = Loc.T("chart.waiting");
 
@@ -623,6 +674,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
 
+        _diskUsage.Dispose();
         SaveNow();
         AppLog.Info("Monitor de hardware cerrado.");
     }
@@ -676,6 +728,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         foreach (DiskDetailViewModel disk in DiskDetails)
             disk.RefreshLanguage();
+
+        foreach (ChartPanelViewModel item in ChartListItems)
+            item.RefreshLanguage();
 
         foreach (FanViewModel fan in Fans)
             fan.RefreshLanguage();
@@ -887,6 +942,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdateStorageSensors(snapshot.Sensors);
         UpdateDiskDetails();
         UpdateNetwork();
+        UpdateDisks();
 
         if (snapshot.Sensors.Count == 0)
         {
@@ -909,6 +965,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                             ?? MaxValue(cpu, SensorKind.Temperature);
         CpuPower = FindValue(cpu, SensorKind.Power, "CPU Package", "Package")
                    ?? MaxValue(cpu, SensorKind.Power);
+        CpuClockGhz = AverageCoreClockGhz(cpu);
         CpuLoad = FindValue(cpu, SensorKind.Load, "CPU Total", "Total")
                   ?? FirstValue(cpu, SensorKind.Load);
 
@@ -951,7 +1008,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NetDownMbs,
             NetUpMbs,
             CpuLoad,
-            GpuLoad));
+            GpuLoad,
+            _disks.Count == 0 ? null : _disks));
 
         // El gráfico permite ventanas de hasta 10 minutos; conservamos ese
         // margen y descartamos lo más viejo para no crecer sin límite.
@@ -965,10 +1023,16 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         List<string> configured = _config.ChartMetrics ?? new List<string>();
 
-        foreach (string key in configured)
+        for (int i = 0; i < configured.Count; i++)
         {
-            ChartMetric? metric = ChartMetrics.All.FirstOrDefault(item =>
-                item.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+            string key = configured[i];
+            ChartMetric? metric = FindChartMetric(key);
+
+            if (metric is null && key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                _pendingChartKeys.Add((i, key));
+                continue;
+            }
 
             if (metric is null || ChartPanels.Any(panel =>
                     string.Equals(panel.SelectedMetric.Key, metric.Key, StringComparison.OrdinalIgnoreCase)))
@@ -982,7 +1046,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         // Si la configuración traía solo claves desconocidas, restauramos el
         // conjunto principal. Un arreglo vacío sí se respeta: el usuario quitó
         // todos los gráficos a propósito.
-        if (configured.Count > 0 && ChartPanels.Count == 0)
+        if (configured.Count > 0 && ChartPanels.Count == 0 && _pendingChartKeys.Count == 0)
         {
             AddChartPanelCore(ChartMetrics.Cpu);
             AddChartPanelCore(ChartMetrics.Gpu);
@@ -991,14 +1055,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         _chartsInitialized = true;
         RefreshAvailableChartMetrics();
+        SyncChartListItems();
     }
 
-    private void AddChartPanelCore(ChartMetric metric)
+    private void AddChartPanelCore(ChartMetric metric, int? index = null)
     {
-        var panel = new ChartPanelViewModel(this, ChartMetrics.All, metric);
+        var panel = new ChartPanelViewModel(this, AllChartMetrics, metric);
         panel.PropertyChanged += OnChartPanelPropertyChanged;
-        ChartPanels.Add(panel);
+
+        if (index is { } position)
+            ChartPanels.Insert(position, panel);
+        else
+            ChartPanels.Add(panel);
     }
+
+    private ChartMetric? FindChartMetric(string key) =>
+        AllChartMetrics.FirstOrDefault(item => item.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 
     private void OnChartPanelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -1013,8 +1085,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (!_chartsInitialized)
             return;
 
+        // Las tarjetas de disco que esperan a los contadores también se guardan.
         _config.ChartMetrics = ChartPanels
             .Select(panel => panel.SelectedMetric.Key)
+            .Concat(_pendingChartKeys.Select(pending => pending.Key))
             .ToList();
 
         SaveSoon();
@@ -1022,7 +1096,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private void RefreshAvailableChartMetrics()
     {
-        List<ChartMetric> available = ChartMetrics.All
+        List<ChartMetric> available = AllChartMetrics
             .Where(metric => !ChartPanels.Any(panel =>
                 string.Equals(panel.SelectedMetric.Key, metric.Key, StringComparison.OrdinalIgnoreCase)))
             .ToList();
@@ -1033,12 +1107,68 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NewChartMetric = available.FirstOrDefault();
 
         OnPropertyChanged(nameof(IsChartPanelsEmpty));
+        OnPropertyChanged(nameof(ShowChartPanelsEmpty));
+    }
+
+    /// <summary>Agrega a la vista de lista las métricas nuevas (por ejemplo, discos recién detectados).</summary>
+    private void SyncChartListItems()
+    {
+        foreach (ChartMetric metric in AllChartMetrics)
+        {
+            if (ChartListItems.Any(item => item.SelectedMetric == metric))
+                continue;
+
+            ChartListItems.Add(new ChartPanelViewModel(this, AllChartMetrics, metric));
+        }
+
+        // Aplica el orden guardado; las métricas sin posición guardada (por
+        // ejemplo, un disco nuevo) quedan al final en su orden natural.
+        List<string> order = _config.ChartListOrder ?? new List<string>();
+        List<ChartPanelViewModel> sorted = ChartListItems
+            .Select((item, index) => (item, index))
+            .OrderBy(entry => OrderIndex(order, entry.item.SelectedMetric.Key))
+            .ThenBy(entry => entry.index)
+            .Select(entry => entry.item)
+            .ToList();
+
+        for (int i = 0; i < sorted.Count; i++)
+        {
+            int current = ChartListItems.IndexOf(sorted[i]);
+
+            if (current != i)
+                ChartListItems.Move(current, i);
+        }
+
+        SelectedChartListItem ??= ChartListItems.FirstOrDefault();
+    }
+
+    private static int OrderIndex(List<string> order, string key)
+    {
+        int index = order.FindIndex(item => item.Equals(key, StringComparison.OrdinalIgnoreCase));
+        return index < 0 ? int.MaxValue : index;
+    }
+
+    /// <summary>Mueve una métrica de la vista de lista al arrastrarla y guarda el orden.</summary>
+    public void MoveChartListItem(ChartPanelViewModel item, int newIndex)
+    {
+        int oldIndex = ChartListItems.IndexOf(item);
+
+        if (oldIndex < 0 || newIndex < 0 || newIndex >= ChartListItems.Count || oldIndex == newIndex)
+            return;
+
+        ChartListItems.Move(oldIndex, newIndex);
+        _config.ChartListOrder = ChartListItems.Select(entry => entry.SelectedMetric.Key).ToList();
+        SaveSoon();
     }
 
     private void RefreshChartPanels()
     {
         foreach (ChartPanelViewModel panel in ChartPanels)
             panel.Refresh();
+
+        // En la vista de lista se actualizan todas: cada entrada tiene su mini gráfico y su resumen.
+        foreach (ChartPanelViewModel item in ChartListItems)
+            item.Refresh();
     }
 
     private void UpdateMemory()
@@ -1073,6 +1203,67 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         VramTotalGb = total / 1024d;
         VramPercent = Math.Clamp(used / total * 100d, 0, 100);
         VramText = Loc.F("vram.text", VramUsedGb, VramTotalGb, VramPercent);
+    }
+
+    private void UpdateDisks()
+    {
+        IReadOnlyList<DiskActivity> disks = _diskUsage.Read();
+
+        // Mientras los contadores se preparan la lista viene vacía: se conserva
+        // la anterior para no borrar los gráficos de disco por un instante.
+        if (disks.Count == 0 && _disks.Count > 0)
+            return;
+
+        bool changed = disks.Count != _disks.Count || disks.Any(disk => !_disks.ContainsKey(disk.Id));
+        _disks = disks.ToDictionary(disk => disk.Id, StringComparer.Ordinal);
+
+        if (changed)
+            RebuildChartMetrics();
+    }
+
+    /// <summary>Actividad actual de un disco, o <c>null</c> si no está conectado.</summary>
+    public DiskActivity? GetDisk(string diskId) =>
+        _disks.TryGetValue(diskId, out DiskActivity? disk) ? disk : null;
+
+    /// <summary>
+    /// Arma la lista de métricas con un gráfico por disco y la pasa a los
+    /// selectores. Las tarjetas de disco guardadas que esperaban a que se
+    /// detectaran los discos se agregan ahora, en su posición original.
+    /// </summary>
+    private void RebuildChartMetrics()
+    {
+        IEnumerable<ChartMetric> diskMetrics = _disks.Keys
+            .OrderBy(DiskNames.Number)
+            .Select(ChartMetrics.ForDisk);
+
+        // Un disco desconectado deja su tarjeta; su métrica sigue en la lista
+        // para que el selector no pierda la elección.
+        IEnumerable<ChartMetric> orphaned = ChartPanels
+            .Select(panel => panel.SelectedMetric)
+            .Where(metric => metric.Key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.Ordinal));
+
+        AllChartMetrics = ChartMetrics.Base.Concat(diskMetrics).Concat(orphaned).Distinct().ToList();
+
+        AppLog.Info($"Discos para gráficos: {string.Join(", ", _disks.Keys.OrderBy(DiskNames.Number))}");
+
+        foreach (ChartPanelViewModel panel in ChartPanels)
+            panel.Options = AllChartMetrics;
+
+        foreach ((int index, string key) in _pendingChartKeys.ToList())
+        {
+            ChartMetric? metric = FindChartMetric(key);
+
+            if (metric is null)
+                continue;
+
+            _pendingChartKeys.Remove((index, key));
+
+            if (!ChartPanels.Any(panel => panel.SelectedMetric == metric))
+                AddChartPanelCore(metric, Math.Min(index, ChartPanels.Count));
+        }
+
+        RefreshAvailableChartMetrics();
+        SyncChartListItems();
     }
 
     private void UpdateNetwork()
@@ -1200,6 +1391,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                              ?? fans.OrderByDescending(s => s.Value).FirstOrDefault();
 
         return cpu is null ? null : (int)Math.Round(cpu.Value);
+    }
+
+    /// <summary>
+    /// Promedio de los relojes de núcleo («Core #1», «Core #2»…), sin el reloj
+    /// de bus. Es lo más parecido a la velocidad que muestra el Administrador de tareas.
+    /// </summary>
+    private static double? AverageCoreClockGhz(IEnumerable<SensorReading> cpu)
+    {
+        double[] cores = cpu
+            .Where(s => s.Kind == SensorKind.Clock
+                        && s.Name.Contains("Core", StringComparison.OrdinalIgnoreCase)
+                        && s.Value > 0)
+            .Select(s => s.Value)
+            .ToArray();
+
+        return cores.Length == 0 ? null : cores.Average() / 1000d;
     }
 
     private static double? FindValue(
