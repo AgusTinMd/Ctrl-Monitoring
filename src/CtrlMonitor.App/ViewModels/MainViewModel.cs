@@ -54,6 +54,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly Dictionary<string, SensorGroupViewModel> _groupsById = new(StringComparer.Ordinal);
     private readonly Dictionary<string, FanViewModel> _fansById = new(StringComparer.Ordinal);
     private readonly NetworkUsageReader _networkUsage = new();
+    private readonly DiskUsageReader _diskUsage = new();
 
     private int _lastActiveFanCount = -1;
 
@@ -260,6 +261,20 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private double? _netUpMbs;
+
+    /// <summary>Tiempo activo del disco más ocupado, en %.</summary>
+    [ObservableProperty]
+    private double? _diskActivePercent;
+
+    [ObservableProperty]
+    private double? _diskReadMbs;
+
+    [ObservableProperty]
+    private double? _diskWriteMbs;
+
+    /// <summary>Frecuencia promedio de los núcleos del CPU, en GHz.</summary>
+    [ObservableProperty]
+    private double? _cpuClockGhz;
 
     [ObservableProperty]
     private string _lastUpdateText = Loc.T("chart.waiting");
@@ -495,6 +510,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
 
+        _diskUsage.Dispose();
         SaveNow();
         AppLog.Info("Monitor de hardware cerrado.");
     }
@@ -640,6 +656,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         UpdateMemory();
         UpdateNetwork();
+        UpdateDisks();
 
         if (snapshot.Sensors.Count == 0)
         {
@@ -662,6 +679,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                             ?? MaxValue(cpu, SensorKind.Temperature);
         CpuPower = FindValue(cpu, SensorKind.Power, "CPU Package", "Package")
                    ?? MaxValue(cpu, SensorKind.Power);
+        CpuClockGhz = AverageCoreClockGhz(cpu);
         CpuLoad = FindValue(cpu, SensorKind.Load, "CPU Total", "Total")
                   ?? FirstValue(cpu, SensorKind.Load);
 
@@ -704,7 +722,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NetDownMbs,
             NetUpMbs,
             CpuLoad,
-            GpuLoad));
+            GpuLoad,
+            DiskActivePercent,
+            DiskReadMbs,
+            DiskWriteMbs));
 
         // El gráfico permite ventanas de hasta 10 minutos; conservamos ese
         // margen y descartamos lo más viejo para no crecer sin límite.
@@ -826,6 +847,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         VramTotalGb = total / 1024d;
         VramPercent = Math.Clamp(used / total * 100d, 0, 100);
         VramText = Loc.F("vram.text", VramUsedGb, VramTotalGb, VramPercent);
+    }
+
+    private void UpdateDisks()
+    {
+        DiskUsage usage = _diskUsage.Read();
+        DiskActivePercent = usage.ActivePercent;
+        DiskReadMbs = usage.ActivePercent is null ? null : usage.ReadMegaBytesPerSecond;
+        DiskWriteMbs = usage.ActivePercent is null ? null : usage.WriteMegaBytesPerSecond;
     }
 
     private void UpdateNetwork()
@@ -953,6 +982,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                              ?? fans.OrderByDescending(s => s.Value).FirstOrDefault();
 
         return cpu is null ? null : (int)Math.Round(cpu.Value);
+    }
+
+    /// <summary>
+    /// Promedio de los relojes de núcleo («Core #1», «Core #2»…), sin el reloj
+    /// de bus. Es lo más parecido a la velocidad que muestra el Administrador de tareas.
+    /// </summary>
+    private static double? AverageCoreClockGhz(IEnumerable<SensorReading> cpu)
+    {
+        double[] cores = cpu
+            .Where(s => s.Kind == SensorKind.Clock
+                        && s.Name.Contains("Core", StringComparison.OrdinalIgnoreCase)
+                        && s.Value > 0)
+            .Select(s => s.Value)
+            .ToArray();
+
+        return cores.Length == 0 ? null : cores.Average() / 1000d;
     }
 
     private static double? FindValue(

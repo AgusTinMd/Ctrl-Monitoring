@@ -12,4 +12,7 @@ public sealed record ChartSample(
     double? NetDownMbs,
     double? NetUpMbs,
     double? CpuLoad,
-    double? GpuLoad);
+    double? GpuLoad,
+    double? DiskActive,
+    double? DiskReadMbs,
+    double? DiskWriteMbs);

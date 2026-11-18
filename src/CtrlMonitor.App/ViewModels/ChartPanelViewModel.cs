@@ -82,6 +82,15 @@ public sealed class ChartMetric : INotifyPropertyChanged
 
     public string TertiaryUnit { get; init; } = string.Empty;
 
+    /// <summary>Valor chico bajo el secundario; por ejemplo, los GHz del CPU.</summary>
+    public Func<MainViewModel, double?>? Quaternary { get; init; }
+
+    public string QuaternaryFormat { get; init; } = "0.00";
+
+    public string QuaternaryUnit { get; init; } = string.Empty;
+
+    public Brush? QuaternaryBrush { get; init; }
+
     public override string ToString() => Title;
 }
 
@@ -162,6 +171,18 @@ public sealed partial class ChartPanelViewModel : ObservableObject
     private string _tertiaryUnit = string.Empty;
 
     [ObservableProperty]
+    private string _quaternaryValue = string.Empty;
+
+    [ObservableProperty]
+    private string _quaternaryUnit = string.Empty;
+
+    [ObservableProperty]
+    private Brush _quaternaryValueBrush = UiBrushes.TextSecondary;
+
+    [ObservableProperty]
+    private bool _hasQuaternary;
+
+    [ObservableProperty]
     private bool _hasSecondary;
 
     [ObservableProperty]
@@ -194,6 +215,9 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         TertiaryValue = metric.Tertiary is null
             ? string.Empty
             : Format(metric.Tertiary(_owner), metric.TertiaryFormat);
+        QuaternaryValue = metric.Quaternary is null
+            ? string.Empty
+            : Format(metric.Quaternary(_owner), metric.QuaternaryFormat);
     }
 
     /// <summary>Vuelve a tomar los textos de la métrica después de cambiar de idioma.</summary>
@@ -219,6 +243,9 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         TertiaryUnit = metric.TertiaryUnit;
         HasSecondary = metric.Secondary is not null;
         HasTertiary = metric.Tertiary is not null;
+        QuaternaryUnit = metric.QuaternaryUnit;
+        QuaternaryValueBrush = metric.QuaternaryBrush ?? UiBrushes.TextSecondary;
+        HasQuaternary = metric.Quaternary is not null;
 
         Refresh();
     }
@@ -249,6 +276,8 @@ internal static class ChartMetrics
         Secondary = vm => vm.CpuFanRpm,
         SecondaryFormat = "0",
         SecondaryUnit = " RPM",
+        Quaternary = vm => vm.CpuClockGhz,
+        QuaternaryUnit = " GHz",
         Tertiary = vm => vm.CpuPower,
         TertiaryFormat = "0.0",
         TertiaryUnit = " W"
@@ -293,6 +322,8 @@ internal static class ChartMetrics
         Secondary = vm => vm.CpuTemperature,
         SecondaryFormat = "0.0",
         SecondaryUnit = " °C",
+        Quaternary = vm => vm.CpuClockGhz,
+        QuaternaryUnit = " GHz",
         Tertiary = vm => vm.CpuPower,
         TertiaryFormat = "0.0",
         TertiaryUnit = " W"
@@ -422,6 +453,32 @@ internal static class ChartMetrics
         SecondaryBrush = UiBrushes.ChartNetUp
     };
 
+    public static ChartMetric Disk { get; } = new()
+    {
+        Key = "Disk",
+        TitleKey = "metric.disk.title",
+        SubtitleKey = "metric.disk.subtitle",
+        Color = UiBrushes.ChartDiskRead,
+        AxisUnit = " MB/s",
+        AxisMin = 0,
+        // Techo para un NVMe rápido; la escala automática lo ajusta al tráfico real.
+        AxisMax = 8000,
+        AxisStep = 1,
+        Primary = vm => vm.DiskActivePercent,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        PrimaryLabelKey = "metric.label.active",
+        SecondaryLabelKey = "metric.label.readWrite",
+        Secondary = vm => vm.DiskReadMbs,
+        SecondaryFormat = "0.0",
+        SecondaryUnit = " MB/s",
+        SecondaryBrush = UiBrushes.ChartDiskRead,
+        Quaternary = vm => vm.DiskWriteMbs,
+        QuaternaryFormat = "0.0",
+        QuaternaryUnit = " MB/s",
+        QuaternaryBrush = UiBrushes.ChartDiskWrite
+    };
+
     public static IReadOnlyList<ChartMetric> All { get; } = new[]
     {
         Cpu,
@@ -432,6 +489,7 @@ internal static class ChartMetrics
         Hotspot,
         Ram,
         Vram,
-        Network
+        Network,
+        Disk
     };
 }

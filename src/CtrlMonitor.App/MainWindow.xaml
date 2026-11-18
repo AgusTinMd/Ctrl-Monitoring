@@ -113,6 +113,16 @@
                                                Foreground="{StaticResource TextMutedBrush}"
                                                VerticalAlignment="Bottom" Margin="0,0,0,1" />
                                 </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                            Margin="0,-1,0,0"
+                                            Visibility="{Binding HasQuaternary, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding QuaternaryValue}"
+                                               FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{Binding QuaternaryValueBrush}" />
+                                    <TextBlock Text="{Binding QuaternaryUnit}" FontSize="9.5"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                                </StackPanel>
                             </StackPanel>
 
                             <Border Width="1" Height="34" Margin="0,0,12,0"
