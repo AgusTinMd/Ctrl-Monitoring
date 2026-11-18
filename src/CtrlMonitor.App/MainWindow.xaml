@@ -106,10 +106,26 @@
                                            HorizontalAlignment="Right" />
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
                                             Margin="0,2,0,0">
+                                    <TextBlock Text="{Binding SecondaryInline}" FontSize="10"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Bottom" Margin="0,0,6,1" />
                                     <TextBlock Text="{Binding SecondaryValue}"
                                                FontSize="12.5" FontWeight="SemiBold"
                                                Foreground="{Binding SecondaryValueBrush}" />
                                     <TextBlock Text="{Binding SecondaryUnit}" FontSize="10"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                            Margin="0,-1,0,0"
+                                            Visibility="{Binding HasQuaternary, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding QuaternaryInline}" FontSize="10"
+                                               Foreground="{StaticResource TextMutedBrush}"
+                                               VerticalAlignment="Bottom" Margin="0,0,6,1" />
+                                    <TextBlock Text="{Binding QuaternaryValue}"
+                                               FontSize="11.5" FontWeight="SemiBold"
+                                               Foreground="{Binding QuaternaryValueBrush}" />
+                                    <TextBlock Text="{Binding QuaternaryUnit}" FontSize="9.5"
                                                Foreground="{StaticResource TextMutedBrush}"
                                                VerticalAlignment="Bottom" Margin="0,0,0,1" />
                                 </StackPanel>

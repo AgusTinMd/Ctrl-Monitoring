@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using CtrlMonitor.App.Models;
+using CtrlMonitor.App.ViewModels;
+using CtrlMonitor.Core.Inventory;
 using CtrlMonitor.Core.Charting;
 using CtrlMonitor.Core.Localization;
 
@@ -213,8 +215,11 @@ public sealed class LiveChart : FrameworkElement
         double min = Math.Min(AxisMin, AxisMax - step);
         double max = Math.Max(AxisMax, min + step);
 
+        // Las áreas en % no usan el eje: no entran en la escala automática.
+        var lineSeries = series.Where(item => !item.PercentArea).ToList();
+
         if (AutoScale)
-            (min, max) = GetAutoScaleRange(samples, series, start);
+            (min, max) = GetAutoScaleRange(samples, lineSeries, start);
 
         // El paso base sirve para rangos chicos; con rangos grandes (red a
         // 100 MB/s con paso 1) se agranda para que las etiquetas no se encimen.
@@ -252,7 +257,10 @@ public sealed class LiveChart : FrameworkElement
 
         dc.PushClip(new RectangleGeometry(plot));
 
-        foreach (ChartSeries item in series)
+        foreach (ChartSeries item in series.Where(item => item.PercentArea))
+            DrawPercentArea(dc, samples, item.Selector, item.Brush, plot, start, end);
+
+        foreach (ChartSeries item in lineSeries)
             DrawSeries(dc, samples, item.Selector, item.Brush, plot, start, end, min, max);
 
         dc.Pop();
@@ -262,6 +270,17 @@ public sealed class LiveChart : FrameworkElement
     {
         var result = new List<ChartSeries>(5);
         string series = Series?.Trim() ?? string.Empty;
+
+        // Cada disco tiene su serie: «Disk:2 C:». Va antes del switch porque
+        // el identificador del disco distingue mayúsculas.
+        if (series.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            string diskId = series[ChartMetrics.DiskKeyPrefix.Length..];
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.ActivePercent, Resource("ChartDiskActiveBrush", Brushes.DarkGreen), PercentArea: true));
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.ReadMegaBytesPerSecond, Resource("ChartDiskReadBrush", Brushes.LimeGreen)));
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.WriteMegaBytesPerSecond, Resource("ChartDiskWriteBrush", Brushes.Gold)));
+            return result;
+        }
 
         if (series.Length > 0)
         {
@@ -537,6 +556,55 @@ public sealed class LiveChart : FrameworkElement
         }
     }
 
+    private static void DrawPercentArea(
+        DrawingContext dc,
+        IReadOnlyList<ChartSample> samples,
+        Func<ChartSample, double?> selector,
+        Brush brush,
+        Rect plot,
+        DateTime start,
+        DateTime end)
+    {
+        double totalSeconds = Math.Max(1, (end - start).TotalSeconds);
+        var geometry = new StreamGeometry();
+        bool hasPoint = false;
+
+        using (StreamGeometryContext context = geometry.Open())
+        {
+            Point? first = null;
+            Point last = default;
+
+            foreach (ChartSample sample in samples)
+            {
+                if (sample.TimestampUtc < start || selector(sample) is not { } value)
+                    continue;
+
+                Point point = ToPoint(sample.TimestampUtc, value, start, totalSeconds, plot, 0, 100);
+
+                if (first is null)
+                {
+                    first = point;
+                    context.BeginFigure(new Point(point.X, plot.Bottom), isFilled: true, isClosed: true);
+                }
+
+                context.LineTo(point, isStroked: false, isSmoothJoin: true);
+                last = point;
+                hasPoint = true;
+            }
+
+            if (hasPoint)
+                context.LineTo(new Point(last.X, plot.Bottom), isStroked: false, isSmoothJoin: false);
+        }
+
+        if (!hasPoint)
+            return;
+
+        if (geometry.CanFreeze)
+            geometry.Freeze();
+
+        dc.DrawGeometry(brush, null, geometry);
+    }
+
     private static Point ToPoint(
         DateTime timestamp,
         double value,
@@ -551,6 +619,9 @@ public sealed class LiveChart : FrameworkElement
 
         return new Point(x, y);
     }
+
+    private static DiskActivity? Disk(ChartSample sample, string diskId) =>
+        sample.Disks is { } disks && disks.TryGetValue(diskId, out DiskActivity? disk) ? disk : null;
 
     private Brush Resource(string key, Brush fallback) =>
         TryFindResource(key) as Brush ?? fallback;
@@ -576,7 +647,12 @@ public sealed class LiveChart : FrameworkElement
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
         InvalidateVisual();
 
+    /// <param name="PercentArea">
+    /// Se dibuja como área de fondo en escala 0–100 % de la altura, sin usar el
+    /// eje. Sirve para mostrar el % de actividad del disco junto a sus MB/s.
+    /// </param>
     private readonly record struct ChartSeries(
         Func<ChartSample, double?> Selector,
-        Brush Brush);
+        Brush Brush,
+        bool PercentArea = false);
 }

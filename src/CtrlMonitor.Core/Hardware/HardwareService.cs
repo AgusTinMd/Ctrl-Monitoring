@@ -240,6 +240,7 @@ public sealed class HardwareService : IDisposable
         SensorType.Load => SensorKind.Load,
         SensorType.Control => SensorKind.Pwm,
         SensorType.SmallData => SensorKind.Memory,
+        SensorType.Clock => SensorKind.Clock,
         _ => null
     };
 
@@ -251,6 +252,7 @@ public sealed class HardwareService : IDisposable
         SensorKind.Voltage => "V",
         SensorKind.Load or SensorKind.Pwm => "%",
         SensorKind.Memory => "MB",
+        SensorKind.Clock => "MHz",
         _ => string.Empty
     };
 
