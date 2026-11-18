@@ -103,6 +103,10 @@ public partial class MainWindow : Window
             Hide();
     }
 
+    /// <summary>El SelectedItem del TreeView es de solo lectura: se copia al view model.</summary>
+    private void ProcessTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) =>
+        _viewModel.Processes.Selected = e.NewValue as ProcessNode;
+
     private void ChartCard_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         DisarmDrag();

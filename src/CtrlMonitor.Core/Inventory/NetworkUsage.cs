@@ -28,6 +28,9 @@ public sealed class NetworkUsageReader
         "tap-", "wireguard", "tailscale", "zerotier", "bluetooth"
     };
 
+    /// <summary>Velocidad sumada de los enlaces físicos activos, en bits por segundo.</summary>
+    public long LinkBitsPerSecond { get; private set; }
+
     private long _lastReceived;
     private long _lastSent;
     private long _lastTimestamp;
@@ -35,7 +38,8 @@ public sealed class NetworkUsageReader
 
     public NetworkUsage Read()
     {
-        (long received, long sent) = ReadTotals();
+        (long received, long sent, long speed) = ReadTotals();
+        LinkBitsPerSecond = speed;
         long now = Stopwatch.GetTimestamp();
 
         if (!_initialized)
@@ -64,10 +68,11 @@ public sealed class NetworkUsageReader
             Math.Max(0, sentDelta) / seconds);
     }
 
-    private static (long Received, long Sent) ReadTotals()
+    private static (long Received, long Sent, long Speed) ReadTotals()
     {
         long received = 0;
         long sent = 0;
+        long speed = 0;
 
         foreach (NetworkInterface network in NetworkInterface.GetAllNetworkInterfaces())
         {
@@ -81,6 +86,7 @@ public sealed class NetworkUsageReader
 
                 received += statistics.BytesReceived;
                 sent += statistics.BytesSent;
+                speed += network.Speed;
             }
             catch (NetworkInformationException)
             {
@@ -88,7 +94,7 @@ public sealed class NetworkUsageReader
             }
         }
 
-        return (received, sent);
+        return (received, sent, speed);
     }
 
     private static bool IsPhysicalAndUp(NetworkInterface network)

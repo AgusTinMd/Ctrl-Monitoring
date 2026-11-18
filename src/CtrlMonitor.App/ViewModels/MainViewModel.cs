@@ -94,6 +94,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         };
 
         InitializeChartPanels();
+        Processes.Attach(_config, SaveSoon);
 
         _hardware.SnapshotUpdated += OnSnapshotUpdated;
 
@@ -961,6 +962,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdateVolumes();
         UpdateStorageSensors(snapshot.Sensors);
         UpdateDiskDetails();
+        UpdateProcessTotals();
         UpdateNetwork();
         UpdateDisks();
 
@@ -1285,6 +1287,24 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         RefreshAvailableChartMetrics();
         SyncChartListItems();
+    }
+
+    /// <summary>Totales del equipo para los encabezados del administrador de procesos.</summary>
+    private void UpdateProcessTotals()
+    {
+        if (!Processes.IsActive)
+            return;
+
+        double? disk = _disks.Count > 0 ? _disks.Values.Max(d => d.ActivePercent) : null;
+        double? network = null;
+
+        if (_networkUsage.LinkBitsPerSecond > 0 && NetDownMbs is { } down && NetUpMbs is { } up)
+        {
+            double bits = (down + up) * 1024 * 1024 * 8;
+            network = Math.Clamp(bits / _networkUsage.LinkBitsPerSecond * 100, 0, 100);
+        }
+
+        Processes.SetTotals(CpuLoad, RamPercent, disk, network);
     }
 
     private void UpdateNetwork()

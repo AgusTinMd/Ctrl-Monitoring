@@ -16,7 +16,17 @@ namespace CtrlMonitor.Core.Processes;
 /// <param name="Path">Ruta completa del ejecutable, si se pudo leer.</param>
 /// <param name="CpuPercent">% de CPU de todo el equipo; <c>null</c> en la primera lectura.</param>
 /// <param name="MemoryBytes">Memoria en uso (conjunto de trabajo privado).</param>
-public sealed record ProcessSample(int Id, long StartTicks, string Name, string? Path, double? CpuPercent, long MemoryBytes)
+/// <param name="DiskBytesPerSecond">Lectura y escritura a disco; <c>null</c> en la primera lectura.</param>
+/// <param name="NetworkBytesPerSecond">Tráfico de red; <c>null</c> si no se puede medir.</param>
+public sealed record ProcessSample(
+    int Id,
+    long StartTicks,
+    string Name,
+    string? Path,
+    double? CpuPercent,
+    long MemoryBytes,
+    double? DiskBytesPerSecond = null,
+    double? NetworkBytesPerSecond = null)
 {
     /// <summary>Clave estable del proceso: PID más momento de inicio.</summary>
     public (int, long) Key => (Id, StartTicks);
@@ -31,7 +41,15 @@ public sealed record ProcessSample(int Id, long StartTicks, string Name, string?
 public sealed class ProcessSampler
 {
     private readonly Dictionary<(int, long), TimeSpan> _lastCpu = new();
+    private readonly Dictionary<(int, long), ulong> _lastIo = new();
+    private readonly ProcessNetworkMonitor? _network;
     private long _lastTimestamp;
+
+    /// <param name="network">
+    /// Medición de red por proceso. Además de la columna Red, sirve para
+    /// descontar el tráfico de red de los contadores de E/S y dejar solo el disco.
+    /// </param>
+    public ProcessSampler(ProcessNetworkMonitor? network = null) => _network = network;
 
     public IReadOnlyList<ProcessSample> Read()
     {
@@ -41,6 +59,8 @@ public sealed class ProcessSampler
 
         double totalCapacity = elapsedSeconds * Environment.ProcessorCount;
         var currentCpu = new Dictionary<(int, long), TimeSpan>();
+        var currentIo = new Dictionary<(int, long), ulong>();
+        IReadOnlyDictionary<int, long>? network = _network is { IsRunning: true } ? _network.TakeBytes() : null;
         var result = new List<ProcessSample>();
 
         foreach (Process process in Process.GetProcesses())
@@ -66,13 +86,32 @@ public sealed class ProcessSampler
 
                     long memory = NativeProcess.PrivateWorkingSet(id) ?? TryGet(() => process.WorkingSet64);
 
+                    double? net = null;
+
+                    if (network is not null && elapsedSeconds > 0)
+                        net = network.TryGetValue(id, out long netBytes) ? netBytes / elapsedSeconds : 0;
+
+                    // Los contadores de E/S suman disco y red: se descuenta la red
+                    // medida por ETW para acercarse a lo que muestra el Administrador.
+                    double? disk = null;
+
+                    if (NativeProcess.IoBytes(id) is { } io)
+                    {
+                        currentIo[key] = io;
+
+                        if (elapsedSeconds > 0 && _lastIo.TryGetValue(key, out ulong previousIo) && io >= previousIo)
+                            disk = Math.Max(0, (io - previousIo) / elapsedSeconds - (net ?? 0));
+                    }
+
                     result.Add(new ProcessSample(
                         id,
                         start,
                         id == 0 ? "Idle" : process.ProcessName,
                         NativeProcess.ImagePath(id),
                         cpu,
-                        memory));
+                        memory,
+                        disk,
+                        net));
                 }
                 catch (InvalidOperationException)
                 {
@@ -85,6 +124,11 @@ public sealed class ProcessSampler
 
         foreach ((var key, TimeSpan value) in currentCpu)
             _lastCpu[key] = value;
+
+        _lastIo.Clear();
+
+        foreach ((var key, ulong value) in currentIo)
+            _lastIo[key] = value;
 
         return result;
     }
@@ -166,6 +210,40 @@ internal static class NativeProcess
             CloseHandle(handle);
         }
     }
+
+    /// <summary>Bytes leídos y escritos por el proceso desde que arrancó.</summary>
+    public static ulong? IoBytes(int id)
+    {
+        IntPtr handle = OpenProcess(QueryLimitedInformation, false, id);
+
+        if (handle == IntPtr.Zero)
+            return null;
+
+        try
+        {
+            return GetProcessIoCounters(handle, out IoCounters counters)
+                ? counters.ReadTransferCount + counters.WriteTransferCount
+                : null;
+        }
+        finally
+        {
+            CloseHandle(handle);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct IoCounters
+    {
+        public ulong ReadOperationCount;
+        public ulong WriteOperationCount;
+        public ulong OtherOperationCount;
+        public ulong ReadTransferCount;
+        public ulong WriteTransferCount;
+        public ulong OtherTransferCount;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool GetProcessIoCounters(IntPtr process, out IoCounters counters);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct ProcessMemoryCountersEx

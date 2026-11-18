@@ -19,44 +19,42 @@ using CtrlMonitor.Core.Processes;
 
 namespace CtrlMonitor.App.ViewModels;
 
-/// <summary>Un proceso en la lista del administrador de procesos.</summary>
-public sealed partial class ProcessRowViewModel : ObservableObject
+/// <summary>
+/// Una fila del administrador de procesos: un programa (grupo) o uno de sus
+/// procesos. Los valores se muestran con un fondo más intenso cuanto más
+/// consumen, como en el Administrador de tareas.
+/// </summary>
+public abstract partial class ProcessNode : ObservableObject
 {
-    public ProcessRowViewModel(ProcessSample sample, string description, ImageSource? icon)
-    {
-        Id = sample.Id;
-        StartTicks = sample.StartTicks;
-        Name = sample.Name;
-        Path = sample.Path;
-        Description = description;
-        Icon = icon;
-        IsProtected = ProcessKiller.IsProtected(sample.Id, sample.Name);
-        Update(sample);
-    }
+    public string Description { get; protected init; } = string.Empty;
 
-    public int Id { get; }
+    public string Name { get; protected init; } = string.Empty;
 
-    public long StartTicks { get; }
-
-    public string Name { get; }
-
-    public string? Path { get; }
-
-    /// <summary>Descripción del ejecutable («Google Chrome»), o el nombre si no tiene.</summary>
-    public string Description { get; }
-
-    public ImageSource? Icon { get; }
+    public ImageSource? Icon { get; protected init; }
 
     public bool HasIcon => Icon is not null;
 
-    /// <summary>Proceso crítico de Windows o la propia app: no se puede finalizar.</summary>
-    public bool IsProtected { get; }
+    /// <summary>Cantidad de procesos junto al nombre del programa: «(12)».</summary>
+    public virtual string CountText => string.Empty;
+
+    /// <summary>Texto del tooltip: ruta y PID.</summary>
+    public abstract string Details { get; }
+
+    public abstract bool IsProtected { get; }
+
+    /// <summary>Nivel en el árbol: 0 para programas, 1 para sus procesos.</summary>
+    public abstract int Level { get; }
+
+    public Thickness NameIndent => new(Level * 26, 0, 0, 0);
 
     [ObservableProperty]
     private double _cpuPercent;
 
     [ObservableProperty]
-    private string _cpuText = "—";
+    private string _cpuText = string.Empty;
+
+    [ObservableProperty]
+    private Brush _cpuHeat = Brushes.Transparent;
 
     [ObservableProperty]
     private long _memoryBytes;
@@ -64,64 +62,212 @@ public sealed partial class ProcessRowViewModel : ObservableObject
     [ObservableProperty]
     private string _memoryText = string.Empty;
 
-    public void Update(ProcessSample sample)
+    [ObservableProperty]
+    private Brush _memoryHeat = Brushes.Transparent;
+
+    [ObservableProperty]
+    private double _diskBytes;
+
+    [ObservableProperty]
+    private string _diskText = string.Empty;
+
+    [ObservableProperty]
+    private Brush _diskHeat = Brushes.Transparent;
+
+    [ObservableProperty]
+    private double _networkBytes;
+
+    [ObservableProperty]
+    private string _networkText = string.Empty;
+
+    [ObservableProperty]
+    private Brush _networkHeat = Brushes.Transparent;
+
+    protected void SetValues(double? cpu, long memory, double? disk, double? network)
     {
-        CpuPercent = sample.CpuPercent ?? 0;
-        CpuText = sample.CpuPercent is { } cpu ? cpu.ToString("0.0", CultureInfo.CurrentCulture) + " %" : "—";
-        MemoryBytes = sample.MemoryBytes;
-        MemoryText = FormatMemory(sample.MemoryBytes);
+        CultureInfo culture = CultureInfo.CurrentCulture;
+
+        CpuPercent = cpu ?? 0;
+        CpuText = cpu is { } c ? c.ToString("0.0", culture) + " %" : "—";
+        CpuHeat = Heat.For(CpuPercent / 50);
+
+        MemoryBytes = memory;
+        MemoryText = (memory / (1024d * 1024d)).ToString("#,##0.0", culture) + " MB";
+        MemoryHeat = Heat.For(memory / (1536d * 1024 * 1024));
+
+        DiskBytes = disk ?? 0;
+        DiskText = disk is { } d ? (d / (1024d * 1024d)).ToString("0.0", culture) + " MB/s" : "—";
+        DiskHeat = Heat.For(DiskBytes / (20d * 1024 * 1024));
+
+        NetworkBytes = network ?? 0;
+        NetworkText = network is { } n ? (n * 8 / 1_000_000d).ToString("0.0", culture) + " Mbps" : "—";
+        NetworkHeat = Heat.For(NetworkBytes * 8 / 20_000_000d);
+    }
+}
+
+/// <summary>Un proceso.</summary>
+public sealed class ProcessLeaf : ProcessNode
+{
+    public ProcessLeaf(ProcessSample sample, string description, ImageSource? icon)
+    {
+        Id = sample.Id;
+        StartTicks = sample.StartTicks;
+        Name = sample.Name;
+        Path = sample.Path;
+        Description = description;
+        Icon = icon;
+        Protected = ProcessKiller.IsProtected(sample.Id, sample.Name);
+        Update(sample);
     }
 
-    private static string FormatMemory(long bytes)
+    public int Id { get; }
+
+    public long StartTicks { get; }
+
+    public string? Path { get; }
+
+    private bool Protected { get; }
+
+    public override bool IsProtected => Protected;
+
+    public override int Level => 1;
+
+    public override string Details => $"{Path ?? Name}\nPID {Id}";
+
+    public ProcessSample Sample { get; private set; } = null!;
+
+    public void Update(ProcessSample sample)
     {
-        double megabytes = bytes / (1024d * 1024d);
-        return megabytes >= 1024
-            ? (megabytes / 1024d).ToString("0.0", CultureInfo.CurrentCulture) + " GB"
-            : megabytes.ToString("0.0", CultureInfo.CurrentCulture) + " MB";
+        Sample = sample;
+        SetValues(sample.CpuPercent, sample.MemoryBytes, sample.DiskBytesPerSecond, sample.NetworkBytesPerSecond);
+    }
+}
+
+/// <summary>Un programa: todos los procesos del mismo ejecutable.</summary>
+public sealed partial class ProcessGroup : ProcessNode
+{
+    public ProcessGroup(string key, string description, string name, ImageSource? icon)
+    {
+        Key = key;
+        Description = description;
+        Name = name;
+        Icon = icon;
+        ChildrenView = new ListCollectionView(Children);
+    }
+
+    public string Key { get; }
+
+    public ObservableCollection<ProcessLeaf> Children { get; } = new();
+
+    /// <summary>Procesos del programa, ordenados igual que la lista.</summary>
+    public ListCollectionView ChildrenView { get; }
+
+    /// <summary>Solo los programas con más de un proceso se despliegan.</summary>
+    public bool HasChildren => Children.Count > 1;
+
+    public override string CountText => Children.Count > 1 ? $" ({Children.Count})" : string.Empty;
+
+    [ObservableProperty]
+    private bool _isExpanded;
+
+    public override bool IsProtected => Children.All(child => child.IsProtected);
+
+    public override int Level => 0;
+
+    public override string Details => Children.Count == 1
+        ? Children[0].Details
+        : string.Join("\n", Children.Take(12).Select(child => $"PID {child.Id}"))
+          + (Children.Count > 12 ? "\n…" : string.Empty);
+
+    public void Recalculate()
+    {
+        bool anyCpu = Children.Any(child => child.Sample.CpuPercent is not null);
+        bool anyDisk = Children.Any(child => child.Sample.DiskBytesPerSecond is not null);
+        bool anyNet = Children.Any(child => child.Sample.NetworkBytesPerSecond is not null);
+
+        SetValues(
+            anyCpu ? Children.Sum(child => child.Sample.CpuPercent ?? 0) : null,
+            Children.Sum(child => child.Sample.MemoryBytes),
+            anyDisk ? Children.Sum(child => child.Sample.DiskBytesPerSecond ?? 0) : null,
+            anyNet ? Children.Sum(child => child.Sample.NetworkBytesPerSecond ?? 0) : null);
+
+        OnPropertyChanged(nameof(HasChildren));
+        OnPropertyChanged(nameof(CountText));
+        OnPropertyChanged(nameof(IsProtected));
+        OnPropertyChanged(nameof(Details));
+    }
+}
+
+/// <summary>Fondos de «calor» para el tema oscuro: de transparente a naranja.</summary>
+internal static class Heat
+{
+    private static readonly Brush[] Steps = Enumerable.Range(0, 11).Select(Make).ToArray();
+
+    public static Brush For(double intensity)
+    {
+        if (double.IsNaN(intensity) || intensity <= 0.02)
+            return Brushes.Transparent;
+
+        return Steps[(int)Math.Round(Math.Clamp(intensity, 0, 1) * 10)];
+    }
+
+    private static Brush Make(int step)
+    {
+        double t = step / 10d;
+
+        // Ámbar suave que va hacia naranja y gana opacidad con el consumo.
+        byte r = 245;
+        byte g = (byte)(180 - 60 * t);
+        byte b = (byte)(40 - 20 * t);
+        byte a = (byte)(28 + 150 * t);
+        var brush = new SolidColorBrush(Color.FromArgb(a, r, g, b));
+        brush.Freeze();
+        return brush;
     }
 }
 
 /// <summary>
-/// Administrador de procesos: lista los procesos con su uso de CPU y memoria y
-/// permite finalizarlos. Solo lee mientras la pestaña está a la vista.
+/// Administrador de procesos: lista los programas y sus procesos con CPU,
+/// memoria, disco y red, y permite finalizarlos. Solo lee mientras la pestaña
+/// está a la vista.
 /// </summary>
 public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
 {
     private static readonly TimeSpan RefreshInterval = TimeSpan.FromSeconds(2);
 
-    private readonly ProcessSampler _sampler = new();
+    private readonly ProcessNetworkMonitor _network = new();
+    private readonly ProcessSampler _sampler;
     private readonly DispatcherTimer _timer;
-    private readonly Dictionary<(int, long), ProcessRowViewModel> _rows = new();
+    private readonly Dictionary<(int, long), ProcessLeaf> _leaves = new();
+    private readonly Dictionary<string, ProcessGroup> _groups = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, (string Description, ImageSource? Icon)> _fileInfo =
         new(StringComparer.OrdinalIgnoreCase);
     private bool _reading;
 
     public ProcessesViewModel()
     {
-        View = (ListCollectionView)CollectionViewSource.GetDefaultView(Processes);
-        View.Filter = Matches;
-        View.IsLiveSorting = true;
-        View.IsLiveFiltering = false;
+        _sampler = new ProcessSampler(_network);
+        View = new ListCollectionView(Groups) { Filter = Matches, IsLiveSorting = true };
         ApplySort();
 
         _timer = new DispatcherTimer { Interval = RefreshInterval };
         _timer.Tick += (_, _) => Refresh();
     }
 
-    public ObservableCollection<ProcessRowViewModel> Processes { get; } = new();
+    public ObservableCollection<ProcessGroup> Groups { get; } = new();
 
-    /// <summary>Vista ordenada y filtrada que muestra la lista.</summary>
+    /// <summary>Programas ordenados y filtrados.</summary>
     public ListCollectionView View { get; }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EndTaskCommand))]
     [NotifyCanExecuteChangedFor(nameof(EndTreeCommand))]
-    private ProcessRowViewModel? _selected;
+    private ProcessNode? _selected;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
 
-    /// <summary>Columna de orden: «Name», «Id», «Cpu» o «Memory».</summary>
+    /// <summary>Columna de orden: «Name», «Cpu», «Memory», «Disk» o «Network».</summary>
     [ObservableProperty]
     private string _sortColumn = "Cpu";
 
@@ -132,13 +278,79 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
     private string _nameArrow = string.Empty;
 
     [ObservableProperty]
-    private string _idArrow = string.Empty;
-
-    [ObservableProperty]
     private string _cpuArrow = string.Empty;
 
     [ObservableProperty]
     private string _memoryArrow = string.Empty;
+
+    [ObservableProperty]
+    private string _diskArrow = string.Empty;
+
+    [ObservableProperty]
+    private string _networkArrow = string.Empty;
+
+    // Totales del equipo para los encabezados, como el Administrador de tareas.
+    [ObservableProperty]
+    private string _cpuTotal = "—";
+
+    [ObservableProperty]
+    private string _memoryTotal = "—";
+
+    [ObservableProperty]
+    private string _diskTotal = "—";
+
+    [ObservableProperty]
+    private string _networkTotal = "—";
+
+    // Anchos de las columnas de valores; el nombre ocupa el resto. Los separadores
+    // del encabezado los cambian y todas las filas los siguen.
+    [ObservableProperty]
+    private GridLength _cpuWidth = new(96);
+
+    [ObservableProperty]
+    private GridLength _memoryWidth = new(116);
+
+    [ObservableProperty]
+    private GridLength _diskWidth = new(100);
+
+    [ObservableProperty]
+    private GridLength _networkWidth = new(96);
+
+    private Core.Configuration.AppConfig? _config;
+    private Action? _save;
+
+    /// <summary>Toma los anchos guardados y la forma de guardarlos.</summary>
+    public void Attach(Core.Configuration.AppConfig config, Action save)
+    {
+        _config = config;
+        List<double> widths = config.ProcessColumnWidths;
+        CpuWidth = new GridLength(widths[0]);
+        MemoryWidth = new GridLength(widths[1]);
+        DiskWidth = new GridLength(widths[2]);
+        NetworkWidth = new GridLength(widths[3]);
+        _save = save;
+    }
+
+    partial void OnCpuWidthChanged(GridLength value) => SaveWidths();
+
+    partial void OnMemoryWidthChanged(GridLength value) => SaveWidths();
+
+    partial void OnDiskWidthChanged(GridLength value) => SaveWidths();
+
+    partial void OnNetworkWidthChanged(GridLength value) => SaveWidths();
+
+    private void SaveWidths()
+    {
+        if (_config is null || _save is null)
+            return;
+
+        _config.ProcessColumnWidths = new List<double>
+        {
+            Math.Round(CpuWidth.Value), Math.Round(MemoryWidth.Value),
+            Math.Round(DiskWidth.Value), Math.Round(NetworkWidth.Value)
+        };
+        _save();
+    }
 
     [ObservableProperty]
     private string _summary = string.Empty;
@@ -146,7 +358,7 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _status = string.Empty;
 
-    /// <summary>La pestaña está a la vista: refresca; si no, no lee nada.</summary>
+    /// <summary>La pestaña está a la vista: mide y refresca; si no, no lee nada.</summary>
     public bool IsActive
     {
         get => _timer.IsEnabled;
@@ -157,16 +369,34 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
 
             if (value)
             {
+                _network.Start();
+
+                if (_network.IsRunning)
+                    AppLog.Info("Medición de red por proceso activa (ETW).");
+                else
+                    AppLog.Warn($"Sin medición de red por proceso: {_network.LastError}");
+
                 _timer.Start();
                 Refresh();
             }
             else
             {
                 _timer.Stop();
+                _network.Stop();
             }
 
             OnPropertyChanged();
         }
+    }
+
+    /// <summary>Totales del equipo que ya mide la ventana principal.</summary>
+    public void SetTotals(double? cpu, double? memory, double? disk, double? network)
+    {
+        CultureInfo culture = CultureInfo.CurrentCulture;
+        CpuTotal = cpu is { } c ? c.ToString("0", culture) + " %" : "—";
+        MemoryTotal = memory is { } m ? m.ToString("0", culture) + " %" : "—";
+        DiskTotal = disk is { } d ? d.ToString("0", culture) + " %" : "—";
+        NetworkTotal = network is { } n ? n.ToString("0", culture) + " %" : "—";
     }
 
     partial void OnSearchTextChanged(string value) => View.Refresh();
@@ -185,48 +415,59 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
             return;
         }
 
-        // CPU y memoria se miran de mayor a menor; nombre y PID, de menor a mayor.
-        SortDescending = column is "Cpu" or "Memory";
+        // Los consumos se miran de mayor a menor; el nombre, de la A a la Z.
+        SortDescending = column != "Name";
         SortColumn = column;
     }
 
     private void ApplySort()
     {
+        string arrow = SortDescending ? " ▾" : " ▴";
+        NameArrow = SortColumn == "Name" ? arrow : string.Empty;
+        CpuArrow = SortColumn == "Cpu" ? arrow : string.Empty;
+        MemoryArrow = SortColumn == "Memory" ? arrow : string.Empty;
+        DiskArrow = SortColumn == "Disk" ? arrow : string.Empty;
+        NetworkArrow = SortColumn == "Network" ? arrow : string.Empty;
+
+        Sort(View);
+
+        foreach (ProcessGroup group in Groups)
+            Sort(group.ChildrenView);
+    }
+
+    private void Sort(ListCollectionView view)
+    {
         string property = SortColumn switch
         {
-            "Name" => nameof(ProcessRowViewModel.Description),
-            "Id" => nameof(ProcessRowViewModel.Id),
-            "Memory" => nameof(ProcessRowViewModel.MemoryBytes),
-            _ => nameof(ProcessRowViewModel.CpuPercent)
+            "Name" => nameof(ProcessNode.Description),
+            "Memory" => nameof(ProcessNode.MemoryBytes),
+            "Disk" => nameof(ProcessNode.DiskBytes),
+            "Network" => nameof(ProcessNode.NetworkBytes),
+            _ => nameof(ProcessNode.CpuPercent)
         };
 
         var direction = SortDescending ? ListSortDirection.Descending : ListSortDirection.Ascending;
 
-        // Flecha junto al encabezado de la columna por la que se ordena.
-        string arrow = SortDescending ? " ▾" : " ▴";
-        NameArrow = SortColumn == "Name" ? arrow : string.Empty;
-        IdArrow = SortColumn == "Id" ? arrow : string.Empty;
-        CpuArrow = SortColumn == "Cpu" ? arrow : string.Empty;
-        MemoryArrow = SortColumn == "Memory" ? arrow : string.Empty;
-
-        using (View.DeferRefresh())
+        using (view.DeferRefresh())
         {
-            View.SortDescriptions.Clear();
-            View.SortDescriptions.Add(new SortDescription(property, direction));
-            View.LiveSortingProperties.Clear();
-            View.LiveSortingProperties.Add(property);
+            view.IsLiveSorting = true;
+            view.SortDescriptions.Clear();
+            view.SortDescriptions.Add(new SortDescription(property, direction));
+            view.LiveSortingProperties.Clear();
+            view.LiveSortingProperties.Add(property);
         }
     }
 
     private bool Matches(object item)
     {
-        if (item is not ProcessRowViewModel row || string.IsNullOrWhiteSpace(SearchText))
+        if (item is not ProcessGroup group || string.IsNullOrWhiteSpace(SearchText))
             return true;
 
         string text = SearchText.Trim();
-        return row.Name.Contains(text, StringComparison.OrdinalIgnoreCase)
-               || row.Description.Contains(text, StringComparison.OrdinalIgnoreCase)
-               || row.Id.ToString(CultureInfo.InvariantCulture).StartsWith(text, StringComparison.Ordinal);
+        return group.Name.Contains(text, StringComparison.OrdinalIgnoreCase)
+               || group.Description.Contains(text, StringComparison.OrdinalIgnoreCase)
+               || group.Children.Any(child =>
+                   child.Id.ToString(CultureInfo.InvariantCulture).StartsWith(text, StringComparison.Ordinal));
     }
 
     /// <summary>Lee los procesos en segundo plano y actualiza la lista sin recrearla.</summary>
@@ -243,11 +484,15 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
             IReadOnlyList<ProcessSample> samples = _sampler.Read();
 
             // Descripción e ícono se leen una vez por ejecutable y quedan en caché.
-            foreach (ProcessSample sample in samples)
-            {
-                if (sample.Path is { } path && !_fileInfo.ContainsKey(path))
-                    _fileInfo[path] = ReadFileInfo(path);
-            }
+            List<string> newPaths = samples
+                .Select(sample => sample.Path)
+                .OfType<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Where(path => !_fileInfo.ContainsKey(path))
+                .ToList();
+
+            if (newPaths.Count > 0)
+                ReadFileInfoOnStaThread(newPaths);
 
             return samples;
         }).ContinueWith(task => dispatcher.BeginInvoke(new Action(() =>
@@ -264,14 +509,16 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
     private void Apply(IReadOnlyList<ProcessSample> samples)
     {
         var seen = new HashSet<(int, long)>();
+        var touched = new HashSet<ProcessGroup>();
 
         foreach (ProcessSample sample in samples)
         {
             seen.Add(sample.Key);
 
-            if (_rows.TryGetValue(sample.Key, out ProcessRowViewModel? row))
+            if (_leaves.TryGetValue(sample.Key, out ProcessLeaf? leaf))
             {
-                row.Update(sample);
+                leaf.Update(sample);
+                touched.Add(_groups[GroupKey(sample)]);
                 continue;
             }
 
@@ -279,21 +526,52 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
                 ? info
                 : (string.Empty, null);
 
-            row = new ProcessRowViewModel(sample, description.Length > 0 ? description : sample.Name, icon);
-            _rows[sample.Key] = row;
-            Processes.Add(row);
+            string label = description.Length > 0 ? description : sample.Name;
+            leaf = new ProcessLeaf(sample, label, icon);
+            _leaves[sample.Key] = leaf;
+
+            string key = GroupKey(sample);
+
+            if (!_groups.TryGetValue(key, out ProcessGroup? group))
+            {
+                group = new ProcessGroup(key, label, sample.Name, icon);
+                _groups[key] = group;
+                Sort(group.ChildrenView);
+                Groups.Add(group);
+            }
+
+            group.Children.Add(leaf);
+            touched.Add(group);
         }
 
-        foreach ((int, long) key in _rows.Keys.Where(key => !seen.Contains(key)).ToList())
+        foreach ((int, long) key in _leaves.Keys.Where(key => !seen.Contains(key)).ToList())
         {
-            Processes.Remove(_rows[key]);
-            _rows.Remove(key);
+            ProcessLeaf leaf = _leaves[key];
+            _leaves.Remove(key);
+
+            if (_groups.TryGetValue(GroupKey(leaf.Sample), out ProcessGroup? group))
+            {
+                group.Children.Remove(leaf);
+                touched.Add(group);
+
+                if (group.Children.Count == 0)
+                {
+                    Groups.Remove(group);
+                    _groups.Remove(group.Key);
+                    touched.Remove(group);
+                }
+            }
         }
 
-        double cpu = samples.Sum(sample => sample.CpuPercent ?? 0);
-        long memory = samples.Sum(sample => sample.MemoryBytes);
-        Summary = Loc.F("processes.summary", samples.Count, Math.Min(cpu, 100), memory / (1024d * 1024d * 1024d));
+        foreach (ProcessGroup group in touched)
+            group.Recalculate();
+
+        Summary = Loc.F("processes.summary", samples.Count, Groups.Count);
     }
+
+    // Los procesos del mismo ejecutable forman un programa; los que no tienen
+    // ruta legible (procesos del sistema) se agrupan por nombre.
+    private static string GroupKey(ProcessSample sample) => sample.Path ?? "name:" + sample.Name;
 
     private bool CanEnd() => Selected is { IsProtected: false };
 
@@ -305,10 +583,22 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
 
     private void End(bool entireTree)
     {
-        if (Selected is not { } row)
+        if (Selected is not { } node)
             return;
 
-        string question = Loc.F(entireTree ? "processes.confirmTree" : "processes.confirm", row.Description, row.Id);
+        List<ProcessLeaf> targets = node switch
+        {
+            ProcessGroup group => group.Children.Where(child => !child.IsProtected).ToList(),
+            ProcessLeaf leaf => new List<ProcessLeaf> { leaf },
+            _ => new List<ProcessLeaf>()
+        };
+
+        if (targets.Count == 0)
+            return;
+
+        string question = targets.Count > 1
+            ? Loc.F(entireTree ? "processes.confirmGroupTree" : "processes.confirmGroup", node.Description, targets.Count)
+            : Loc.F(entireTree ? "processes.confirmTree" : "processes.confirm", node.Description, targets[0].Id);
 
         if (MessageBox.Show(question, "Ctrl Monitor", MessageBoxButton.YesNo, MessageBoxImage.Warning,
                 MessageBoxResult.No) != MessageBoxResult.Yes)
@@ -316,12 +606,17 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
             return;
         }
 
-        KillResult result = ProcessKiller.Kill(row.Id, row.StartTicks, row.Name, entireTree);
-        AppLog.Info($"Finalizar proceso {row.Name} ({row.Id}), árbol={entireTree}: {result}");
+        var results = targets.Select(target => ProcessKiller.Kill(target.Id, target.StartTicks, target.Name, entireTree)).ToList();
+        AppLog.Info($"Finalizar {node.Name} ({targets.Count} procesos), árbol={entireTree}: {string.Join(", ", results)}");
+
+        // Con varios procesos, «ya no estaba» es normal: al cerrar uno se cierran sus hijos.
+        KillResult result = results.Any(r => r == KillResult.Done)
+            ? KillResult.Done
+            : results.FirstOrDefault(r => r != KillResult.NotFound, KillResult.NotFound);
 
         Status = result switch
         {
-            KillResult.Done => Loc.F("processes.ended", row.Description),
+            KillResult.Done => Loc.F("processes.ended", node.Description),
             KillResult.NotFound => Loc.T("processes.notFound"),
             KillResult.Protected => Loc.T("processes.protected"),
             KillResult.AccessDenied => Loc.T("processes.accessDenied"),
@@ -331,11 +626,43 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
         Refresh();
     }
 
-    /// <summary>Vuelve a armar el resumen después de cambiar de idioma.</summary>
+    /// <summary>Vuelve a armar los textos después de cambiar de idioma.</summary>
     public void RefreshLanguage()
     {
-        if (_rows.Count > 0)
+        if (_leaves.Count > 0)
             Refresh();
+    }
+
+    /// <summary>
+    /// Lee descripciones e íconos en un hilo STA propio: SHGetFileInfo necesita
+    /// COM inicializado, y llamarlo desde un hilo común puede hacer que una
+    /// extensión del Explorador cierre la app sin dejar rastro.
+    /// </summary>
+    private void ReadFileInfoOnStaThread(List<string> paths)
+    {
+        var thread = new Thread(() =>
+        {
+            foreach (string path in paths)
+            {
+                try
+                {
+                    _fileInfo[path] = ReadFileInfo(path);
+                }
+                catch (Exception ex)
+                {
+                    _fileInfo[path] = (string.Empty, null);
+                    AppLog.Warn($"No se pudo leer el ícono de {path}: {ex.Message}");
+                }
+            }
+        })
+        {
+            IsBackground = true,
+            Name = "CtrlMonitor íconos"
+        };
+
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
     }
 
     private static (string Description, ImageSource? Icon) ReadFileInfo(string path)
@@ -354,7 +681,11 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
         return (description, ShellIcon.Small(path));
     }
 
-    public void Dispose() => _timer.Stop();
+    public void Dispose()
+    {
+        _timer.Stop();
+        _network.Dispose();
+    }
 }
 
 /// <summary>Ícono chico de un ejecutable, como lo muestra el Explorador.</summary>

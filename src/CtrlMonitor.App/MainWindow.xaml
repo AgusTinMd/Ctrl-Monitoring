@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:CtrlMonitor.App.Controls"
         xmlns:l="clr-namespace:CtrlMonitor.App.Localization"
+        xmlns:vm="clr-namespace:CtrlMonitor.App.ViewModels"
         Title="Ctrl Monitor"
         Width="1220" Height="820" MinWidth="620" MinHeight="460"
         WindowStartupLocation="CenterScreen"
@@ -1401,6 +1402,114 @@
         <!-- Procesos                                                     -->
         <!-- ============================================================ -->
         <TabItem Header="{l:Tr nav.processes}" Style="{StaticResource NavTabItem}">
+            <TabItem.Resources>
+                <!-- Fila de un programa o proceso: nombre y celdas con calor, como el
+                     Administrador de tareas. Las celdas ocupan todo el alto de la fila. -->
+                <DataTemplate x:Key="ProcessCells">
+                    <Grid Height="30">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="{Binding DataContext.Processes.CpuWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}" MinWidth="56" />
+                            <ColumnDefinition Width="{Binding DataContext.Processes.MemoryWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}" MinWidth="56" />
+                            <ColumnDefinition Width="{Binding DataContext.Processes.DiskWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}" MinWidth="56" />
+                            <ColumnDefinition Width="{Binding DataContext.Processes.NetworkWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=OneWay}" MinWidth="56" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" Margin="{Binding NameIndent}" VerticalAlignment="Center"
+                                    ToolTip="{Binding Details}">
+                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,9,0"
+                                   Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}}" />
+                            <TextBlock Text="{Binding Description}" FontSize="12.5" VerticalAlignment="Center"
+                                       Foreground="{StaticResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding CountText}" Style="{StaticResource MutedText}" VerticalAlignment="Center" />
+                            <TextBlock Text=" 🔒" FontSize="11" VerticalAlignment="Center"
+                                       ToolTip="{l:Tr processes.protectedTooltip}"
+                                       Visibility="{Binding IsProtected, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+                        <Border Grid.Column="1" Background="{Binding CpuHeat}" Padding="8,0">
+                    <TextBlock Text="{Binding CpuText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Border>
+                        <Border Grid.Column="2" Background="{Binding MemoryHeat}" Padding="8,0">
+                    <TextBlock Text="{Binding MemoryText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Border>
+                        <Border Grid.Column="3" Background="{Binding DiskHeat}" Padding="8,0">
+                    <TextBlock Text="{Binding DiskText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Border>
+                        <Border Grid.Column="4" Background="{Binding NetworkHeat}" Padding="8,0">
+                    <TextBlock Text="{Binding NetworkText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                </Border>
+                    </Grid>
+                </DataTemplate>
+
+                <!-- Programa: flecha para desplegar (si tiene varios procesos) y cantidad. -->
+                <HierarchicalDataTemplate DataType="{x:Type vm:ProcessGroup}" ItemsSource="{Binding ChildrenView}">
+                    <Grid>
+                        <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource ProcessCells}" Margin="22,0,0,0" />
+                        <ToggleButton IsChecked="{Binding IsExpanded, Mode=TwoWay}" Width="22" Height="30"
+                                      HorizontalAlignment="Left" Cursor="Hand" Focusable="False"
+                                      ToolTip="{l:Tr processes.expandTooltip}"
+                                      Visibility="{Binding HasChildren, Converter={StaticResource BoolToVis}}">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border Background="Transparent">
+                                        <Path x:Name="Arrow" Data="M0,0 L4,4 L0,8" Stroke="{StaticResource TextMutedBrush}"
+                                              StrokeThickness="1.6" Width="6" Height="10" Stretch="Uniform"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              RenderTransformOrigin="0.5,0.5" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="Arrow" Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <RotateTransform Angle="90" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
+                    </Grid>
+                </HierarchicalDataTemplate>
+
+                <!-- Proceso de un programa, sangrado bajo su programa. -->
+                <DataTemplate DataType="{x:Type vm:ProcessLeaf}">
+                    <ContentPresenter Content="{Binding}" ContentTemplate="{StaticResource ProcessCells}" Margin="22,0,0,0" />
+                </DataTemplate>
+
+                <!-- Filas sin la sangría ni el aspecto del TreeView de Windows. -->
+                <Style x:Key="ProcessTreeItem" TargetType="TreeViewItem">
+                    <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay, FallbackValue=False}" />
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TreeViewItem">
+                                <StackPanel>
+                                    <Border x:Name="Row" Background="Transparent" CornerRadius="4" Margin="0,0,0,1">
+                                        <ContentPresenter ContentSource="Header" />
+                                    </Border>
+                                    <ItemsPresenter x:Name="Children" Visibility="Collapsed" />
+                                </StackPanel>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsExpanded" Value="True">
+                                        <Setter TargetName="Children" Property="Visibility" Value="Visible" />
+                                    </Trigger>
+                                    <Trigger SourceName="Row" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Row" Property="Background" Value="{StaticResource CardHoverBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Row" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabItem.Resources>
+
             <!-- Sin ScrollViewer de página: la lista tiene su propio scroll. -->
             <Grid Margin="24,20,24,24">
                 <Grid.RowDefinitions>
@@ -1433,7 +1542,7 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Lista -->
+                <!-- Tabla -->
                 <Border Grid.Row="2" Style="{StaticResource Card}" Padding="8,6,8,8">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -1441,81 +1550,99 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <Grid Margin="8,0,24,4">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="30" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="90" />
-                                <ColumnDefinition Width="110" />
+                        <!-- Encabezados: total del equipo arriba y nombre de la columna abajo. -->
+                        <Grid Margin="0,0,18,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="{Binding DataContext.Processes.CpuWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}" MinWidth="56" />
+                                <ColumnDefinition Width="{Binding DataContext.Processes.MemoryWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}" MinWidth="56" />
+                                <ColumnDefinition Width="{Binding DataContext.Processes.DiskWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}" MinWidth="56" />
+                                <ColumnDefinition Width="{Binding DataContext.Processes.NetworkWidth, RelativeSource={RelativeSource AncestorType=Window}, Mode=TwoWay}" MinWidth="56" />
                             </Grid.ColumnDefinitions>
-                        <Button Grid.Column="1" Style="{StaticResource GhostButton}" Padding="6,4"
-                                HorizontalAlignment="Left" Command="{Binding Processes.SortByCommand}" CommandParameter="Name">
-                            <TextBlock Style="{StaticResource CaptionText}">
-                                <Run Text="{l:Tr processes.column.name}" /><Run Text="{Binding Processes.NameArrow, Mode=OneWay}" />
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="2" Style="{StaticResource GhostButton}" Padding="6,4"
-                                HorizontalAlignment="Right" Command="{Binding Processes.SortByCommand}" CommandParameter="Id">
-                            <TextBlock Style="{StaticResource CaptionText}">
-                                <Run Text="{l:Tr processes.column.pid}" /><Run Text="{Binding Processes.IdArrow, Mode=OneWay}" />
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="3" Style="{StaticResource GhostButton}" Padding="6,4"
-                                HorizontalAlignment="Right" Command="{Binding Processes.SortByCommand}" CommandParameter="Cpu">
-                            <TextBlock Style="{StaticResource CaptionText}">
-                                <Run Text="{l:Tr processes.column.cpu}" /><Run Text="{Binding Processes.CpuArrow, Mode=OneWay}" />
-                            </TextBlock>
-                        </Button>
-                        <Button Grid.Column="4" Style="{StaticResource GhostButton}" Padding="6,4"
-                                HorizontalAlignment="Right" Command="{Binding Processes.SortByCommand}" CommandParameter="Memory">
-                            <TextBlock Style="{StaticResource CaptionText}">
-                                <Run Text="{l:Tr processes.column.memory}" /><Run Text="{Binding Processes.MemoryArrow, Mode=OneWay}" />
-                            </TextBlock>
-                        </Button>
+                            <Button Style="{StaticResource GhostButton}" Padding="30,4,8,4"
+                                    HorizontalContentAlignment="Left" HorizontalAlignment="Stretch"
+                                    VerticalContentAlignment="Bottom"
+                                    Command="{Binding Processes.SortByCommand}" CommandParameter="Name">
+                                <TextBlock Style="{StaticResource CaptionText}" VerticalAlignment="Bottom">
+                                    <Run Text="{l:Tr processes.column.name}" /><Run Text="{Binding Processes.NameArrow, Mode=OneWay}" />
+                                </TextBlock>
+                            </Button>
+                            <!-- Separadores para cambiar el ancho de cada columna. -->
+                            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Left" Panel.ZIndex="1"
+                                          ResizeBehavior="PreviousAndCurrent" ResizeDirection="Columns"
+                                          Background="Transparent" Cursor="SizeWE" Focusable="False"
+                                          ToolTip="{l:Tr processes.resizeTooltip}" />
+                            <GridSplitter Grid.Column="2" Width="6" HorizontalAlignment="Left" Panel.ZIndex="1"
+                                          ResizeBehavior="PreviousAndCurrent" ResizeDirection="Columns"
+                                          Background="Transparent" Cursor="SizeWE" Focusable="False"
+                                          ToolTip="{l:Tr processes.resizeTooltip}" />
+                            <GridSplitter Grid.Column="3" Width="6" HorizontalAlignment="Left" Panel.ZIndex="1"
+                                          ResizeBehavior="PreviousAndCurrent" ResizeDirection="Columns"
+                                          Background="Transparent" Cursor="SizeWE" Focusable="False"
+                                          ToolTip="{l:Tr processes.resizeTooltip}" />
+                            <GridSplitter Grid.Column="4" Width="6" HorizontalAlignment="Left" Panel.ZIndex="1"
+                                          ResizeBehavior="PreviousAndCurrent" ResizeDirection="Columns"
+                                          Background="Transparent" Cursor="SizeWE" Focusable="False"
+                                          ToolTip="{l:Tr processes.resizeTooltip}" />
+                            <Button Grid.Column="1" Style="{StaticResource GhostButton}" Padding="8,4"
+                                    HorizontalContentAlignment="Right" HorizontalAlignment="Stretch"
+                                    Command="{Binding Processes.SortByCommand}" CommandParameter="Cpu">
+                                <StackPanel HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding Processes.CpuTotal}" FontSize="17" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                                    <TextBlock Style="{StaticResource CaptionText}" HorizontalAlignment="Right">
+                                        <Run Text="{l:Tr processes.column.cpu}" /><Run Text="{Binding Processes.CpuArrow, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" Style="{StaticResource GhostButton}" Padding="8,4"
+                                    HorizontalContentAlignment="Right" HorizontalAlignment="Stretch"
+                                    Command="{Binding Processes.SortByCommand}" CommandParameter="Memory">
+                                <StackPanel HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding Processes.MemoryTotal}" FontSize="17" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                                    <TextBlock Style="{StaticResource CaptionText}" HorizontalAlignment="Right">
+                                        <Run Text="{l:Tr processes.column.memory}" /><Run Text="{Binding Processes.MemoryArrow, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="3" Style="{StaticResource GhostButton}" Padding="8,4"
+                                    HorizontalContentAlignment="Right" HorizontalAlignment="Stretch"
+                                    Command="{Binding Processes.SortByCommand}" CommandParameter="Disk">
+                                <StackPanel HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding Processes.DiskTotal}" FontSize="17" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                                    <TextBlock Style="{StaticResource CaptionText}" HorizontalAlignment="Right">
+                                        <Run Text="{l:Tr processes.column.disk}" /><Run Text="{Binding Processes.DiskArrow, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="4" Style="{StaticResource GhostButton}" Padding="8,4"
+                                    HorizontalContentAlignment="Right" HorizontalAlignment="Stretch"
+                                    Command="{Binding Processes.SortByCommand}" CommandParameter="Network">
+                                <StackPanel HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding Processes.NetworkTotal}" FontSize="17" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                                    <TextBlock Style="{StaticResource CaptionText}" HorizontalAlignment="Right">
+                                        <Run Text="{l:Tr processes.column.network}" /><Run Text="{Binding Processes.NetworkArrow, Mode=OneWay}" />
+                                    </TextBlock>
+                                </StackPanel>
+                            </Button>
                         </Grid>
 
-                        <ListBox Grid.Row="1" ItemsSource="{Binding Processes.View}"
-                                 SelectedItem="{Binding Processes.Selected, Mode=TwoWay}"
-                                 ItemContainerStyle="{StaticResource ChartListItem}"
-                                 Background="Transparent" BorderThickness="0" Padding="0"
-                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 VirtualizingPanel.IsVirtualizing="True"
-                                 VirtualizingPanel.VirtualizationMode="Recycling"
-                                 VirtualizingPanel.ScrollUnit="Pixel">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,-3">
-                                        <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="30" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="80" />
-                                <ColumnDefinition Width="90" />
-                                <ColumnDefinition Width="110" />
-                            </Grid.ColumnDefinitions>
-                                        <Image Source="{Binding Icon}" Width="16" Height="16" VerticalAlignment="Center"
-                                               HorizontalAlignment="Left"
-                                               Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}}" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                            <TextBlock Text="{Binding Description}" FontSize="12.5"
-                                                       Foreground="{StaticResource TextPrimaryBrush}"
-                                                       TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" />
-                                            <TextBlock Text="{Binding Name, StringFormat={}  {0}}" Style="{StaticResource MutedText}"
-                                                       VerticalAlignment="Center" />
-                                            <TextBlock Text=" 🔒" FontSize="11" VerticalAlignment="Center"
-                                                       ToolTip="{l:Tr processes.protectedTooltip}"
-                                                       Visibility="{Binding IsProtected, Converter={StaticResource BoolToVis}}" />
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="2" Text="{Binding Id}" Style="{StaticResource MutedText}"
-                                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                        <TextBlock Grid.Column="3" Text="{Binding CpuText}" Style="{StaticResource SecondaryText}"
-                                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                        <TextBlock Grid.Column="4" Text="{Binding MemoryText}" Style="{StaticResource SecondaryText}"
-                                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                        <TreeView Grid.Row="1" ItemsSource="{Binding Processes.View}"
+                                  ItemContainerStyle="{StaticResource ProcessTreeItem}"
+                                  SelectedItemChanged="ProcessTree_SelectedItemChanged"
+                                  Background="Transparent" BorderThickness="0" Padding="0"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                  VirtualizingPanel.IsVirtualizing="True"
+                                  VirtualizingPanel.VirtualizationMode="Recycling"
+                                  VirtualizingPanel.ScrollUnit="Pixel">
+                            <TreeView.Resources>
+                                <!-- Los procesos dentro de un programa usan el mismo estilo de fila. -->
+                                <Style TargetType="TreeViewItem" BasedOn="{StaticResource ProcessTreeItem}" />
+                            </TreeView.Resources>
+                        </TreeView>
                     </Grid>
                 </Border>
 
