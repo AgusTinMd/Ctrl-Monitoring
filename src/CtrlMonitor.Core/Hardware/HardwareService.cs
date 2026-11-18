@@ -35,6 +35,9 @@ public sealed partial class HardwareService : IDisposable
 
     public string MotherboardName { get; private set; } = "Placa madre";
 
+    /// <summary>Texto donde buscar la marca: placa y datos del equipo, sin textos de relleno.</summary>
+    public string MotherboardBrandText { get; private set; } = string.Empty;
+
     public string CpuName { get; private set; } = "CPU";
 
     public string GpuName { get; private set; } = "GPU";
@@ -176,6 +179,22 @@ public sealed partial class HardwareService : IDisposable
 
         MotherboardName = all.FirstOrDefault(h => h.HardwareType == HardwareType.Motherboard)?.Name
                           ?? "Placa madre";
+
+        // Muchas notebooks informan «Notebook» o «To Be Filled By O.E.M.» como placa;
+        // la marca real queda en el fabricante y modelo del equipo.
+        SystemIdentity identity;
+
+        try
+        {
+            identity = SystemIdentityReader.Read();
+        }
+        catch (Exception)
+        {
+            identity = SystemIdentity.Empty;
+        }
+
+        MotherboardBrandText = BoardIdentity.BrandText(MotherboardName, identity);
+        MotherboardName = BoardIdentity.DisplayName(MotherboardName, identity);
 
         CpuName = all.FirstOrDefault(h => h.HardwareType == HardwareType.Cpu)?.Name
                  ?? "CPU";

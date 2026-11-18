@@ -67,6 +67,13 @@ public static class BoardBrands
         (new HardwareBrand("HP", "hp.png"), new[] { "HP", "Hewlett-Packard" }),
         (new HardwareBrand("Lenovo", "lenovo.png"), new[] { "Lenovo" }),
         (new HardwareBrand("Acer", "acer.png"), new[] { "Acer" }),
+        // Marcas argentinas de notebooks: suelen usar placas genéricas, así que
+        // la marca aparece en los datos del equipo y no en el nombre de la placa.
+        (new HardwareBrand("ENOVA", null), new[] { "Enova" }),
+        (new HardwareBrand("Positivo BGH", null), new[] { "Positivo", "BGH" }),
+        (new HardwareBrand("Bangho", null), new[] { "Bangho" }),
+        (new HardwareBrand("EXO", null), new[] { "EXO", "Exomate" }),
+        (new HardwareBrand("Noblex", null), new[] { "Noblex" }),
         (new HardwareBrand("Intel", "intel.png"), new[] { "Intel" }));
 
     /// <summary>
