@@ -113,6 +113,11 @@ public partial class MainWindow : Window
         if (sender is not FrameworkElement card || card.DataContext is not ChartPanelViewModel panel)
             return;
 
+        // En la vista de lista el clic también elige la métrica: el evento se
+        // marca como manejado y el ListBox ya no se entera.
+        if (_viewModel.ChartListItems.Contains(panel))
+            _viewModel.SelectedChartListItem = panel;
+
         _dragCandidate = panel;
         _dragStart = e.GetPosition(this);
         _grabOffset = e.GetPosition(card);
@@ -229,7 +234,13 @@ public partial class MainWindow : Window
 
         // Las celdas del UniformGrid miden lo mismo, así que al intercambiar
         // posiciones la tarjeta arrastrada queda bajo el cursor y no oscila.
-        if (!ReferenceEquals(dragged, target))
+        if (ReferenceEquals(dragged, target))
+            return;
+
+        // Tarjetas y lista tienen colecciones separadas; solo se reordena dentro de la misma.
+        if (_viewModel.ChartListItems.Contains(dragged) && _viewModel.ChartListItems.Contains(target))
+            _viewModel.MoveChartListItem(dragged, _viewModel.ChartListItems.IndexOf(target));
+        else if (_viewModel.ChartPanels.Contains(dragged) && _viewModel.ChartPanels.Contains(target))
             _viewModel.MoveChartPanel(dragged, _viewModel.ChartPanels.IndexOf(target));
     }
 
