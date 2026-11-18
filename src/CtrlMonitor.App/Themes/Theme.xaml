@@ -38,6 +38,9 @@
     <SolidColorBrush x:Key="ChartVramBrush" Color="#F472B6" />
     <SolidColorBrush x:Key="ChartNetDownBrush" Color="#22D3EE" />
     <SolidColorBrush x:Key="ChartNetUpBrush" Color="#FB923C" />
+    <SolidColorBrush x:Key="ChartDiskReadBrush" Color="#4ADE80" />
+    <SolidColorBrush x:Key="ChartDiskWriteBrush" Color="#FACC15" />
+    <SolidColorBrush x:Key="ChartDiskActiveBrush" Color="#334ADE80" />
 
     <FontFamily x:Key="AppFont">Segoe UI Variable Text, Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
