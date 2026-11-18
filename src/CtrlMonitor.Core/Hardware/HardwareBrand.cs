@@ -97,7 +97,7 @@ public static class CpuBrands
 public static class DiskBrands
 {
     private static readonly HardwareBrand Seagate = new("Seagate", "seagate.png");
-    private static readonly HardwareBrand Crucial = new("Crucial", null);
+    private static readonly HardwareBrand Crucial = new("Crucial", "crucial.png");
 
     private static readonly BrandMatcher Matcher = new(
         (new HardwareBrand("Western Digital", "wd.png"), new[] { "WDC", "WD", "Western Digital", "WD_BLACK", "WD Blue", "WD Green" }),

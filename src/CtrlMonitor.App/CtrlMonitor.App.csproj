@@ -43,6 +43,7 @@
     <Resource Include="Assets\sandisk.png" />
     <Resource Include="Assets\kingston.png" />
     <Resource Include="Assets\micron.png" />
+    <Resource Include="Assets\crucial.png" />
   </ItemGroup>
 
 </Project>

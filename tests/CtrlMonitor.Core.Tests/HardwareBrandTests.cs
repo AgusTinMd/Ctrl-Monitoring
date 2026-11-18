@@ -79,7 +79,7 @@ public class HardwareBrandTests
     [InlineData("TOSHIBA DT01ACA100", "Toshiba", "toshiba.png")]
     [InlineData("SanDisk SDSSDA240G", "SanDisk", "sandisk.png")]
     [InlineData("KINGSTON SNV2S500G", "Kingston", "kingston.png")]
-    [InlineData("CT500MX500SSD1", "Crucial", null)]
+    [InlineData("CT500MX500SSD1", "Crucial", "crucial.png")]
     public void Disk_KnownBrands(string model, string name, string? logo)
     {
         HardwareBrand? brand = DiskBrands.Detect(model);
