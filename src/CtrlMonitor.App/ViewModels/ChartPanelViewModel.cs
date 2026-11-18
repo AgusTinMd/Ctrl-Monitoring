@@ -236,6 +236,25 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         QuaternaryValue = metric.Quaternary is null
             ? string.Empty
             : Format(metric.Quaternary(_owner), metric.QuaternaryFormat);
+
+        Summary = BuildSummary();
+    }
+
+    /// <summary>Resumen de una línea para la vista de lista: «12 %  45,0 °C · 4,04 GHz».</summary>
+    [ObservableProperty]
+    private string _summary = string.Empty;
+
+    private string BuildSummary()
+    {
+        string text = PrimaryValue + PrimaryUnit;
+
+        if (HasSecondary)
+            text += "   " + SecondaryValue + SecondaryUnit;
+
+        if (HasQuaternary)
+            text += " · " + QuaternaryValue + QuaternaryUnit;
+
+        return text;
     }
 
     /// <summary>Vuelve a tomar los textos de la métrica después de cambiar de idioma.</summary>

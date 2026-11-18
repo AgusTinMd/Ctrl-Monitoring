@@ -135,12 +135,48 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             _availableChartMetrics = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasAvailableChartMetrics));
+            OnPropertyChanged(nameof(CanAddChartPanel));
         }
     }
 
     public bool HasAvailableChartMetrics => AvailableChartMetrics.Count > 0;
 
     public bool IsChartPanelsEmpty => ChartPanels.Count == 0;
+
+    /// <summary>Una entrada por métrica para la vista de lista, como el Administrador de tareas.</summary>
+    public ObservableCollection<ChartPanelViewModel> ChartListItems { get; } = new();
+
+    [ObservableProperty]
+    private ChartPanelViewModel? _selectedChartListItem;
+
+    /// <summary>La sección de gráficos se muestra como lista con un gráfico grande.</summary>
+    public bool IsChartListView
+    {
+        get => _config.ChartListView;
+        set
+        {
+            if (_config.ChartListView == value)
+                return;
+
+            _config.ChartListView = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsChartCardView));
+            OnPropertyChanged(nameof(CanAddChartPanel));
+            OnPropertyChanged(nameof(ShowChartPanelsEmpty));
+            SaveSoon();
+        }
+    }
+
+    public bool IsChartCardView
+    {
+        get => !IsChartListView;
+        set => IsChartListView = !value;
+    }
+
+    /// <summary>El selector para agregar tarjetas solo tiene sentido en la vista de tarjetas.</summary>
+    public bool CanAddChartPanel => IsChartCardView && HasAvailableChartMetrics;
+
+    public bool ShowChartPanelsEmpty => IsChartCardView && IsChartPanelsEmpty;
 
     [ObservableProperty]
     private ChartMetric? _newChartMetric;
@@ -559,6 +595,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (ChartPanelViewModel panel in ChartPanels)
             panel.RefreshLanguage();
 
+        foreach (ChartPanelViewModel item in ChartListItems)
+            item.RefreshLanguage();
+
         foreach (FanViewModel fan in Fans)
             fan.RefreshLanguage();
 
@@ -769,6 +808,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         _chartsInitialized = true;
         RefreshAvailableChartMetrics();
+        SyncChartListItems();
     }
 
     private void AddChartPanelCore(ChartMetric metric, int? index = null)
@@ -820,12 +860,31 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NewChartMetric = available.FirstOrDefault();
 
         OnPropertyChanged(nameof(IsChartPanelsEmpty));
+        OnPropertyChanged(nameof(ShowChartPanelsEmpty));
+    }
+
+    /// <summary>Agrega a la vista de lista las métricas nuevas (por ejemplo, discos recién detectados).</summary>
+    private void SyncChartListItems()
+    {
+        foreach (ChartMetric metric in AllChartMetrics)
+        {
+            if (ChartListItems.Any(item => item.SelectedMetric == metric))
+                continue;
+
+            ChartListItems.Add(new ChartPanelViewModel(this, AllChartMetrics, metric));
+        }
+
+        SelectedChartListItem ??= ChartListItems.FirstOrDefault();
     }
 
     private void RefreshChartPanels()
     {
         foreach (ChartPanelViewModel panel in ChartPanels)
             panel.Refresh();
+
+        // En la vista de lista se actualizan todas: cada entrada tiene su mini gráfico y su resumen.
+        foreach (ChartPanelViewModel item in ChartListItems)
+            item.Refresh();
     }
 
     private void UpdateMemory()
@@ -920,6 +979,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
 
         RefreshAvailableChartMetrics();
+        SyncChartListItems();
     }
 
     private void UpdateNetwork()

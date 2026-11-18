@@ -26,6 +26,12 @@ public sealed class AppConfig
     public List<string> ChartMetrics { get; set; } = new() { "Cpu", "Gpu", "Ram" };
 
     /// <summary>
+    /// Vista del modo gráfico: tarjetas (false) o lista con un gráfico grande,
+    /// al estilo del Administrador de tareas (true).
+    /// </summary>
+    public bool ChartListView { get; set; }
+
+    /// <summary>
     /// Idioma de la interfaz: «auto» (el de Windows) o «es», «en», «pt-BR».
     /// </summary>
     public string Language { get; set; } = AppLanguage.Auto;

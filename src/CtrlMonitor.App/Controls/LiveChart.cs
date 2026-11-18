@@ -97,6 +97,22 @@ public sealed class LiveChart : FrameworkElement
         typeof(LiveChart),
         new FrameworkPropertyMetadata("°", FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty CompactProperty = DependencyProperty.Register(
+        nameof(Compact),
+        typeof(bool),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    /// <summary>
+    /// Mini gráfico para la vista de lista: ocupa todo el control, sin grilla,
+    /// ejes ni textos.
+    /// </summary>
+    public bool Compact
+    {
+        get => (bool)GetValue(CompactProperty);
+        set => SetValue(CompactProperty, value);
+    }
+
     public IEnumerable? Samples
     {
         get => (IEnumerable?)GetValue(SamplesProperty);
@@ -185,6 +201,12 @@ public sealed class LiveChart : FrameworkElement
         double width = ActualWidth;
         double height = ActualHeight;
 
+        if (Compact)
+        {
+            RenderCompact(dc, width, height);
+            return;
+        }
+
         if (width < 120 || height < 100)
             return;
 
@@ -262,6 +284,38 @@ public sealed class LiveChart : FrameworkElement
 
         foreach (ChartSeries item in lineSeries)
             DrawSeries(dc, samples, item.Selector, item.Brush, plot, start, end, min, max);
+
+        dc.Pop();
+    }
+
+    private void RenderCompact(DrawingContext dc, double width, double height)
+    {
+        if (width < 8 || height < 8)
+            return;
+
+        var plot = new Rect(1, 2, width - 2, height - 4);
+        double windowMinutes = Math.Clamp(WindowMinutes, 0.5, 60);
+        var samples = Samples?.OfType<ChartSample>().ToList() ?? new List<ChartSample>();
+
+        if (samples.Count == 0)
+            return;
+
+        DateTime end = samples[^1].TimestampUtc;
+        DateTime start = end - TimeSpan.FromMinutes(windowMinutes);
+        List<ChartSeries> series = GetActiveSeries();
+        var lineSeries = series.Where(item => !item.PercentArea).ToList();
+
+        (double min, double max) = AutoScale
+            ? GetAutoScaleRange(samples, lineSeries, start)
+            : (Math.Min(AxisMin, AxisMax - 1), Math.Max(AxisMax, AxisMin + 1));
+
+        dc.PushClip(new RectangleGeometry(new Rect(0, 0, width, height)));
+
+        foreach (ChartSeries item in series.Where(item => item.PercentArea))
+            DrawPercentArea(dc, samples, item.Selector, item.Brush, plot, start, end);
+
+        foreach (ChartSeries item in lineSeries)
+            DrawSeries(dc, samples, item.Selector, item.Brush, plot, start, end, min, max, compact: true);
 
         dc.Pop();
     }
@@ -483,7 +537,8 @@ public sealed class LiveChart : FrameworkElement
         DateTime start,
         DateTime end,
         double min,
-        double max)
+        double max,
+        bool compact = false)
     {
         double totalSeconds = Math.Max(1, (end - start).TotalSeconds);
         var geometry = new StreamGeometry();
@@ -528,7 +583,7 @@ public sealed class LiveChart : FrameworkElement
         if (geometry.CanFreeze)
             geometry.Freeze();
 
-        var pen = new Pen(brush, 1.8)
+        var pen = new Pen(brush, compact ? 1.2 : 1.8)
         {
             LineJoin = PenLineJoin.Round,
             StartLineCap = PenLineCap.Round,
@@ -539,6 +594,10 @@ public sealed class LiveChart : FrameworkElement
             pen.Freeze();
 
         dc.DrawGeometry(null, pen, geometry);
+
+        // El punto final ayuda a leer el valor actual; en el mini gráfico molesta.
+        if (compact)
+            return;
 
         for (int i = samples.Count - 1; i >= 0; i--)
         {

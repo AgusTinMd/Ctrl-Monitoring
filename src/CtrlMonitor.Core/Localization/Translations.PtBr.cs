@@ -47,6 +47,8 @@ public static partial class Translations
         ["chart.title"] = "Gráficos",
         ["chart.subtitle"] = "Escolha qual métrica cada gráfico mostra; a escala se ajusta sozinha.",
         ["chart.clear"] = "Limpar",
+        ["chart.view.cards"] = "Cartões",
+        ["chart.view.list"] = "Lista",
         ["chart.add"] = "Adicionar",
         ["chart.addTooltip"] = "Escolha a métrica do gráfico que você quer adicionar",
         ["chart.hint"] = "Os últimos 10 minutos ficam na memória. Use o seletor de cada cartão para mudar a métrica e arraste os cartões para reordená-los; a escala vertical se ajusta à série.",
