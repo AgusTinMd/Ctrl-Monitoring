@@ -95,6 +95,12 @@ public sealed class ChartMetric : INotifyPropertyChanged
 
     public Brush? QuaternaryBrush { get; init; }
 
+    /// <summary>Clave del texto a la izquierda del valor secundario; por ejemplo, «Lectura».</summary>
+    public string SecondaryInlineKey { get; init; } = string.Empty;
+
+    /// <summary>Clave del texto a la izquierda del cuarto valor; por ejemplo, «Escritura».</summary>
+    public string QuaternaryInlineKey { get; init; } = string.Empty;
+
     public override string ToString() => Title;
 }
 
@@ -189,6 +195,12 @@ public sealed partial class ChartPanelViewModel : ObservableObject
     private bool _hasQuaternary;
 
     [ObservableProperty]
+    private string _secondaryInline = string.Empty;
+
+    [ObservableProperty]
+    private string _quaternaryInline = string.Empty;
+
+    [ObservableProperty]
     private bool _hasSecondary;
 
     [ObservableProperty]
@@ -252,6 +264,8 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         QuaternaryUnit = metric.QuaternaryUnit;
         QuaternaryValueBrush = metric.QuaternaryBrush ?? UiBrushes.TextSecondary;
         HasQuaternary = metric.Quaternary is not null;
+        SecondaryInline = metric.SecondaryInlineKey.Length == 0 ? string.Empty : Loc.T(metric.SecondaryInlineKey);
+        QuaternaryInline = metric.QuaternaryInlineKey.Length == 0 ? string.Empty : Loc.T(metric.QuaternaryInlineKey);
 
         Refresh();
     }
@@ -499,6 +513,8 @@ internal static class ChartMetrics
             SecondaryFormat = "0.0",
             SecondaryUnit = " MB/s",
             SecondaryBrush = UiBrushes.ChartDiskRead,
+            SecondaryInlineKey = "metric.label.read",
+            QuaternaryInlineKey = "metric.label.write",
             Quaternary = vm => vm.GetDisk(diskId)?.WriteMegaBytesPerSecond,
             QuaternaryFormat = "0.0",
             QuaternaryUnit = " MB/s",
