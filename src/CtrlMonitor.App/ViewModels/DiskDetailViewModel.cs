@@ -38,6 +38,13 @@ public sealed partial class DiskDetailViewModel : ObservableObject
 
     public int Number { get; }
 
+    /// <summary>
+    /// La ficha muestra sus datos; contraída queda el encabezado con el resumen de
+    /// espacio. Arranca contraída para ver todos los discos de un vistazo.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isExpanded;
+
     public ObservableCollection<DiskStatViewModel> Stats { get; } = new();
 
     public ObservableCollection<string> Issues { get; } = new();
@@ -53,13 +60,50 @@ public sealed partial class DiskDetailViewModel : ObservableObject
     /// <summary>Reemplaza las unidades del disco (se leen al entrar a la sección).</summary>
     public void SetVolumes(IEnumerable<VolumeUsage> volumes)
     {
+        List<VolumeUsage> list = volumes.ToList();
         Volumes.Clear();
 
-        foreach (VolumeUsage volume in volumes)
+        foreach (VolumeUsage volume in list)
             Volumes.Add(new VolumeViewModel(volume));
 
         HasVolumes = Volumes.Count > 0;
+
+        // Resumen de todas las unidades del disco para la ficha contraída.
+        long total = list.Sum(volume => volume.TotalBytes);
+        long used = list.Sum(volume => volume.UsedBytes);
+        _spaceUsedPercent = total > 0 ? Math.Clamp(used * 100d / total, 0, 100) : null;
+        ApplySpaceSummary();
     }
+
+    private double? _spaceUsedPercent;
+
+    [ObservableProperty]
+    private double _spaceUsedPercentValue;
+
+    [ObservableProperty]
+    private string _spaceSummary = string.Empty;
+
+    [ObservableProperty]
+    private Brush _spaceBrush = UiBrushes.Accent;
+
+    [ObservableProperty]
+    private bool _hasSpaceSummary;
+
+    private void ApplySpaceSummary()
+    {
+        HasSpaceSummary = _spaceUsedPercent is not null;
+
+        if (_spaceUsedPercent is not { } usedPercent)
+            return;
+
+        SpaceUsedPercentValue = usedPercent;
+        SpaceSummary = Loc.F("disks.spaceSummary", usedPercent, 100 - usedPercent);
+        SpaceBrush = usedPercent >= 90 ? UiBrushes.Warning : UiBrushes.Accent;
+    }
+
+    /// <summary>Tipo de disco para el ícono: «Hdd», «SataSsd» o «NvmeSsd».</summary>
+    [ObservableProperty]
+    private string _kind = "Hdd";
 
     [ObservableProperty]
     private string _title = string.Empty;
@@ -122,6 +166,7 @@ public sealed partial class DiskDetailViewModel : ObservableObject
     public void RefreshLanguage()
     {
         Apply();
+        ApplySpaceSummary();
 
         foreach (VolumeViewModel volume in Volumes)
             volume.RefreshLanguage();
@@ -143,6 +188,8 @@ public sealed partial class DiskDetailViewModel : ObservableObject
         HasLogo = LogoUri is not null;
         BrandText = brand is { LogoFile: null } ? brand.Name.ToUpperInvariant() : null;
         HasBrandText = BrandText is not null;
+        Kind = smart.IsNvme ? "NvmeSsd" : smart.IsSsd ? "SataSsd" : "Hdd";
+
         Subtitle = string.Join(" · ", new[]
         {
             string.Join(" ", new[] { smart.IsSsd ? "SSD" : "HDD", smart.Interface }.Where(part => part.Length > 0)),
