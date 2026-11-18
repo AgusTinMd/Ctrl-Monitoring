@@ -665,6 +665,58 @@
         </Setter>
     </Style>
 
+    <!-- ===================== Expander ===================== -->
+    <!-- Desplegable simple para el tema oscuro: flecha y texto, sin bordes. -->
+    <Style TargetType="Expander">
+        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Expander">
+                    <StackPanel>
+                        <ToggleButton IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                      Cursor="Hand" FocusVisualStyle="{x:Null}" HorizontalAlignment="Left">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                                        <Path x:Name="Arrow" Data="M0,0 L4,4 L0,8" Stroke="{StaticResource TextMutedBrush}"
+                                              StrokeThickness="1.6" Width="8" Height="8" Stretch="Uniform"
+                                              VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                            <Path.RenderTransform>
+                                                <RotateTransform x:Name="ArrowRotation" Angle="0" />
+                                            </Path.RenderTransform>
+                                        </Path>
+                                        <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="Arrow" Property="RenderTransform">
+                                                <Setter.Value>
+                                                    <RotateTransform Angle="90" />
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Arrow" Property="Stroke" Value="{StaticResource TextPrimaryBrush}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                            <TextBlock Text="{Binding Header, RelativeSource={RelativeSource AncestorType=Expander}}"
+                                       FontSize="12.5" FontWeight="SemiBold"
+                                       Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Expander}}" />
+                        </ToggleButton>
+                        <ContentPresenter x:Name="Body" Visibility="Collapsed" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="Body" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ===================== ProgressBar / medidor ===================== -->
     <Style x:Key="MeterBar" TargetType="ProgressBar">
         <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
