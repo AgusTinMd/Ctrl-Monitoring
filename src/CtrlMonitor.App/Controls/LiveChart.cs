@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using CtrlMonitor.App.Models;
+using CtrlMonitor.App.ViewModels;
+using CtrlMonitor.Core.Inventory;
 using CtrlMonitor.Core.Charting;
 using CtrlMonitor.Core.Localization;
 
@@ -269,6 +271,17 @@ public sealed class LiveChart : FrameworkElement
         var result = new List<ChartSeries>(5);
         string series = Series?.Trim() ?? string.Empty;
 
+        // Cada disco tiene su serie: «Disk:2 C:». Va antes del switch porque
+        // el identificador del disco distingue mayúsculas.
+        if (series.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            string diskId = series[ChartMetrics.DiskKeyPrefix.Length..];
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.ActivePercent, Resource("ChartDiskActiveBrush", Brushes.DarkGreen), PercentArea: true));
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.ReadMegaBytesPerSecond, Resource("ChartDiskReadBrush", Brushes.LimeGreen)));
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.WriteMegaBytesPerSecond, Resource("ChartDiskWriteBrush", Brushes.Gold)));
+            return result;
+        }
+
         if (series.Length > 0)
         {
             switch (series.ToLowerInvariant())
@@ -300,11 +313,6 @@ public sealed class LiveChart : FrameworkElement
                 case "network":
                     result.Add(new ChartSeries(s => s.NetDownMbs, Resource("ChartNetDownBrush", Brushes.DeepSkyBlue)));
                     result.Add(new ChartSeries(s => s.NetUpMbs, Resource("ChartNetUpBrush", Brushes.Orange)));
-                    break;
-                case "disk":
-                    result.Add(new ChartSeries(s => s.DiskActive, Resource("ChartDiskActiveBrush", Brushes.DarkGreen), PercentArea: true));
-                    result.Add(new ChartSeries(s => s.DiskReadMbs, Resource("ChartDiskReadBrush", Brushes.LimeGreen)));
-                    result.Add(new ChartSeries(s => s.DiskWriteMbs, Resource("ChartDiskWriteBrush", Brushes.Gold)));
                     break;
             }
 
@@ -611,6 +619,9 @@ public sealed class LiveChart : FrameworkElement
 
         return new Point(x, y);
     }
+
+    private static DiskActivity? Disk(ChartSample sample, string diskId) =>
+        sample.Disks is { } disks && disks.TryGetValue(diskId, out DiskActivity? disk) ? disk : null;
 
     private Brush Resource(string key, Brush fallback) =>
         TryFindResource(key) as Brush ?? fallback;

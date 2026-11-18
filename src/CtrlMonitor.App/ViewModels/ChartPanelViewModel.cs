@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CtrlMonitor.Core.Inventory;
 using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.ViewModels;
@@ -31,7 +32,10 @@ public sealed class ChartMetric : INotifyPropertyChanged
     /// <summary>Clave de la descripción breve bajo el selector.</summary>
     public required string SubtitleKey { get; init; }
 
-    public string Title => Loc.T(TitleKey);
+    /// <summary>Título armado en el momento; por ejemplo, «Disco 2 (C:)».</summary>
+    public Func<string>? TitleSelector { get; init; }
+
+    public string Title => TitleSelector?.Invoke() ?? Loc.T(TitleKey);
 
     public string Subtitle => Loc.T(SubtitleKey);
 
@@ -109,12 +113,14 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         ChartMetric selected)
     {
         _owner = owner;
-        Options = options;
+        _options = options;
         _selectedMetric = selected;
         ApplyMetric();
     }
 
-    public IReadOnlyList<ChartMetric> Options { get; }
+    /// <summary>Métricas del selector; cambia cuando se detectan los discos.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<ChartMetric> _options;
 
     [ObservableProperty]
     private ChartMetric _selectedMetric;
@@ -453,33 +459,58 @@ internal static class ChartMetrics
         SecondaryBrush = UiBrushes.ChartNetUp
     };
 
-    public static ChartMetric Disk { get; } = new()
-    {
-        Key = "Disk",
-        TitleKey = "metric.disk.title",
-        SubtitleKey = "metric.disk.subtitle",
-        Color = UiBrushes.ChartDiskRead,
-        AxisUnit = " MB/s",
-        AxisMin = 0,
-        // Techo para un NVMe rápido; la escala automática lo ajusta al tráfico real.
-        AxisMax = 8000,
-        AxisStep = 1,
-        Primary = vm => vm.DiskActivePercent,
-        PrimaryFormat = "0",
-        PrimaryUnit = " %",
-        PrimaryLabelKey = "metric.label.active",
-        SecondaryLabelKey = "metric.label.readWrite",
-        Secondary = vm => vm.DiskReadMbs,
-        SecondaryFormat = "0.0",
-        SecondaryUnit = " MB/s",
-        SecondaryBrush = UiBrushes.ChartDiskRead,
-        Quaternary = vm => vm.DiskWriteMbs,
-        QuaternaryFormat = "0.0",
-        QuaternaryUnit = " MB/s",
-        QuaternaryBrush = UiBrushes.ChartDiskWrite
-    };
+    private static readonly Dictionary<string, ChartMetric> DiskMetrics = new(StringComparer.Ordinal);
 
-    public static IReadOnlyList<ChartMetric> All { get; } = new[]
+    /// <summary>Prefijo de las claves de disco: «Disk:2 C:».</summary>
+    public const string DiskKeyPrefix = "Disk:";
+
+    /// <summary>
+    /// Métrica de un disco físico. Se cachea por disco para que el selector
+    /// reconozca la misma instancia al refrescar la lista de discos.
+    /// </summary>
+    public static ChartMetric ForDisk(string diskId)
+    {
+        if (DiskMetrics.TryGetValue(diskId, out ChartMetric? cached))
+            return cached;
+
+        int number = DiskNames.Number(diskId);
+        string letters = DiskNames.Letters(diskId);
+
+        var metric = new ChartMetric
+        {
+            Key = DiskKeyPrefix + diskId,
+            TitleKey = "metric.disk.title",
+            TitleSelector = () => letters.Length > 0
+                ? Loc.F("metric.disk.titleLetters", number, letters)
+                : Loc.F("metric.disk.title", number),
+            SubtitleKey = "metric.disk.subtitle",
+            Color = UiBrushes.ChartDiskRead,
+            AxisUnit = " MB/s",
+            AxisMin = 0,
+            // Techo para un NVMe rápido; la escala automática lo ajusta al tráfico real.
+            AxisMax = 8000,
+            AxisStep = 1,
+            Primary = vm => vm.GetDisk(diskId)?.ActivePercent,
+            PrimaryFormat = "0",
+            PrimaryUnit = " %",
+            PrimaryLabelKey = "metric.label.active",
+            SecondaryLabelKey = "metric.label.readWrite",
+            Secondary = vm => vm.GetDisk(diskId)?.ReadMegaBytesPerSecond,
+            SecondaryFormat = "0.0",
+            SecondaryUnit = " MB/s",
+            SecondaryBrush = UiBrushes.ChartDiskRead,
+            Quaternary = vm => vm.GetDisk(diskId)?.WriteMegaBytesPerSecond,
+            QuaternaryFormat = "0.0",
+            QuaternaryUnit = " MB/s",
+            QuaternaryBrush = UiBrushes.ChartDiskWrite
+        };
+
+        DiskMetrics[diskId] = metric;
+        return metric;
+    }
+
+    /// <summary>Métricas fijas; las de cada disco se agregan cuando se detectan.</summary>
+    public static IReadOnlyList<ChartMetric> Base { get; } = new[]
     {
         Cpu,
         Gpu,
@@ -489,7 +520,6 @@ internal static class ChartMetrics
         Hotspot,
         Ram,
         Vram,
-        Network,
-        Disk
+        Network
     };
 }

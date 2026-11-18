@@ -39,7 +39,7 @@ public sealed class AppConfig
             .Where(key => !string.IsNullOrWhiteSpace(key))
             .Select(key => key.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
-            .Take(7)
+            .Take(32)
             .ToList();
     }
 }
