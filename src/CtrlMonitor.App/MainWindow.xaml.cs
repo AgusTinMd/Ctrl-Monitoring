@@ -113,6 +113,30 @@ public partial class MainWindow : Window
             _viewModel.Processes.ResizeColumn(column, -e.HorizontalChange);
     }
 
+    /// <summary>
+    /// El clic derecho selecciona la fila antes de abrir el menú, como en el
+    /// Administrador de tareas. Fuera de una fila no se abre el menú.
+    /// </summary>
+    private void ProcessTree_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        DependencyObject? source = e.OriginalSource as DependencyObject;
+
+        while (source is not null and not TreeViewItem)
+            source = source is Visual or System.Windows.Media.Media3D.Visual3D
+                ? VisualTreeHelper.GetParent(source)
+                : LogicalTreeHelper.GetParent(source);
+
+        if (source is TreeViewItem item)
+        {
+            item.IsSelected = true;
+            item.Focus();
+        }
+        else
+        {
+            e.Handled = true;
+        }
+    }
+
     /// <summary>El SelectedItem del TreeView es de solo lectura: se copia al view model.</summary>
     private void ProcessTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) =>
         _viewModel.Processes.Selected = e.NewValue as ProcessNode;

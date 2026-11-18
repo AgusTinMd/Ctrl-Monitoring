@@ -42,6 +42,9 @@ public abstract partial class ProcessNode : ObservableObject
 
     public abstract bool IsProtected { get; }
 
+    /// <summary>Ruta del ejecutable, si se pudo leer.</summary>
+    public abstract string? ExecutablePath { get; }
+
     /// <summary>Nivel en el árbol: 0 para programas, 1 para sus procesos.</summary>
     public abstract int Level { get; }
 
@@ -137,6 +140,8 @@ public sealed class ProcessLeaf : ProcessNode
 
     public override bool IsProtected => Protected;
 
+    public override string? ExecutablePath => Path;
+
     public override int Level => 1;
 
     public override string Details => $"{Path ?? Name}\nPID {Id}";
@@ -178,6 +183,8 @@ public sealed partial class ProcessGroup : ProcessNode
     private bool _isExpanded;
 
     public override bool IsProtected => Children.All(child => child.IsProtected);
+
+    public override string? ExecutablePath => Children.Select(child => child.Path).FirstOrDefault(path => path is not null);
 
     public override int Level => 0;
 
@@ -269,7 +276,73 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(EndTaskCommand))]
     [NotifyCanExecuteChangedFor(nameof(EndTreeCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ToggleExpandCommand))]
+    [NotifyCanExecuteChangedFor(nameof(OpenFileLocationCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SearchOnlineCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ShowPropertiesCommand))]
+    [NotifyPropertyChangedFor(nameof(ExpandMenuText))]
     private ProcessNode? _selected;
+
+    /// <summary>«Expandir» o «Contraer» según el programa seleccionado.</summary>
+    public string ExpandMenuText => Selected is ProcessGroup { IsExpanded: true }
+        ? Loc.T("processes.menu.collapse")
+        : Loc.T("processes.menu.expand");
+
+    private bool CanToggleExpand() => Selected is ProcessGroup { HasChildren: true };
+
+    [RelayCommand(CanExecute = nameof(CanToggleExpand))]
+    private void ToggleExpand()
+    {
+        if (Selected is ProcessGroup group)
+        {
+            group.IsExpanded = !group.IsExpanded;
+            OnPropertyChanged(nameof(ExpandMenuText));
+        }
+    }
+
+    private bool HasFile() => Selected?.ExecutablePath is { Length: > 0 } path && File.Exists(path);
+
+    /// <summary>Abre el Explorador con el ejecutable seleccionado.</summary>
+    [RelayCommand(CanExecute = nameof(HasFile))]
+    private void OpenFileLocation()
+    {
+        if (Selected?.ExecutablePath is { } path)
+            Launch("explorer.exe", $"/select,\"{path}\"");
+    }
+
+    /// <summary>Busca el ejecutable en Internet con el navegador predeterminado.</summary>
+    [RelayCommand(CanExecute = nameof(CanSearch))]
+    private void SearchOnline()
+    {
+        if (Selected is not { } node)
+            return;
+
+        string term = node.ExecutablePath is { } path ? System.IO.Path.GetFileName(path) : node.Name + ".exe";
+        Launch("https://www.google.com/search?q=" + Uri.EscapeDataString(term + " " + node.Description), null);
+    }
+
+    private bool CanSearch() => Selected is not null;
+
+    /// <summary>Abre la ventana de propiedades de Windows del ejecutable.</summary>
+    [RelayCommand(CanExecute = nameof(HasFile))]
+    private void ShowProperties()
+    {
+        if (Selected?.ExecutablePath is { } path && !ShellProperties.Show(path))
+            Status = Loc.T("processes.menu.failed");
+    }
+
+    private void Launch(string target, string? arguments)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(target) { Arguments = arguments ?? string.Empty, UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn($"No se pudo abrir {target}: {ex.Message}");
+            Status = Loc.T("processes.menu.failed");
+        }
+    }
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -710,6 +783,49 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
         _timer.Stop();
         _network.Dispose();
     }
+}
+
+/// <summary>Ventana de propiedades de un archivo, la misma que abre el Explorador.</summary>
+internal static class ShellProperties
+{
+    private const uint InvokeIdList = 0x0000000C;
+
+    public static bool Show(string path)
+    {
+        var info = new ShellExecuteInfo
+        {
+            Size = Marshal.SizeOf<ShellExecuteInfo>(),
+            Verb = "properties",
+            File = path,
+            Show = 1,
+            Mask = InvokeIdList
+        };
+
+        return ShellExecuteEx(ref info);
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct ShellExecuteInfo
+    {
+        public int Size;
+        public uint Mask;
+        public IntPtr Window;
+        [MarshalAs(UnmanagedType.LPWStr)] public string Verb;
+        [MarshalAs(UnmanagedType.LPWStr)] public string File;
+        [MarshalAs(UnmanagedType.LPWStr)] public string? Parameters;
+        [MarshalAs(UnmanagedType.LPWStr)] public string? Directory;
+        public int Show;
+        public IntPtr InstApp;
+        public IntPtr IdList;
+        [MarshalAs(UnmanagedType.LPWStr)] public string? Class;
+        public IntPtr KeyClass;
+        public uint HotKey;
+        public IntPtr IconOrMonitor;
+        public IntPtr Process;
+    }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    private static extern bool ShellExecuteEx(ref ShellExecuteInfo info);
 }
 
 /// <summary>Ícono chico de un ejecutable, como lo muestra el Explorador.</summary>

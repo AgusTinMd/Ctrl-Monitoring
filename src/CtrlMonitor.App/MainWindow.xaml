@@ -1651,11 +1651,25 @@
                         <TreeView Grid.Row="1" ItemsSource="{Binding Processes.View}"
                                   ItemContainerStyle="{StaticResource ProcessTreeItem}"
                                   SelectedItemChanged="ProcessTree_SelectedItemChanged"
+                                  PreviewMouseRightButtonDown="ProcessTree_PreviewMouseRightButtonDown"
                                   Background="Transparent" BorderThickness="0" Padding="0"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                   VirtualizingPanel.IsVirtualizing="True"
                                   VirtualizingPanel.VirtualizationMode="Recycling"
                                   VirtualizingPanel.ScrollUnit="Pixel">
+                            <!-- Clic derecho sobre una fila, como en el Administrador de tareas. -->
+                            <TreeView.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="{Binding Processes.ExpandMenuText}" FontWeight="SemiBold"
+                                              Command="{Binding Processes.ToggleExpandCommand}" />
+                                    <MenuItem Header="{l:Tr processes.endTask}" Command="{Binding Processes.EndTaskCommand}" />
+                                    <MenuItem Header="{l:Tr processes.menu.endTree}" Command="{Binding Processes.EndTreeCommand}" />
+                                    <Separator Margin="4,3" Background="{StaticResource BorderBrush}" />
+                                    <MenuItem Header="{l:Tr processes.menu.openLocation}" Command="{Binding Processes.OpenFileLocationCommand}" />
+                                    <MenuItem Header="{l:Tr processes.menu.searchOnline}" Command="{Binding Processes.SearchOnlineCommand}" />
+                                    <MenuItem Header="{l:Tr processes.menu.properties}" Command="{Binding Processes.ShowPropertiesCommand}" />
+                                </ContextMenu>
+                            </TreeView.ContextMenu>
                             <TreeView.Resources>
                                 <!-- Los procesos dentro de un programa usan el mismo estilo de fila. -->
                                 <Style TargetType="TreeViewItem" BasedOn="{StaticResource ProcessTreeItem}" />
