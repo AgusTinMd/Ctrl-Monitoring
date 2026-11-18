@@ -18,7 +18,7 @@ namespace CtrlMonitor.App.Controls;
 /// </summary>
 public sealed class LiveChart : FrameworkElement
 {
-    private const double PlotLeft = 46;
+    private const double MinPlotLeft = 28;
     private const double PlotTop = 14;
     private const double PlotRight = 14;
     private const double PlotBottom = 28;
@@ -215,16 +215,7 @@ public sealed class LiveChart : FrameworkElement
         var typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
-        // La red usa etiquetas más anchas («125 MB/s»); el margen se adapta
-        // para que no se recorten contra el borde izquierdo.
-        double axisLabelWidth = Text($"8888{Unit}", typeface, 10.5, textBrush, dpi).Width;
-        double plotLeft = Math.Max(PlotLeft, axisLabelWidth + 10);
-
-        var plot = new Rect(
-            plotLeft,
-            PlotTop,
-            Math.Max(20, width - plotLeft - PlotRight),
-            Math.Max(20, height - PlotTop - PlotBottom));
+        double plotHeight = Math.Max(20, height - PlotTop - PlotBottom);
 
         double windowMinutes = Math.Clamp(WindowMinutes, 0.5, 60);
         var samples = Samples?.OfType<ChartSample>().ToList() ?? new List<ChartSample>();
@@ -245,7 +236,7 @@ public sealed class LiveChart : FrameworkElement
 
         // El paso base sirve para rangos chicos; con rangos grandes (red a
         // 100 MB/s con paso 1) se agranda para que las etiquetas no se encimen.
-        AxisTicks ticks = AxisTicks.Compute(min, max, step, plot.Height);
+        AxisTicks ticks = AxisTicks.Compute(min, max, step, plotHeight);
 
         if (AutoScale && ticks.GridStep > step)
         {
@@ -253,8 +244,22 @@ public sealed class LiveChart : FrameworkElement
             min = Math.Floor(min / ticks.GridStep) * ticks.GridStep;
             max = Math.Min(ceiling, Math.Ceiling(max / ticks.GridStep) * ticks.GridStep);
             min = Math.Max(Math.Min(AxisMin, AxisMax - step), min);
-            ticks = AxisTicks.Compute(min, max, step, plot.Height);
+            ticks = AxisTicks.Compute(min, max, step, plotHeight);
         }
+
+        // El margen izquierdo se ajusta a la etiqueta más ancha que se va a
+        // dibujar («40°» o «1250 MB/s»), sin reservar lugar de más.
+        string unit = Unit ?? string.Empty;
+        double axisLabelWidth = Math.Max(
+            Text($"{min:0}{unit}", typeface, 10.5, textBrush, dpi).Width,
+            Text($"{max:0}{unit}", typeface, 10.5, textBrush, dpi).Width);
+        double plotLeft = Math.Max(MinPlotLeft, axisLabelWidth + 12);
+
+        var plot = new Rect(
+            plotLeft,
+            PlotTop,
+            Math.Max(20, width - plotLeft - PlotRight),
+            plotHeight);
 
         DrawGrid(dc, plot, gridBrush, textBrush, typeface, dpi, min, max, windowMinutes, ticks, Unit ?? string.Empty);
 

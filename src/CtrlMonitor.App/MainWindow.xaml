@@ -92,7 +92,7 @@
 
         <!-- Los mismos valores en columna, para la izquierda de las tarjetas. -->
         <DataTemplate x:Key="ChartValuesColumnTemplate">
-            <StackPanel MinWidth="92">
+            <StackPanel>
                 <TextBlock Text="{Binding PrimaryLabel}" Style="{StaticResource CaptionText}"
                            Visibility="{Binding HasPrimaryLabel, Converter={StaticResource BoolToVis}}" />
                 <StackPanel Orientation="Horizontal">
@@ -216,7 +216,7 @@
 
                         <ContentControl Content="{Binding}" Focusable="False"
                                         ContentTemplate="{StaticResource ChartValuesColumnTemplate}"
-                                        VerticalAlignment="Top" Margin="0,10,4,0" />
+                                        VerticalAlignment="Top" Margin="0,10,6,0" />
 
                     <controls:LiveChart Grid.Column="1"
                                         Samples="{Binding DataContext.ChartSamples, RelativeSource={RelativeSource AncestorType=Window}}"
