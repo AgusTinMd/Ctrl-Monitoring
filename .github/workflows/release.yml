@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Versión a empaquetar (X.Y.Z). Vacío = la del csproj."
+        description: "Versión a empaquetar (X.Y.Z). Vacío = el último tag vX.Y.Z."
         required: false
         default: ""
 
@@ -29,6 +29,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Historial y tags completos: sin tag explícito, la versión sale del último vX.Y.Z.
+          fetch-depth: 0
 
       - name: Instalar .NET 10
         uses: actions/setup-dotnet@v4
@@ -49,26 +52,27 @@ jobs:
         id: version
         shell: pwsh
         run: |
+          # La versión siempre sale de un tag: el csproj queda fijo en 0.0.0.
           if ($env:GITHUB_REF_TYPE -eq 'tag') {
-            $version = $env:GITHUB_REF_NAME.TrimStart('v')
-          } else {
+            $version = $env:GITHUB_REF_NAME
+          } elseif ('${{ github.event.inputs.version }}') {
             $version = '${{ github.event.inputs.version }}'
+          } else {
+            # El tag de versión más alto del repo (los tags están en los merges de main).
+            $version = git tag --list 'v*.*.*' --sort=-v:refname | Select-Object -First 1
+            if (-not $version) { throw "No hay ningún tag vX.Y.Z; indicá la versión al lanzar el workflow." }
           }
+          $version = "$version".Trim().TrimStart('v', 'V')
           "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Empaquetar
         shell: pwsh
-        run: |
-          $arguments = @{ Iscc = $env:ISCC }
-          if ('${{ steps.version.outputs.version }}') {
-            $arguments.Version = '${{ steps.version.outputs.version }}'
-          }
-          ./build/package.ps1 @arguments
+        run: ./build/package.ps1 -Iscc $env:ISCC -Version '${{ steps.version.outputs.version }}'
 
       - name: Subir artefactos del workflow
         uses: actions/upload-artifact@v4
         with:
-          name: CtrlMonitor-${{ steps.version.outputs.version || 'csproj' }}
+          name: CtrlMonitor-${{ steps.version.outputs.version }}
           path: |
             artifacts/*.exe
             artifacts/*.zip

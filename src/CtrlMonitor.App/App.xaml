@@ -9,10 +9,10 @@
                 <ResourceDictionary Source="Themes/Theme.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <BooleanToVisibilityConverter x:Key="BoolToVis" />
             <converters:IntEqualsConverter x:Key="IntEquals" />
             <converters:WidthToColumnsConverter x:Key="WidthToColumns" />
             <converters:ChartColumnsConverter x:Key="ChartColumns" />
+            <converters:SubtractConverter x:Key="Subtract" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

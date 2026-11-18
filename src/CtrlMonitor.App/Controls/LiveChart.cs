@@ -4,6 +4,8 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using CtrlMonitor.App.Models;
+using CtrlMonitor.App.ViewModels;
+using CtrlMonitor.Core.Inventory;
 using CtrlMonitor.Core.Charting;
 using CtrlMonitor.Core.Localization;
 
@@ -16,7 +18,7 @@ namespace CtrlMonitor.App.Controls;
 /// </summary>
 public sealed class LiveChart : FrameworkElement
 {
-    private const double PlotLeft = 46;
+    private const double MinPlotLeft = 28;
     private const double PlotTop = 14;
     private const double PlotRight = 14;
     private const double PlotBottom = 28;
@@ -94,6 +96,22 @@ public sealed class LiveChart : FrameworkElement
         typeof(string),
         typeof(LiveChart),
         new FrameworkPropertyMetadata("°", FrameworkPropertyMetadataOptions.AffectsRender));
+
+    public static readonly DependencyProperty CompactProperty = DependencyProperty.Register(
+        nameof(Compact),
+        typeof(bool),
+        typeof(LiveChart),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
+    /// <summary>
+    /// Mini gráfico para la vista de lista: ocupa todo el control, sin grilla,
+    /// ejes ni textos.
+    /// </summary>
+    public bool Compact
+    {
+        get => (bool)GetValue(CompactProperty);
+        set => SetValue(CompactProperty, value);
+    }
 
     public IEnumerable? Samples
     {
@@ -183,6 +201,12 @@ public sealed class LiveChart : FrameworkElement
         double width = ActualWidth;
         double height = ActualHeight;
 
+        if (Compact)
+        {
+            RenderCompact(dc, width, height);
+            return;
+        }
+
         if (width < 120 || height < 100)
             return;
 
@@ -191,16 +215,7 @@ public sealed class LiveChart : FrameworkElement
         var typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
         double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
-        // La red usa etiquetas más anchas («125 MB/s»); el margen se adapta
-        // para que no se recorten contra el borde izquierdo.
-        double axisLabelWidth = Text($"8888{Unit}", typeface, 10.5, textBrush, dpi).Width;
-        double plotLeft = Math.Max(PlotLeft, axisLabelWidth + 10);
-
-        var plot = new Rect(
-            plotLeft,
-            PlotTop,
-            Math.Max(20, width - plotLeft - PlotRight),
-            Math.Max(20, height - PlotTop - PlotBottom));
+        double plotHeight = Math.Max(20, height - PlotTop - PlotBottom);
 
         double windowMinutes = Math.Clamp(WindowMinutes, 0.5, 60);
         var samples = Samples?.OfType<ChartSample>().ToList() ?? new List<ChartSample>();
@@ -213,12 +228,15 @@ public sealed class LiveChart : FrameworkElement
         double min = Math.Min(AxisMin, AxisMax - step);
         double max = Math.Max(AxisMax, min + step);
 
+        // Las áreas en % no usan el eje: no entran en la escala automática.
+        var lineSeries = series.Where(item => !item.PercentArea).ToList();
+
         if (AutoScale)
-            (min, max) = GetAutoScaleRange(samples, series, start);
+            (min, max) = GetAutoScaleRange(samples, lineSeries, start);
 
         // El paso base sirve para rangos chicos; con rangos grandes (red a
         // 100 MB/s con paso 1) se agranda para que las etiquetas no se encimen.
-        AxisTicks ticks = AxisTicks.Compute(min, max, step, plot.Height);
+        AxisTicks ticks = AxisTicks.Compute(min, max, step, plotHeight);
 
         if (AutoScale && ticks.GridStep > step)
         {
@@ -226,8 +244,22 @@ public sealed class LiveChart : FrameworkElement
             min = Math.Floor(min / ticks.GridStep) * ticks.GridStep;
             max = Math.Min(ceiling, Math.Ceiling(max / ticks.GridStep) * ticks.GridStep);
             min = Math.Max(Math.Min(AxisMin, AxisMax - step), min);
-            ticks = AxisTicks.Compute(min, max, step, plot.Height);
+            ticks = AxisTicks.Compute(min, max, step, plotHeight);
         }
+
+        // El margen izquierdo se ajusta a la etiqueta más ancha que se va a
+        // dibujar («40°» o «1250 MB/s»), sin reservar lugar de más.
+        string unit = Unit ?? string.Empty;
+        double axisLabelWidth = Math.Max(
+            Text($"{min:0}{unit}", typeface, 10.5, textBrush, dpi).Width,
+            Text($"{max:0}{unit}", typeface, 10.5, textBrush, dpi).Width);
+        double plotLeft = Math.Max(MinPlotLeft, axisLabelWidth + 12);
+
+        var plot = new Rect(
+            plotLeft,
+            PlotTop,
+            Math.Max(20, width - plotLeft - PlotRight),
+            plotHeight);
 
         DrawGrid(dc, plot, gridBrush, textBrush, typeface, dpi, min, max, windowMinutes, ticks, Unit ?? string.Empty);
 
@@ -252,8 +284,43 @@ public sealed class LiveChart : FrameworkElement
 
         dc.PushClip(new RectangleGeometry(plot));
 
-        foreach (ChartSeries item in series)
+        foreach (ChartSeries item in series.Where(item => item.PercentArea))
+            DrawPercentArea(dc, samples, item.Selector, item.Brush, plot, start, end);
+
+        foreach (ChartSeries item in lineSeries)
             DrawSeries(dc, samples, item.Selector, item.Brush, plot, start, end, min, max);
+
+        dc.Pop();
+    }
+
+    private void RenderCompact(DrawingContext dc, double width, double height)
+    {
+        if (width < 8 || height < 8)
+            return;
+
+        var plot = new Rect(1, 2, width - 2, height - 4);
+        double windowMinutes = Math.Clamp(WindowMinutes, 0.5, 60);
+        var samples = Samples?.OfType<ChartSample>().ToList() ?? new List<ChartSample>();
+
+        if (samples.Count == 0)
+            return;
+
+        DateTime end = samples[^1].TimestampUtc;
+        DateTime start = end - TimeSpan.FromMinutes(windowMinutes);
+        List<ChartSeries> series = GetActiveSeries();
+        var lineSeries = series.Where(item => !item.PercentArea).ToList();
+
+        (double min, double max) = AutoScale
+            ? GetAutoScaleRange(samples, lineSeries, start)
+            : (Math.Min(AxisMin, AxisMax - 1), Math.Max(AxisMax, AxisMin + 1));
+
+        dc.PushClip(new RectangleGeometry(new Rect(0, 0, width, height)));
+
+        foreach (ChartSeries item in series.Where(item => item.PercentArea))
+            DrawPercentArea(dc, samples, item.Selector, item.Brush, plot, start, end);
+
+        foreach (ChartSeries item in lineSeries)
+            DrawSeries(dc, samples, item.Selector, item.Brush, plot, start, end, min, max, compact: true);
 
         dc.Pop();
     }
@@ -262,6 +329,17 @@ public sealed class LiveChart : FrameworkElement
     {
         var result = new List<ChartSeries>(5);
         string series = Series?.Trim() ?? string.Empty;
+
+        // Cada disco tiene su serie: «Disk:2 C:». Va antes del switch porque
+        // el identificador del disco distingue mayúsculas.
+        if (series.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase))
+        {
+            string diskId = series[ChartMetrics.DiskKeyPrefix.Length..];
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.ActivePercent, Resource("ChartDiskActiveBrush", Brushes.DarkGreen), PercentArea: true));
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.ReadMegaBytesPerSecond, Resource("ChartDiskReadBrush", Brushes.LimeGreen)));
+            result.Add(new ChartSeries(s => Disk(s, diskId)?.WriteMegaBytesPerSecond, Resource("ChartDiskWriteBrush", Brushes.Gold)));
+            return result;
+        }
 
         if (series.Length > 0)
         {
@@ -272,6 +350,12 @@ public sealed class LiveChart : FrameworkElement
                     break;
                 case "gpu":
                     result.Add(new ChartSeries(s => s.Gpu, Resource("ChartGpuBrush", Brushes.MediumSeaGreen)));
+                    break;
+                case "cpuload":
+                    result.Add(new ChartSeries(s => s.CpuLoad, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
+                    break;
+                case "gpuload":
+                    result.Add(new ChartSeries(s => s.GpuLoad, Resource("ChartGpuBrush", Brushes.MediumSeaGreen)));
                     break;
                 case "board":
                     result.Add(new ChartSeries(s => s.Board, Resource("ChartBoardBrush", Brushes.Goldenrod)));
@@ -458,7 +542,8 @@ public sealed class LiveChart : FrameworkElement
         DateTime start,
         DateTime end,
         double min,
-        double max)
+        double max,
+        bool compact = false)
     {
         double totalSeconds = Math.Max(1, (end - start).TotalSeconds);
         var geometry = new StreamGeometry();
@@ -503,7 +588,7 @@ public sealed class LiveChart : FrameworkElement
         if (geometry.CanFreeze)
             geometry.Freeze();
 
-        var pen = new Pen(brush, 1.8)
+        var pen = new Pen(brush, compact ? 1.2 : 1.8)
         {
             LineJoin = PenLineJoin.Round,
             StartLineCap = PenLineCap.Round,
@@ -514,6 +599,10 @@ public sealed class LiveChart : FrameworkElement
             pen.Freeze();
 
         dc.DrawGeometry(null, pen, geometry);
+
+        // El punto final ayuda a leer el valor actual; en el mini gráfico molesta.
+        if (compact)
+            return;
 
         for (int i = samples.Count - 1; i >= 0; i--)
         {
@@ -531,6 +620,55 @@ public sealed class LiveChart : FrameworkElement
         }
     }
 
+    private static void DrawPercentArea(
+        DrawingContext dc,
+        IReadOnlyList<ChartSample> samples,
+        Func<ChartSample, double?> selector,
+        Brush brush,
+        Rect plot,
+        DateTime start,
+        DateTime end)
+    {
+        double totalSeconds = Math.Max(1, (end - start).TotalSeconds);
+        var geometry = new StreamGeometry();
+        bool hasPoint = false;
+
+        using (StreamGeometryContext context = geometry.Open())
+        {
+            Point? first = null;
+            Point last = default;
+
+            foreach (ChartSample sample in samples)
+            {
+                if (sample.TimestampUtc < start || selector(sample) is not { } value)
+                    continue;
+
+                Point point = ToPoint(sample.TimestampUtc, value, start, totalSeconds, plot, 0, 100);
+
+                if (first is null)
+                {
+                    first = point;
+                    context.BeginFigure(new Point(point.X, plot.Bottom), isFilled: true, isClosed: true);
+                }
+
+                context.LineTo(point, isStroked: false, isSmoothJoin: true);
+                last = point;
+                hasPoint = true;
+            }
+
+            if (hasPoint)
+                context.LineTo(new Point(last.X, plot.Bottom), isStroked: false, isSmoothJoin: false);
+        }
+
+        if (!hasPoint)
+            return;
+
+        if (geometry.CanFreeze)
+            geometry.Freeze();
+
+        dc.DrawGeometry(brush, null, geometry);
+    }
+
     private static Point ToPoint(
         DateTime timestamp,
         double value,
@@ -545,6 +683,9 @@ public sealed class LiveChart : FrameworkElement
 
         return new Point(x, y);
     }
+
+    private static DiskActivity? Disk(ChartSample sample, string diskId) =>
+        sample.Disks is { } disks && disks.TryGetValue(diskId, out DiskActivity? disk) ? disk : null;
 
     private Brush Resource(string key, Brush fallback) =>
         TryFindResource(key) as Brush ?? fallback;
@@ -570,7 +711,12 @@ public sealed class LiveChart : FrameworkElement
     private void OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) =>
         InvalidateVisual();
 
+    /// <param name="PercentArea">
+    /// Se dibuja como área de fondo en escala 0–100 % de la altura, sin usar el
+    /// eje. Sirve para mostrar el % de actividad del disco junto a sus MB/s.
+    /// </param>
     private readonly record struct ChartSeries(
         Func<ChartSample, double?> Selector,
-        Brush Brush);
+        Brush Brush,
+        bool PercentArea = false);
 }

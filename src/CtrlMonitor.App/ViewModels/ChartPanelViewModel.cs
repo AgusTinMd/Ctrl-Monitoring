@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CtrlMonitor.Core.Inventory;
 using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.ViewModels;
@@ -31,7 +32,10 @@ public sealed class ChartMetric : INotifyPropertyChanged
     /// <summary>Clave de la descripción breve bajo el selector.</summary>
     public required string SubtitleKey { get; init; }
 
-    public string Title => Loc.T(TitleKey);
+    /// <summary>Título armado en el momento; por ejemplo, «Disco 2 (C:)».</summary>
+    public Func<string>? TitleSelector { get; init; }
+
+    public string Title => TitleSelector?.Invoke() ?? Loc.T(TitleKey);
 
     public string Subtitle => Loc.T(SubtitleKey);
 
@@ -82,6 +86,21 @@ public sealed class ChartMetric : INotifyPropertyChanged
 
     public string TertiaryUnit { get; init; } = string.Empty;
 
+    /// <summary>Valor chico bajo el secundario; por ejemplo, los GHz del CPU.</summary>
+    public Func<MainViewModel, double?>? Quaternary { get; init; }
+
+    public string QuaternaryFormat { get; init; } = "0.00";
+
+    public string QuaternaryUnit { get; init; } = string.Empty;
+
+    public Brush? QuaternaryBrush { get; init; }
+
+    /// <summary>Clave del texto a la izquierda del valor secundario; por ejemplo, «Lectura».</summary>
+    public string SecondaryInlineKey { get; init; } = string.Empty;
+
+    /// <summary>Clave del texto a la izquierda del cuarto valor; por ejemplo, «Escritura».</summary>
+    public string QuaternaryInlineKey { get; init; } = string.Empty;
+
     public override string ToString() => Title;
 }
 
@@ -100,12 +119,14 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         ChartMetric selected)
     {
         _owner = owner;
-        Options = options;
+        _options = options;
         _selectedMetric = selected;
         ApplyMetric();
     }
 
-    public IReadOnlyList<ChartMetric> Options { get; }
+    /// <summary>Métricas del selector; cambia cuando se detectan los discos.</summary>
+    [ObservableProperty]
+    private IReadOnlyList<ChartMetric> _options;
 
     [ObservableProperty]
     private ChartMetric _selectedMetric;
@@ -162,6 +183,24 @@ public sealed partial class ChartPanelViewModel : ObservableObject
     private string _tertiaryUnit = string.Empty;
 
     [ObservableProperty]
+    private string _quaternaryValue = string.Empty;
+
+    [ObservableProperty]
+    private string _quaternaryUnit = string.Empty;
+
+    [ObservableProperty]
+    private Brush _quaternaryValueBrush = UiBrushes.TextSecondary;
+
+    [ObservableProperty]
+    private bool _hasQuaternary;
+
+    [ObservableProperty]
+    private string _secondaryInline = string.Empty;
+
+    [ObservableProperty]
+    private string _quaternaryInline = string.Empty;
+
+    [ObservableProperty]
     private bool _hasSecondary;
 
     [ObservableProperty]
@@ -194,6 +233,28 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         TertiaryValue = metric.Tertiary is null
             ? string.Empty
             : Format(metric.Tertiary(_owner), metric.TertiaryFormat);
+        QuaternaryValue = metric.Quaternary is null
+            ? string.Empty
+            : Format(metric.Quaternary(_owner), metric.QuaternaryFormat);
+
+        Summary = BuildSummary();
+    }
+
+    /// <summary>Resumen de una línea para la vista de lista: «12 %  45,0 °C · 4,04 GHz».</summary>
+    [ObservableProperty]
+    private string _summary = string.Empty;
+
+    private string BuildSummary()
+    {
+        string text = PrimaryValue + PrimaryUnit;
+
+        if (HasSecondary)
+            text += "   " + SecondaryValue + SecondaryUnit;
+
+        if (HasQuaternary)
+            text += " · " + QuaternaryValue + QuaternaryUnit;
+
+        return text;
     }
 
     /// <summary>Vuelve a tomar los textos de la métrica después de cambiar de idioma.</summary>
@@ -219,6 +280,11 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         TertiaryUnit = metric.TertiaryUnit;
         HasSecondary = metric.Secondary is not null;
         HasTertiary = metric.Tertiary is not null;
+        QuaternaryUnit = metric.QuaternaryUnit;
+        QuaternaryValueBrush = metric.QuaternaryBrush ?? UiBrushes.TextSecondary;
+        HasQuaternary = metric.Quaternary is not null;
+        SecondaryInline = metric.SecondaryInlineKey.Length == 0 ? string.Empty : Loc.T(metric.SecondaryInlineKey);
+        QuaternaryInline = metric.QuaternaryInlineKey.Length == 0 ? string.Empty : Loc.T(metric.QuaternaryInlineKey);
 
         Refresh();
     }
@@ -249,6 +315,8 @@ internal static class ChartMetrics
         Secondary = vm => vm.CpuFanRpm,
         SecondaryFormat = "0",
         SecondaryUnit = " RPM",
+        Quaternary = vm => vm.CpuClockGhz,
+        QuaternaryUnit = " GHz",
         Tertiary = vm => vm.CpuPower,
         TertiaryFormat = "0.0",
         TertiaryUnit = " W"
@@ -271,6 +339,52 @@ internal static class ChartMetrics
         Secondary = vm => vm.GpuFanRpm,
         SecondaryFormat = "0",
         SecondaryUnit = " RPM",
+        Tertiary = vm => vm.GpuPower,
+        TertiaryFormat = "0.0",
+        TertiaryUnit = " W"
+    };
+
+    public static ChartMetric CpuLoad { get; } = new()
+    {
+        Key = "CpuLoad",
+        TitleKey = "metric.cpuLoad.title",
+        SubtitleKey = "metric.cpuLoad.subtitle",
+        Color = UiBrushes.ChartCpu,
+        AxisUnit = "%",
+        AxisMin = 0,
+        AxisMax = 100,
+        AxisStep = 10,
+        Primary = vm => vm.CpuLoad,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        SecondaryLabelKey = "metric.label.temp",
+        Secondary = vm => vm.CpuTemperature,
+        SecondaryFormat = "0.0",
+        SecondaryUnit = " °C",
+        Quaternary = vm => vm.CpuClockGhz,
+        QuaternaryUnit = " GHz",
+        Tertiary = vm => vm.CpuPower,
+        TertiaryFormat = "0.0",
+        TertiaryUnit = " W"
+    };
+
+    public static ChartMetric GpuLoad { get; } = new()
+    {
+        Key = "GpuLoad",
+        TitleKey = "metric.gpuLoad.title",
+        SubtitleKey = "metric.gpuLoad.subtitle",
+        Color = UiBrushes.ChartGpu,
+        AxisUnit = "%",
+        AxisMin = 0,
+        AxisMax = 100,
+        AxisStep = 10,
+        Primary = vm => vm.GpuLoad,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        SecondaryLabelKey = "metric.label.temp",
+        Secondary = vm => vm.GpuTemperature,
+        SecondaryFormat = "0.0",
+        SecondaryUnit = " °C",
         Tertiary = vm => vm.GpuPower,
         TertiaryFormat = "0.0",
         TertiaryUnit = " W"
@@ -378,10 +492,65 @@ internal static class ChartMetrics
         SecondaryBrush = UiBrushes.ChartNetUp
     };
 
-    public static IReadOnlyList<ChartMetric> All { get; } = new[]
+    private static readonly Dictionary<string, ChartMetric> DiskMetrics = new(StringComparer.Ordinal);
+
+    /// <summary>Prefijo de las claves de disco: «Disk:2 C:».</summary>
+    public const string DiskKeyPrefix = "Disk:";
+
+    /// <summary>
+    /// Métrica de un disco físico. Se cachea por disco para que el selector
+    /// reconozca la misma instancia al refrescar la lista de discos.
+    /// </summary>
+    public static ChartMetric ForDisk(string diskId)
+    {
+        if (DiskMetrics.TryGetValue(diskId, out ChartMetric? cached))
+            return cached;
+
+        int number = DiskNames.Number(diskId);
+        string letters = DiskNames.Letters(diskId);
+
+        var metric = new ChartMetric
+        {
+            Key = DiskKeyPrefix + diskId,
+            TitleKey = "metric.disk.title",
+            TitleSelector = () => letters.Length > 0
+                ? Loc.F("metric.disk.titleLetters", number, letters)
+                : Loc.F("metric.disk.title", number),
+            SubtitleKey = "metric.disk.subtitle",
+            Color = UiBrushes.ChartDiskRead,
+            AxisUnit = " MB/s",
+            AxisMin = 0,
+            // Techo para un NVMe rápido; la escala automática lo ajusta al tráfico real.
+            AxisMax = 8000,
+            AxisStep = 1,
+            Primary = vm => vm.GetDisk(diskId)?.ActivePercent,
+            PrimaryFormat = "0",
+            PrimaryUnit = " %",
+            PrimaryLabelKey = "metric.label.active",
+            SecondaryLabelKey = "metric.label.readWrite",
+            Secondary = vm => vm.GetDisk(diskId)?.ReadMegaBytesPerSecond,
+            SecondaryFormat = "0.0",
+            SecondaryUnit = " MB/s",
+            SecondaryBrush = UiBrushes.ChartDiskRead,
+            SecondaryInlineKey = "metric.label.read",
+            QuaternaryInlineKey = "metric.label.write",
+            Quaternary = vm => vm.GetDisk(diskId)?.WriteMegaBytesPerSecond,
+            QuaternaryFormat = "0.0",
+            QuaternaryUnit = " MB/s",
+            QuaternaryBrush = UiBrushes.ChartDiskWrite
+        };
+
+        DiskMetrics[diskId] = metric;
+        return metric;
+    }
+
+    /// <summary>Métricas fijas; las de cada disco se agregan cuando se detectan.</summary>
+    public static IReadOnlyList<ChartMetric> Base { get; } = new[]
     {
         Cpu,
         Gpu,
+        CpuLoad,
+        GpuLoad,
         Board,
         Hotspot,
         Ram,

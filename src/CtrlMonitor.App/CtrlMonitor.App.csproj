@@ -11,7 +11,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\fan.ico</ApplicationIcon>
     <PlatformTarget>x64</PlatformTarget>
-    <Version>2.7.0</Version>
+    <!-- Versión fija para compilaciones locales: la real la pone el tag vX.Y.Z
+         al publicar (build/package.ps1 pasa -p:Version). No hace falta tocarla. -->
+    <Version>0.0.0</Version>
     <Product>Ctrl Monitor</Product>
     <Description>Monitor de temperaturas, ventiladores, memoria y red. Solo lectura.</Description>
   </PropertyGroup>
@@ -29,6 +31,40 @@
     <Resource Include="Assets\fan.ico" />
     <Resource Include="Assets\fan.png" />
     <Resource Include="Assets\asus.png" />
+    <Resource Include="Assets\gigabyte.png" />
+    <Resource Include="Assets\msi.png" />
+    <Resource Include="Assets\asrock.png" />
+    <Resource Include="Assets\intel.png" />
+    <Resource Include="Assets\amd.png" />
+    <Resource Include="Assets\biostar.png" />
+    <Resource Include="Assets\evga.png" />
+    <Resource Include="Assets\nzxt.png" />
+    <Resource Include="Assets\supermicro.png" />
+    <Resource Include="Assets\colorful.png" />
+    <Resource Include="Assets\maxsun.png" />
+    <Resource Include="Assets\dell.png" />
+    <Resource Include="Assets\hp.png" />
+    <Resource Include="Assets\lenovo.png" />
+    <Resource Include="Assets\acer.png" />
+    <Resource Include="Assets\nvidia.png" />
+    <Resource Include="Assets\wd.png" />
+    <Resource Include="Assets\samsung.png" />
+    <Resource Include="Assets\seagate.png" />
+    <Resource Include="Assets\toshiba.png" />
+    <Resource Include="Assets\sandisk.png" />
+    <Resource Include="Assets\kingston.png" />
+    <Resource Include="Assets\micron.png" />
+    <Resource Include="Assets\crucial.png" />
+    <Resource Include="Assets\kioxia.png" />
+    <Resource Include="Assets\adata.png" />
+    <Resource Include="Assets\corsair.png" />
+    <Resource Include="Assets\skhynix.png" />
+    <Resource Include="Assets\hgst.png" />
+    <Resource Include="Assets\hitachi.png" />
+    <Resource Include="Assets\lexar.png" />
+    <Resource Include="Assets\teamgroup.png" />
+    <Resource Include="Assets\patriot.png" />
+    <Resource Include="Assets\pny.png" />
   </ItemGroup>
 
 </Project>

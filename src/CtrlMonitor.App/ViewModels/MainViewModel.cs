@@ -54,6 +54,17 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly Dictionary<string, SensorGroupViewModel> _groupsById = new(StringComparer.Ordinal);
     private readonly Dictionary<string, FanViewModel> _fansById = new(StringComparer.Ordinal);
     private readonly NetworkUsageReader _networkUsage = new();
+    private readonly DiskUsageReader _diskUsage = new();
+    private IReadOnlyDictionary<string, DiskActivity> _disks = new Dictionary<string, DiskActivity>();
+
+    /// <summary>
+    /// Tarjetas guardadas cuya métrica todavía no existe (discos que se
+    /// detectan unos segundos después de arrancar), con su posición original.
+    /// </summary>
+    private readonly List<(int Index, string Key)> _pendingChartKeys = new();
+
+    /// <summary>Métricas fijas más una por cada disco detectado.</summary>
+    public IReadOnlyList<ChartMetric> AllChartMetrics { get; private set; } = ChartMetrics.Base;
 
     private int _lastActiveFanCount = -1;
 
@@ -124,6 +135,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             _availableChartMetrics = value;
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasAvailableChartMetrics));
+            OnPropertyChanged(nameof(CanAddChartPanel));
         }
     }
 
@@ -131,18 +143,208 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public bool IsChartPanelsEmpty => ChartPanels.Count == 0;
 
+    /// <summary>Una entrada por métrica para la vista de lista, como el Administrador de tareas.</summary>
+    public ObservableCollection<ChartPanelViewModel> ChartListItems { get; } = new();
+
+    [ObservableProperty]
+    private ChartPanelViewModel? _selectedChartListItem;
+
+    /// <summary>La sección de gráficos se muestra como lista con un gráfico grande.</summary>
+    public bool IsChartListView
+    {
+        get => _config.ChartListView;
+        set
+        {
+            if (_config.ChartListView == value)
+                return;
+
+            _config.ChartListView = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsChartCardView));
+            OnPropertyChanged(nameof(CanAddChartPanel));
+            OnPropertyChanged(nameof(ShowChartPanelsEmpty));
+            SaveSoon();
+        }
+    }
+
+    public bool IsChartCardView
+    {
+        get => !IsChartListView;
+        set => IsChartListView = !value;
+    }
+
+    /// <summary>El selector para agregar tarjetas solo tiene sentido en la vista de tarjetas.</summary>
+    public bool CanAddChartPanel => IsChartCardView && HasAvailableChartMetrics;
+
+    public bool ShowChartPanelsEmpty => IsChartCardView && IsChartPanelsEmpty;
+
     [ObservableProperty]
     private ChartMetric? _newChartMetric;
 
     /// <summary>Canales de ventilador detectados, con RPM y PWM del BIOS.</summary>
     public ObservableCollection<FanViewModel> Fans { get; } = new();
 
+    /// <summary>Discos físicos con sus unidades, para la tarjeta de almacenamiento de Inicio.</summary>
+    public ObservableCollection<StorageDiskViewModel> StorageDisks { get; } = new();
+
+    private bool _readingVolumes;
+    private bool _volumesRequested = true;
+
+    /// <summary>Pestaña visible; 0 es Inicio.</summary>
+    [ObservableProperty]
+    private int _selectedTabIndex;
+
+    // El espacio en disco cambia poco: se relee solo al volver a Inicio, no en
+    // cada refresco del monitor.
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value == 0)
+            RequestVolumes();
+
+        // Los datos de los discos solo se consultan mientras se ven: en
+        // Inicio, en Sensores y en Discos.
+        _hardware.StorageUpdatesEnabled = value is HomeTabIndex or SensorsTabIndex or DisksTabIndex;
+
+        if (value == DisksTabIndex)
+            RequestDiskDetails();
+    }
+
+    private const int HomeTabIndex = 0;
+    private const int SensorsTabIndex = 3;
+    private const int DisksTabIndex = 4;
+
+    /// <summary>Ficha de cada disco para la sección Discos.</summary>
+    public ObservableCollection<DiskDetailViewModel> DiskDetails { get; } = new();
+
+    public bool HasDiskDetails => DiskDetails.Count > 0;
+
+    private static readonly TimeSpan DiskDetailsInterval = TimeSpan.FromSeconds(5);
+    private DateTime _diskDetailsUtc = DateTime.MinValue;
+    private IReadOnlyDictionary<int, DiskCondition> _windowsDiskHealth = new Dictionary<int, DiskCondition>();
+    private IReadOnlyDictionary<int, IReadOnlyList<VolumeUsage>> _diskVolumes = new Dictionary<int, IReadOnlyList<VolumeUsage>>();
+    private bool _diskVolumesChanged;
+
+    /// <summary>
+    /// Al entrar a Discos se relee la salud que informa Windows (en segundo
+    /// plano) y se fuerza a actualizar las fichas en el próximo refresco.
+    /// </summary>
+    private void RequestDiskDetails()
+    {
+        _diskDetailsUtc = DateTime.MinValue;
+
+        Task.Run(() => (Disks: PhysicalDiskReader.Read(), Volumes: VolumeUsageReader.Read())).ContinueWith(
+            task => _dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!task.IsCompletedSuccessfully || _disposed)
+                    return;
+
+                // Unidades de cada disco para los gráficos de espacio.
+                _diskVolumes = task.Result.Disks.ToDictionary(
+                    disk => disk.Number,
+                    disk => (IReadOnlyList<VolumeUsage>)task.Result.Volumes
+                        .Where(volume => disk.Letters.Contains(volume.Letter, StringComparer.OrdinalIgnoreCase))
+                        .ToList());
+                _diskVolumesChanged = true;
+
+                _windowsDiskHealth = task.Result.Disks.ToDictionary(
+                    disk => disk.Number,
+                    disk => disk.Health switch
+                    {
+                        DiskHealth.Healthy => DiskCondition.Good,
+                        DiskHealth.Warning => DiskCondition.Caution,
+                        DiskHealth.Unhealthy => DiskCondition.Bad,
+                        _ => DiskCondition.Unknown
+                    });
+
+                UpdateDiskDetails(force: true);
+            })),
+            TaskScheduler.Default);
+    }
+
+    private void UpdateDiskDetails(bool force = false)
+    {
+        if (SelectedTabIndex != DisksTabIndex)
+            return;
+
+        if (!force && DateTime.UtcNow - _diskDetailsUtc < DiskDetailsInterval)
+            return;
+
+        _diskDetailsUtc = DateTime.UtcNow;
+        IReadOnlyList<DiskSmartInfo> disks = _hardware.GetDiskSmart();
+
+        for (int i = DiskDetails.Count - 1; i >= 0; i--)
+        {
+            if (!disks.Any(disk => disk.Number == DiskDetails[i].Number))
+                DiskDetails.RemoveAt(i);
+        }
+
+        foreach (DiskSmartInfo disk in disks)
+        {
+            DiskDetailViewModel? detail = DiskDetails.FirstOrDefault(item => item.Number == disk.Number);
+
+            if (detail is null)
+            {
+                detail = new DiskDetailViewModel(disk.Number);
+                DiskDetails.Add(detail);
+                detail.SetVolumes(_diskVolumes.TryGetValue(disk.Number, out IReadOnlyList<VolumeUsage>? fresh)
+                    ? fresh
+                    : Array.Empty<VolumeUsage>());
+            }
+            else if (_diskVolumesChanged)
+            {
+                detail.SetVolumes(_diskVolumes.TryGetValue(disk.Number, out IReadOnlyList<VolumeUsage>? volumes)
+                    ? volumes
+                    : Array.Empty<VolumeUsage>());
+            }
+
+            detail.Update(disk, _windowsDiskHealth.TryGetValue(disk.Number, out DiskCondition health)
+                ? health
+                : DiskCondition.Unknown);
+        }
+
+        _diskVolumesChanged = false;
+        OnPropertyChanged(nameof(HasDiskDetails));
+    }
+
+    private void RequestVolumes()
+    {
+        _volumesRequested = true;
+        UpdateVolumes();
+    }
+
     /// <summary>Vista filtrada de los ventiladores según «Solo activos».</summary>
     public ListCollectionView VisibleFans { get; private set; } = null!;
 
     public string MotherboardName => _hardware.MotherboardName;
 
+    /// <summary>Marca de la placa detectada a partir de su nombre, o <c>null</c>.</summary>
+    private HardwareBrand? BoardBrand => BoardBrands.Detect(_hardware.MotherboardName);
+
+    /// <summary>Logo de la marca de la placa, si hay uno en Assets.</summary>
+    public string? BoardLogoUri => LogoUri(BoardBrand);
+
+    public bool HasBoardLogo => BoardLogoUri is not null;
+
+    /// <summary>Nombre de la marca cuando no hay logo; así no se muestra el de otra marca.</summary>
+    public string? BoardBrandText => BoardBrand is { LogoFile: null } brand ? brand.Name : null;
+
+    public bool HasBoardBrandText => BoardBrandText is not null;
+
     public string CpuName => _hardware.CpuName;
+
+    /// <summary>Logo de la marca del CPU (Intel o AMD), si se reconoce.</summary>
+    public string? CpuLogoUri => LogoUri(CpuBrands.Detect(_hardware.CpuName));
+
+    public bool HasCpuLogo => CpuLogoUri is not null;
+
+    /// <summary>Logo de la marca de la placa de video (AMD, NVIDIA o Intel), si se reconoce.</summary>
+    public string? GpuLogoUri => LogoUri(GpuBrands.Detect(_hardware.GpuName));
+
+    public bool HasGpuLogo => GpuLogoUri is not null;
+
+    private static string? LogoUri(HardwareBrand? brand) => brand?.LogoFile is { } file
+        ? $"pack://application:,,,/Assets/{file}"
+        : null;
 
     public string GpuName => _hardware.GpuName;
 
@@ -161,18 +363,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public string LogDirectory => AppPaths.LogDirectory;
 
     /// <summary>
-    /// Versión del ejecutable (la que fija el csproj o el tag de la release),
-    /// para no tener que actualizar este texto a mano en cada versión.
+    /// Versión del ejecutable. La pone el tag vX.Y.Z al publicar; una
+    /// compilación local queda en 0.0.0 y se muestra como «(dev)».
     /// </summary>
-    public string VersionText { get; } = BuildVersionText();
+    public string VersionText { get; } = $"Ctrl Monitor {BuildShortVersion()}";
 
-    private static string BuildVersionText()
+    /// <summary>Versión corta al final de la barra superior: «v2.8.0» o «dev».</summary>
+    public string ShortVersionText { get; } = BuildShortVersion();
+
+    private static string BuildShortVersion()
     {
         Version? version = typeof(MainViewModel).Assembly.GetName().Version;
 
-        return version is null
-            ? "Ctrl Monitor"
-            : $"Ctrl Monitor {version.Major}.{version.Minor}.{Math.Max(0, version.Build)}";
+        if (version is null || (version.Major == 0 && version.Minor == 0 && version.Build <= 0))
+            return "dev";
+
+        return $"v{version.Major}.{version.Minor}.{version.Build}";
     }
 
     [ObservableProperty]
@@ -229,11 +435,19 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _vramText = "—";
 
+    /// <summary>RAM en uso, con el mismo formato que la VRAM.</summary>
+    [ObservableProperty]
+    private string _ramUsageText = "—";
+
     [ObservableProperty]
     private double? _netDownMbs;
 
     [ObservableProperty]
     private double? _netUpMbs;
+
+    /// <summary>Frecuencia promedio de los núcleos del CPU, en GHz.</summary>
+    [ObservableProperty]
+    private double? _cpuClockGhz;
 
     [ObservableProperty]
     private string _lastUpdateText = Loc.T("chart.waiting");
@@ -259,8 +473,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _fanSummaryText = Loc.T("fans.initial");
 
+    /// <summary>«Solo activos» viene marcado: los canales a 0 RPM suelen ser cabezales vacíos.</summary>
     [ObservableProperty]
-    private bool _showOnlyActiveFans;
+    private bool _showOnlyActiveFans = true;
 
     [ObservableProperty]
     private bool _showActiveFilterEmpty;
@@ -468,6 +683,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
 
+        _diskUsage.Dispose();
         SaveNow();
         AppLog.Info("Monitor de hardware cerrado.");
     }
@@ -515,6 +731,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         foreach (ChartPanelViewModel panel in ChartPanels)
             panel.RefreshLanguage();
+
+        foreach (StorageDiskViewModel disk in StorageDisks)
+            disk.RefreshLanguage();
+
+        foreach (DiskDetailViewModel disk in DiskDetails)
+            disk.RefreshLanguage();
+
+        foreach (ChartPanelViewModel item in ChartListItems)
+            item.RefreshLanguage();
 
         foreach (FanViewModel fan in Fans)
             fan.RefreshLanguage();
@@ -572,6 +797,116 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             Environment.NewLine,
             inventory.Disks.Select(disk => $"{disk.Model} · {FormatBytes(disk.SizeBytes)}"));
 
+    /// <summary>
+    /// Lee el espacio de las unidades si se pidió (al arrancar o al entrar a
+    /// Inicio), fuera del hilo de la interfaz: una unidad extraíble lenta no
+    /// debe trabar la ventana.
+    /// </summary>
+    private void UpdateVolumes()
+    {
+        if (_readingVolumes || !_volumesRequested)
+            return;
+
+        _readingVolumes = true;
+        _volumesRequested = false;
+
+        Task.Run(ReadStorage).ContinueWith(
+            task => _dispatcher.BeginInvoke(new Action(() =>
+            {
+                _readingVolumes = false;
+
+                if (task.IsCompletedSuccessfully && !_disposed)
+                    ApplyStorage(task.Result.Disks, task.Result.Volumes);
+                else if (task.Exception is { } ex)
+                    AppLog.Warn($"No se pudo leer el almacenamiento: {ex.GetBaseException().Message}");
+            })),
+            TaskScheduler.Default);
+    }
+
+    private static (IReadOnlyList<PhysicalDiskInfo> Disks, IReadOnlyList<VolumeUsage> Volumes) ReadStorage()
+    {
+        IReadOnlyList<PhysicalDiskInfo> disks;
+
+        try
+        {
+            disks = PhysicalDiskReader.Read();
+        }
+        catch (Exception ex)
+        {
+            // Sin la API de almacenamiento se muestran igual las unidades, sin salud.
+            AppLog.Warn($"No se pudo leer la salud de los discos: {ex.Message}");
+            disks = Array.Empty<PhysicalDiskInfo>();
+        }
+
+        return (disks, VolumeUsageReader.Read());
+    }
+
+    /// <summary>
+    /// Agrupa las unidades por disco físico. Las que no aparecen en ningún
+    /// disco (por ejemplo, si falla la API de almacenamiento) van a un grupo aparte.
+    /// </summary>
+    private void ApplyStorage(IReadOnlyList<PhysicalDiskInfo> disks, IReadOnlyList<VolumeUsage> volumes)
+    {
+        var used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var result = new List<StorageDiskViewModel>();
+
+        foreach (PhysicalDiskInfo disk in disks)
+        {
+            List<VolumeViewModel> own = volumes
+                .Where(volume => disk.Letters.Contains(volume.Letter, StringComparer.OrdinalIgnoreCase))
+                .Select(volume => new VolumeViewModel(volume))
+                .ToList();
+
+            own.ForEach(volume => used.Add(volume.Letter));
+            result.Add(new StorageDiskViewModel(disk, own));
+        }
+
+        List<VolumeViewModel> others = volumes
+            .Where(volume => !used.Contains(volume.Letter))
+            .Select(volume => new VolumeViewModel(volume))
+            .ToList();
+
+        if (others.Count > 0)
+            result.Add(new StorageDiskViewModel(null, others));
+
+        StorageDisks.Clear();
+
+        foreach (StorageDiskViewModel disk in result)
+            StorageDisks.Add(disk);
+
+        UpdateStorageSensors(_hardware.Latest.Sensors);
+
+        AppLog.Info("Almacenamiento: " + string.Join(" | ", StorageDisks.Select(disk =>
+            $"{disk.Title} [{disk.Model}] {disk.HealthText} {disk.TemperatureText} {disk.LifeText} ({string.Join(", ", disk.Volumes.Select(v => v.Letter))})")));
+
+        OnPropertyChanged(nameof(HasVolumes));
+    }
+
+    /// <summary>
+    /// Cruza los sensores de disco de LibreHardwareMonitor con los discos de
+    /// Windows por modelo. Con dos discos del mismo modelo se asignan en orden.
+    /// </summary>
+    private void UpdateStorageSensors(IReadOnlyList<SensorReading> sensors)
+    {
+        if (StorageDisks.Count == 0)
+            return;
+
+        var byModel = sensors
+            .Where(s => s.HardwareType == "Storage")
+            .GroupBy(s => s.HardwareId)
+            .GroupBy(group => group.First().HardwareName.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => new Queue<List<SensorReading>>(group.Select(g => g.ToList())),
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (StorageDiskViewModel disk in StorageDisks.Where(d => d.Number >= 0).OrderBy(d => d.Number))
+        {
+            if (byModel.TryGetValue(disk.Model, out Queue<List<SensorReading>>? queue) && queue.Count > 0)
+                disk.UpdateSensors(queue.Dequeue());
+        }
+    }
+
+    public bool HasVolumes => StorageDisks.Count > 0;
+
     private static string FormatBytes(long bytes)
     {
         const double Gigabyte = 1024d * 1024d * 1024d;
@@ -612,7 +947,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private void UpdateFromSnapshot(HardwareSnapshot snapshot)
     {
         UpdateMemory();
+        UpdateVolumes();
+        UpdateStorageSensors(snapshot.Sensors);
+        UpdateDiskDetails();
         UpdateNetwork();
+        UpdateDisks();
 
         if (snapshot.Sensors.Count == 0)
         {
@@ -635,6 +974,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                             ?? MaxValue(cpu, SensorKind.Temperature);
         CpuPower = FindValue(cpu, SensorKind.Power, "CPU Package", "Package")
                    ?? MaxValue(cpu, SensorKind.Power);
+        CpuClockGhz = AverageCoreClockGhz(cpu);
         CpuLoad = FindValue(cpu, SensorKind.Load, "CPU Total", "Total")
                   ?? FirstValue(cpu, SensorKind.Load);
 
@@ -675,7 +1015,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             RamPercent,
             VramPercent,
             NetDownMbs,
-            NetUpMbs));
+            NetUpMbs,
+            CpuLoad,
+            GpuLoad,
+            _disks.Count == 0 ? null : _disks));
 
         // El gráfico permite ventanas de hasta 10 minutos; conservamos ese
         // margen y descartamos lo más viejo para no crecer sin límite.
@@ -689,10 +1032,16 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         List<string> configured = _config.ChartMetrics ?? new List<string>();
 
-        foreach (string key in configured)
+        for (int i = 0; i < configured.Count; i++)
         {
-            ChartMetric? metric = ChartMetrics.All.FirstOrDefault(item =>
-                item.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
+            string key = configured[i];
+            ChartMetric? metric = FindChartMetric(key);
+
+            if (metric is null && key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                _pendingChartKeys.Add((i, key));
+                continue;
+            }
 
             if (metric is null || ChartPanels.Any(panel =>
                     string.Equals(panel.SelectedMetric.Key, metric.Key, StringComparison.OrdinalIgnoreCase)))
@@ -706,7 +1055,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         // Si la configuración traía solo claves desconocidas, restauramos el
         // conjunto principal. Un arreglo vacío sí se respeta: el usuario quitó
         // todos los gráficos a propósito.
-        if (configured.Count > 0 && ChartPanels.Count == 0)
+        if (configured.Count > 0 && ChartPanels.Count == 0 && _pendingChartKeys.Count == 0)
         {
             AddChartPanelCore(ChartMetrics.Cpu);
             AddChartPanelCore(ChartMetrics.Gpu);
@@ -715,14 +1064,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         _chartsInitialized = true;
         RefreshAvailableChartMetrics();
+        SyncChartListItems();
     }
 
-    private void AddChartPanelCore(ChartMetric metric)
+    private void AddChartPanelCore(ChartMetric metric, int? index = null)
     {
-        var panel = new ChartPanelViewModel(this, ChartMetrics.All, metric);
+        var panel = new ChartPanelViewModel(this, AllChartMetrics, metric);
         panel.PropertyChanged += OnChartPanelPropertyChanged;
-        ChartPanels.Add(panel);
+
+        if (index is { } position)
+            ChartPanels.Insert(position, panel);
+        else
+            ChartPanels.Add(panel);
     }
+
+    private ChartMetric? FindChartMetric(string key) =>
+        AllChartMetrics.FirstOrDefault(item => item.Key.Equals(key, StringComparison.OrdinalIgnoreCase));
 
     private void OnChartPanelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -737,8 +1094,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (!_chartsInitialized)
             return;
 
+        // Las tarjetas de disco que esperan a los contadores también se guardan.
         _config.ChartMetrics = ChartPanels
             .Select(panel => panel.SelectedMetric.Key)
+            .Concat(_pendingChartKeys.Select(pending => pending.Key))
             .ToList();
 
         SaveSoon();
@@ -746,7 +1105,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private void RefreshAvailableChartMetrics()
     {
-        List<ChartMetric> available = ChartMetrics.All
+        List<ChartMetric> available = AllChartMetrics
             .Where(metric => !ChartPanels.Any(panel =>
                 string.Equals(panel.SelectedMetric.Key, metric.Key, StringComparison.OrdinalIgnoreCase)))
             .ToList();
@@ -757,12 +1116,68 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NewChartMetric = available.FirstOrDefault();
 
         OnPropertyChanged(nameof(IsChartPanelsEmpty));
+        OnPropertyChanged(nameof(ShowChartPanelsEmpty));
+    }
+
+    /// <summary>Agrega a la vista de lista las métricas nuevas (por ejemplo, discos recién detectados).</summary>
+    private void SyncChartListItems()
+    {
+        foreach (ChartMetric metric in AllChartMetrics)
+        {
+            if (ChartListItems.Any(item => item.SelectedMetric == metric))
+                continue;
+
+            ChartListItems.Add(new ChartPanelViewModel(this, AllChartMetrics, metric));
+        }
+
+        // Aplica el orden guardado; las métricas sin posición guardada (por
+        // ejemplo, un disco nuevo) quedan al final en su orden natural.
+        List<string> order = _config.ChartListOrder ?? new List<string>();
+        List<ChartPanelViewModel> sorted = ChartListItems
+            .Select((item, index) => (item, index))
+            .OrderBy(entry => OrderIndex(order, entry.item.SelectedMetric.Key))
+            .ThenBy(entry => entry.index)
+            .Select(entry => entry.item)
+            .ToList();
+
+        for (int i = 0; i < sorted.Count; i++)
+        {
+            int current = ChartListItems.IndexOf(sorted[i]);
+
+            if (current != i)
+                ChartListItems.Move(current, i);
+        }
+
+        SelectedChartListItem ??= ChartListItems.FirstOrDefault();
+    }
+
+    private static int OrderIndex(List<string> order, string key)
+    {
+        int index = order.FindIndex(item => item.Equals(key, StringComparison.OrdinalIgnoreCase));
+        return index < 0 ? int.MaxValue : index;
+    }
+
+    /// <summary>Mueve una métrica de la vista de lista al arrastrarla y guarda el orden.</summary>
+    public void MoveChartListItem(ChartPanelViewModel item, int newIndex)
+    {
+        int oldIndex = ChartListItems.IndexOf(item);
+
+        if (oldIndex < 0 || newIndex < 0 || newIndex >= ChartListItems.Count || oldIndex == newIndex)
+            return;
+
+        ChartListItems.Move(oldIndex, newIndex);
+        _config.ChartListOrder = ChartListItems.Select(entry => entry.SelectedMetric.Key).ToList();
+        SaveSoon();
     }
 
     private void RefreshChartPanels()
     {
         foreach (ChartPanelViewModel panel in ChartPanels)
             panel.Refresh();
+
+        // En la vista de lista se actualizan todas: cada entrada tiene su mini gráfico y su resumen.
+        foreach (ChartPanelViewModel item in ChartListItems)
+            item.Refresh();
     }
 
     private void UpdateMemory()
@@ -775,6 +1190,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         RamTotalGb = usage.TotalGb;
         RamUsedGb = usage.UsedGb;
         RamPercent = usage.UsedPercent;
+        RamUsageText = Loc.F("vram.text", RamUsedGb, RamTotalGb, RamPercent);
     }
 
     private void UpdateVideoMemory(IReadOnlyList<SensorReading> gpu)
@@ -797,6 +1213,67 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         VramTotalGb = total / 1024d;
         VramPercent = Math.Clamp(used / total * 100d, 0, 100);
         VramText = Loc.F("vram.text", VramUsedGb, VramTotalGb, VramPercent);
+    }
+
+    private void UpdateDisks()
+    {
+        IReadOnlyList<DiskActivity> disks = _diskUsage.Read();
+
+        // Mientras los contadores se preparan la lista viene vacía: se conserva
+        // la anterior para no borrar los gráficos de disco por un instante.
+        if (disks.Count == 0 && _disks.Count > 0)
+            return;
+
+        bool changed = disks.Count != _disks.Count || disks.Any(disk => !_disks.ContainsKey(disk.Id));
+        _disks = disks.ToDictionary(disk => disk.Id, StringComparer.Ordinal);
+
+        if (changed)
+            RebuildChartMetrics();
+    }
+
+    /// <summary>Actividad actual de un disco, o <c>null</c> si no está conectado.</summary>
+    public DiskActivity? GetDisk(string diskId) =>
+        _disks.TryGetValue(diskId, out DiskActivity? disk) ? disk : null;
+
+    /// <summary>
+    /// Arma la lista de métricas con un gráfico por disco y la pasa a los
+    /// selectores. Las tarjetas de disco guardadas que esperaban a que se
+    /// detectaran los discos se agregan ahora, en su posición original.
+    /// </summary>
+    private void RebuildChartMetrics()
+    {
+        IEnumerable<ChartMetric> diskMetrics = _disks.Keys
+            .OrderBy(DiskNames.Number)
+            .Select(ChartMetrics.ForDisk);
+
+        // Un disco desconectado deja su tarjeta; su métrica sigue en la lista
+        // para que el selector no pierda la elección.
+        IEnumerable<ChartMetric> orphaned = ChartPanels
+            .Select(panel => panel.SelectedMetric)
+            .Where(metric => metric.Key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.Ordinal));
+
+        AllChartMetrics = ChartMetrics.Base.Concat(diskMetrics).Concat(orphaned).Distinct().ToList();
+
+        AppLog.Info($"Discos para gráficos: {string.Join(", ", _disks.Keys.OrderBy(DiskNames.Number))}");
+
+        foreach (ChartPanelViewModel panel in ChartPanels)
+            panel.Options = AllChartMetrics;
+
+        foreach ((int index, string key) in _pendingChartKeys.ToList())
+        {
+            ChartMetric? metric = FindChartMetric(key);
+
+            if (metric is null)
+                continue;
+
+            _pendingChartKeys.Remove((index, key));
+
+            if (!ChartPanels.Any(panel => panel.SelectedMetric == metric))
+                AddChartPanelCore(metric, Math.Min(index, ChartPanels.Count));
+        }
+
+        RefreshAvailableChartMetrics();
+        SyncChartListItems();
     }
 
     private void UpdateNetwork()
@@ -924,6 +1401,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                              ?? fans.OrderByDescending(s => s.Value).FirstOrDefault();
 
         return cpu is null ? null : (int)Math.Round(cpu.Value);
+    }
+
+    /// <summary>
+    /// Promedio de los relojes de núcleo («Core #1», «Core #2»…), sin el reloj
+    /// de bus. Es lo más parecido a la velocidad que muestra el Administrador de tareas.
+    /// </summary>
+    private static double? AverageCoreClockGhz(IEnumerable<SensorReading> cpu)
+    {
+        double[] cores = cpu
+            .Where(s => s.Kind == SensorKind.Clock
+                        && s.Name.Contains("Core", StringComparison.OrdinalIgnoreCase)
+                        && s.Value > 0)
+            .Select(s => s.Value)
+            .ToArray();
+
+        return cores.Length == 0 ? null : cores.Average() / 1000d;
     }
 
     private static double? FindValue(
