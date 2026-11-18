@@ -46,6 +46,14 @@ public static partial class Translations
         ["storage.used"] = "{0} usados ({1:0} %)",
         ["storage.free"] = "{0} libres de {1}",
         ["storage.loading"] = "Leyendo unidades…",
+        ["storage.disk"] = "Disco {0}",
+        ["storage.otherDrives"] = "Otras unidades",
+        ["storage.health.healthy"] = "Saludable",
+        ["storage.health.warning"] = "Advertencia",
+        ["storage.health.unhealthy"] = "Con fallas",
+        ["storage.health.unknown"] = "Sin datos",
+        ["storage.life"] = "Vida {0:0} %",
+        ["storage.healthTooltip"] = "Salud según Windows (S.M.A.R.T.)",
 
         // Gráfico
         ["chart.title"] = "Modo gráfico",

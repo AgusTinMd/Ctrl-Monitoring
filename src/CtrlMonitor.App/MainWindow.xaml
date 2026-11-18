@@ -480,28 +480,70 @@
                                 </TextBlock.Style>
                             </TextBlock>
 
-                            <ItemsControl ItemsSource="{Binding Volumes}" Margin="0,14,0,0" Focusable="False">
+                            <!-- Un bloque por disco físico: salud, temperatura y desgaste
+                                 arriba, y sus unidades con el espacio debajo. -->
+                            <ItemsControl ItemsSource="{Binding StorageDisks}" Margin="0,14,0,0" Focusable="False">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
-                                        <controls:ResponsiveGrid MinItemWidth="230" MaxColumns="3" Gap="24" />
+                                        <controls:ResponsiveGrid MinItemWidth="260" MaxColumns="3" Gap="24" />
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel Margin="0,0,0,6">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding Letter}" Style="{StaticResource SectionTitle}" />
-                                                <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}"
-                                                           Margin="8,0,0,0" VerticalAlignment="Bottom"
-                                                           TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
-                                            <ProgressBar Style="{StaticResource MeterBar}" Minimum="0" Maximum="100"
-                                                         Value="{Binding UsedPercent, Mode=OneWay}"
-                                                         Foreground="{Binding BarBrush}" Margin="0,8,0,0" />
-                                            <TextBlock Text="{Binding FreeText}" Style="{StaticResource SecondaryText}"
-                                                       Margin="0,7,0,0" />
-                                            <TextBlock Text="{Binding UsedText}" Style="{StaticResource MutedText}"
-                                                       Margin="0,2,0,0" />
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource SectionTitle}"
+                                                           VerticalAlignment="Center" />
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding TemperatureText}" FontSize="12.5" FontWeight="SemiBold"
+                                                               Foreground="{Binding TemperatureBrush}" Margin="0,0,10,0"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding HasTemperature, Converter={StaticResource BoolToVis}}" />
+                                                    <Border Style="{StaticResource Chip}" Padding="8,3"
+                                                            ToolTip="{l:Tr storage.healthTooltip}"
+                                                            Visibility="{Binding HasHealth, Converter={StaticResource BoolToVis}}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Ellipse Width="7" Height="7" Fill="{Binding HealthBrush}"
+                                                                     VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding HealthText}" FontSize="10.5" FontWeight="SemiBold"
+                                                                       Foreground="{Binding HealthBrush}" Margin="6,0,0,0" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}"
+                                                       Margin="0,3,0,0" TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding Detail}" />
+                                            <TextBlock Text="{Binding LifeText}" Style="{StaticResource MutedText}"
+                                                       Margin="0,2,0,0"
+                                                       Visibility="{Binding HasLife, Converter={StaticResource BoolToVis}}" />
+
+                                            <ItemsControl ItemsSource="{Binding Volumes}" Focusable="False">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,12,0,0">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding Letter}" FontSize="13.5" FontWeight="SemiBold"
+                                                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                                                <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}"
+                                                                           Margin="8,0,0,0" VerticalAlignment="Bottom"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                            </StackPanel>
+                                                            <ProgressBar Style="{StaticResource MeterBar}" Minimum="0" Maximum="100"
+                                                                         Value="{Binding UsedPercent, Mode=OneWay}"
+                                                                         Foreground="{Binding BarBrush}" Margin="0,7,0,0" />
+                                                            <TextBlock Text="{Binding FreeText}" Style="{StaticResource SecondaryText}"
+                                                                       Margin="0,6,0,0" />
+                                                            <TextBlock Text="{Binding UsedText}" Style="{StaticResource MutedText}"
+                                                                       Margin="0,2,0,0" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </StackPanel>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>

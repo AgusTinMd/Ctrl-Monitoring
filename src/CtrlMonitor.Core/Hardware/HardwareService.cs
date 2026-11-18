@@ -27,7 +27,7 @@ public sealed class HardwareService : IDisposable
             IsMotherboardEnabled = true,
             IsControllerEnabled = true,
             IsMemoryEnabled = false,
-            IsStorageEnabled = false,
+            IsStorageEnabled = true,
             IsNetworkEnabled = false,
             IsPowerMonitorEnabled = false
         };
@@ -131,10 +131,34 @@ public sealed class HardwareService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Pide leer los discos (temperatura, desgaste). Consultar S.M.A.R.T. en
+    /// cada refresco es costo innecesario, así que solo se hace mientras la
+    /// interfaz los muestra y como mucho cada <see cref="StorageInterval"/>.
+    /// </summary>
+    public bool StorageUpdatesEnabled
+    {
+        get => Volatile.Read(ref _storageUpdatesEnabled);
+        set => Volatile.Write(ref _storageUpdatesEnabled, value);
+    }
+
+    private static readonly TimeSpan StorageInterval = TimeSpan.FromSeconds(5);
+    private bool _storageUpdatesEnabled;
+    private DateTime _storageUpdatedUtc = DateTime.MinValue;
+
     private void UpdateAllLocked()
     {
+        bool updateStorage = _storageUpdatedUtc == DateTime.MinValue
+                             || (StorageUpdatesEnabled && DateTime.UtcNow - _storageUpdatedUtc >= StorageInterval);
+
+        if (updateStorage)
+            _storageUpdatedUtc = DateTime.UtcNow;
+
         foreach (IHardware hardware in Flatten(_computer.Hardware))
         {
+            if (hardware.HardwareType == HardwareType.Storage && !updateStorage)
+                continue;
+
             try
             {
                 hardware.Update();
@@ -240,6 +264,7 @@ public sealed class HardwareService : IDisposable
         SensorType.Load => SensorKind.Load,
         SensorType.Control => SensorKind.Pwm,
         SensorType.SmallData => SensorKind.Memory,
+        SensorType.Level => SensorKind.Level,
         _ => null
     };
 
@@ -249,7 +274,7 @@ public sealed class HardwareService : IDisposable
         SensorKind.Fan => "RPM",
         SensorKind.Power => "W",
         SensorKind.Voltage => "V",
-        SensorKind.Load or SensorKind.Pwm => "%",
+        SensorKind.Load or SensorKind.Pwm or SensorKind.Level => "%",
         SensorKind.Memory => "MB",
         _ => string.Empty
     };
