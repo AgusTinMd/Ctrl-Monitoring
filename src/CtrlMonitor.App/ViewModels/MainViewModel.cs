@@ -137,6 +137,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Canales de ventilador detectados, con RPM y PWM del BIOS.</summary>
     public ObservableCollection<FanViewModel> Fans { get; } = new();
 
+    /// <summary>Unidades con letra para la tarjeta de almacenamiento de Inicio.</summary>
+    public ObservableCollection<VolumeViewModel> Volumes { get; } = new();
+
+    private static readonly TimeSpan VolumeRefresh = TimeSpan.FromSeconds(30);
+    private DateTime _volumesReadUtc = DateTime.MinValue;
+    private bool _readingVolumes;
+
     /// <summary>Vista filtrada de los ventiladores según «Solo activos».</summary>
     public ListCollectionView VisibleFans { get; private set; } = null!;
 
@@ -543,6 +550,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (ChartPanelViewModel panel in ChartPanels)
             panel.RefreshLanguage();
 
+        foreach (VolumeViewModel volume in Volumes)
+            volume.RefreshLanguage();
+
         foreach (FanViewModel fan in Fans)
             fan.RefreshLanguage();
 
@@ -599,6 +609,63 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             Environment.NewLine,
             inventory.Disks.Select(disk => $"{disk.Model} · {FormatBytes(disk.SizeBytes)}"));
 
+    /// <summary>
+    /// Relee el espacio de las unidades cada 30 s, fuera del hilo de la
+    /// interfaz: una unidad extraíble lenta no debe trabar la ventana.
+    /// </summary>
+    private void UpdateVolumes()
+    {
+        if (_readingVolumes || DateTime.UtcNow - _volumesReadUtc < VolumeRefresh)
+            return;
+
+        _readingVolumes = true;
+
+        Task.Run(VolumeUsageReader.Read).ContinueWith(
+            task => _dispatcher.BeginInvoke(new Action(() =>
+            {
+                _readingVolumes = false;
+                _volumesReadUtc = DateTime.UtcNow;
+
+                if (task.IsCompletedSuccessfully && !_disposed)
+                    ApplyVolumes(task.Result);
+                else if (task.Exception is { } ex)
+                    AppLog.Warn($"No se pudo leer el espacio de las unidades: {ex.GetBaseException().Message}");
+            })),
+            TaskScheduler.Default);
+    }
+
+    private void ApplyVolumes(IReadOnlyList<VolumeUsage> volumes)
+    {
+        for (int i = Volumes.Count - 1; i >= 0; i--)
+        {
+            if (!volumes.Any(volume => volume.Letter == Volumes[i].Letter))
+                Volumes.RemoveAt(i);
+        }
+
+        for (int i = 0; i < volumes.Count; i++)
+        {
+            VolumeViewModel? existing = Volumes.FirstOrDefault(item => item.Letter == volumes[i].Letter);
+
+            if (existing is null)
+            {
+                Volumes.Insert(Math.Min(i, Volumes.Count), new VolumeViewModel(volumes[i]));
+            }
+            else
+            {
+                existing.Update(volumes[i]);
+
+                int current = Volumes.IndexOf(existing);
+
+                if (current != i && i < Volumes.Count)
+                    Volumes.Move(current, i);
+            }
+        }
+
+        OnPropertyChanged(nameof(HasVolumes));
+    }
+
+    public bool HasVolumes => Volumes.Count > 0;
+
     private static string FormatBytes(long bytes)
     {
         const double Gigabyte = 1024d * 1024d * 1024d;
@@ -639,6 +706,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private void UpdateFromSnapshot(HardwareSnapshot snapshot)
     {
         UpdateMemory();
+        UpdateVolumes();
         UpdateNetwork();
 
         if (snapshot.Sensors.Count == 0)

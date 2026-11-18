@@ -42,6 +42,10 @@ public static partial class Translations
         ["summary.boardCaption"] = "MOTHERBOARD",
         ["summary.boardTemp"] = "BOARD TEMPERATURE",
         ["summary.status"] = "STATUS",
+        ["storage.title"] = "STORAGE",
+        ["storage.used"] = "{0} used ({1:0}%)",
+        ["storage.free"] = "{0} free of {1}",
+        ["storage.loading"] = "Reading drives…",
 
         // Charts
         ["chart.title"] = "Charts",

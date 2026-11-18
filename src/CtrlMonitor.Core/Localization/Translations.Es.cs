@@ -42,6 +42,10 @@ public static partial class Translations
         ["summary.boardCaption"] = "PLACA MADRE",
         ["summary.boardTemp"] = "TEMPERATURA DE PLACA",
         ["summary.status"] = "ESTADO",
+        ["storage.title"] = "ALMACENAMIENTO",
+        ["storage.used"] = "{0} usados ({1:0} %)",
+        ["storage.free"] = "{0} libres de {1}",
+        ["storage.loading"] = "Leyendo unidades…",
 
         // Gráfico
         ["chart.title"] = "Modo gráfico",

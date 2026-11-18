@@ -455,6 +455,60 @@
                         </controls:ResponsiveGrid>
                     </Border>
 
+                    <!-- Almacenamiento: espacio usado y libre de cada unidad -->
+                    <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource IconBadge}" Width="30" Height="30">
+                                    <Path Data="{StaticResource DiskIconGeometry}"
+                                          Fill="{StaticResource AccentBrush}"
+                                          Width="18" Height="18" Stretch="Uniform" />
+                                </Border>
+                                <TextBlock Text="{l:Tr storage.title}" Style="{StaticResource CaptionText}"
+                                           Margin="9,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <TextBlock Text="{l:Tr storage.loading}" Margin="0,12,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasVolumes}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <ItemsControl ItemsSource="{Binding Volumes}" Margin="0,14,0,0" Focusable="False">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <controls:ResponsiveGrid MinItemWidth="230" MaxColumns="3" Gap="24" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,6">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Letter}" Style="{StaticResource SectionTitle}" />
+                                                <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}"
+                                                           Margin="8,0,0,0" VerticalAlignment="Bottom"
+                                                           TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <ProgressBar Style="{StaticResource MeterBar}" Minimum="0" Maximum="100"
+                                                         Value="{Binding UsedPercent, Mode=OneWay}"
+                                                         Foreground="{Binding BarBrush}" Margin="0,8,0,0" />
+                                            <TextBlock Text="{Binding FreeText}" Style="{StaticResource SecondaryText}"
+                                                       Margin="0,7,0,0" />
+                                            <TextBlock Text="{Binding UsedText}" Style="{StaticResource MutedText}"
+                                                       Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
                 </StackPanel>
             </ScrollViewer>
         </TabItem>
