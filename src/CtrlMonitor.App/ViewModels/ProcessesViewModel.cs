@@ -346,6 +346,21 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
 
     partial void OnNetworkWidthChanged(GridLength value) => SaveWidths();
 
+    /// <summary>Cambia el ancho de una columna de valores, con un mínimo y un máximo razonables.</summary>
+    public void ResizeColumn(string column, double delta)
+    {
+        static GridLength Grow(GridLength width, double change) =>
+            new(Math.Clamp(width.Value + change, 56, 420));
+
+        switch (column)
+        {
+            case "Cpu": CpuWidth = Grow(CpuWidth, delta); break;
+            case "Memory": MemoryWidth = Grow(MemoryWidth, delta); break;
+            case "Disk": DiskWidth = Grow(DiskWidth, delta); break;
+            case "Network": NetworkWidth = Grow(NetworkWidth, delta); break;
+        }
+    }
+
     private void SaveWidths()
     {
         if (_config is null || _save is null)

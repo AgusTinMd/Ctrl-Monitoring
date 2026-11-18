@@ -103,6 +103,16 @@ public partial class MainWindow : Window
             Hide();
     }
 
+    /// <summary>
+    /// Arrastrar el borde izquierdo de una columna cambia solo su ancho: hacia la
+    /// izquierda la agranda y Nombre ocupa lo que sobra, así nunca se desalinea.
+    /// </summary>
+    private void ProcessColumnThumb_DragDelta(object sender, DragDeltaEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: string column })
+            _viewModel.Processes.ResizeColumn(column, -e.HorizontalChange);
+    }
+
     /// <summary>El SelectedItem del TreeView es de solo lectura: se copia al view model.</summary>
     private void ProcessTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<object> e) =>
         _viewModel.Processes.Selected = e.NewValue as ProcessNode;
