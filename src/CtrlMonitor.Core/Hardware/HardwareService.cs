@@ -193,6 +193,9 @@ public sealed partial class HardwareService : IDisposable
             identity = SystemIdentity.Empty;
         }
 
+        Diagnostics.AppLog.Info(
+            $"Equipo según Windows: {identity.SystemManufacturer} / {identity.SystemModel} · placa {identity.BoardManufacturer} / {identity.BoardProduct} · LibreHardwareMonitor: {MotherboardName}");
+
         MotherboardBrandText = BoardIdentity.BrandText(MotherboardName, identity);
         MotherboardName = BoardIdentity.DisplayName(MotherboardName, identity);
 
