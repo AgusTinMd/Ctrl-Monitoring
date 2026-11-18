@@ -276,6 +276,50 @@ internal static class ChartMetrics
         TertiaryUnit = " W"
     };
 
+    public static ChartMetric CpuLoad { get; } = new()
+    {
+        Key = "CpuLoad",
+        TitleKey = "metric.cpuLoad.title",
+        SubtitleKey = "metric.cpuLoad.subtitle",
+        Color = UiBrushes.ChartCpu,
+        AxisUnit = "%",
+        AxisMin = 0,
+        AxisMax = 100,
+        AxisStep = 10,
+        Primary = vm => vm.CpuLoad,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        SecondaryLabelKey = "metric.label.temp",
+        Secondary = vm => vm.CpuTemperature,
+        SecondaryFormat = "0.0",
+        SecondaryUnit = " °C",
+        Tertiary = vm => vm.CpuPower,
+        TertiaryFormat = "0.0",
+        TertiaryUnit = " W"
+    };
+
+    public static ChartMetric GpuLoad { get; } = new()
+    {
+        Key = "GpuLoad",
+        TitleKey = "metric.gpuLoad.title",
+        SubtitleKey = "metric.gpuLoad.subtitle",
+        Color = UiBrushes.ChartGpu,
+        AxisUnit = "%",
+        AxisMin = 0,
+        AxisMax = 100,
+        AxisStep = 10,
+        Primary = vm => vm.GpuLoad,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        SecondaryLabelKey = "metric.label.temp",
+        Secondary = vm => vm.GpuTemperature,
+        SecondaryFormat = "0.0",
+        SecondaryUnit = " °C",
+        Tertiary = vm => vm.GpuPower,
+        TertiaryFormat = "0.0",
+        TertiaryUnit = " W"
+    };
+
     public static ChartMetric Board { get; } = new()
     {
         Key = "Board",
@@ -382,6 +426,8 @@ internal static class ChartMetrics
     {
         Cpu,
         Gpu,
+        CpuLoad,
+        GpuLoad,
         Board,
         Hotspot,
         Ram,

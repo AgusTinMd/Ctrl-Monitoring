@@ -72,6 +72,11 @@ public static partial class Translations
         ["metric.label.inUse"] = "IN USE",
         ["metric.label.down"] = "DOWNLOAD",
         ["metric.label.up"] = "UPLOAD",
+        ["metric.label.temp"] = "TEMPERATURE",
+        ["metric.cpuLoad.title"] = "CPU usage",
+        ["metric.cpuLoad.subtitle"] = "Total processor load",
+        ["metric.gpuLoad.title"] = "GPU usage",
+        ["metric.gpuLoad.subtitle"] = "GPU core load",
         ["unit.gbOf"] = " GB of {0} GB",
         ["vram.text"] = "{0:0.0} GB of {1:0.0} GB · {2:0} %",
 
