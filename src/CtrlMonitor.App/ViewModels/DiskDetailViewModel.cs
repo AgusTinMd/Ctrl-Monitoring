@@ -38,6 +38,10 @@ public sealed partial class DiskDetailViewModel : ObservableObject
 
     public int Number { get; }
 
+    /// <summary>La ficha muestra sus datos; al contraerla queda solo el encabezado.</summary>
+    [ObservableProperty]
+    private bool _isExpanded = true;
+
     public ObservableCollection<DiskStatViewModel> Stats { get; } = new();
 
     public ObservableCollection<string> Issues { get; } = new();
