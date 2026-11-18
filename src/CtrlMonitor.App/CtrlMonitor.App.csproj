@@ -36,6 +36,16 @@
     <Resource Include="Assets\asrock.png" />
     <Resource Include="Assets\intel.png" />
     <Resource Include="Assets\amd.png" />
+    <Resource Include="Assets\biostar.png" />
+    <Resource Include="Assets\evga.png" />
+    <Resource Include="Assets\nzxt.png" />
+    <Resource Include="Assets\supermicro.png" />
+    <Resource Include="Assets\colorful.png" />
+    <Resource Include="Assets\maxsun.png" />
+    <Resource Include="Assets\dell.png" />
+    <Resource Include="Assets\hp.png" />
+    <Resource Include="Assets\lenovo.png" />
+    <Resource Include="Assets\acer.png" />
   </ItemGroup>
 
 </Project>
