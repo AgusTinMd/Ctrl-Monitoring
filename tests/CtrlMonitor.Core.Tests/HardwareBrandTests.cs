@@ -40,7 +40,16 @@ public class HardwareBrandTests
     [InlineData("Gigabyte B550 AORUS ELITE", "gigabyte.png")]
     [InlineData("MSI MAG B650 TOMAHAWK WIFI", "msi.png")]
     [InlineData("ASRock B550M Pro4", "asrock.png")]
-    [InlineData("Biostar B550MH", null)]
+    [InlineData("Biostar B550MH", "biostar.png")]
+    [InlineData("EVGA Z590 DARK", "evga.png")]
+    [InlineData("NZXT N7 B550", "nzxt.png")]
+    [InlineData("Supermicro X12SPi-TF", "supermicro.png")]
+    [InlineData("COLORFUL CVN B760M", "colorful.png")]
+    [InlineData("MAXSUN MS-Challenger B760M", "maxsun.png")]
+    [InlineData("Dell Inc. 0XYZ12", "dell.png")]
+    [InlineData("HP 8603", "hp.png")]
+    [InlineData("LENOVO 3717", "lenovo.png")]
+    [InlineData("Acer Aspire XC-886", "acer.png")]
     public void Board_LogoFiles(string boardName, string? expected)
     {
         Assert.Equal(expected, BoardBrands.Detect(boardName)?.LogoFile);
