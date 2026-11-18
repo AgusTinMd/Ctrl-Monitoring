@@ -26,10 +26,122 @@
             <TextBlock Text="{Binding DisplayName}" />
         </DataTemplate>
 
+        <!-- Valores de una métrica (principal, secundario, terciario y cuarto);
+             lo usan las tarjetas y el gráfico grande de la vista de lista. -->
+        <DataTemplate x:Key="ChartValuesTemplate">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Margin="0,0,12,0" VerticalAlignment="Center"
+                            Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding SecondaryLabel}" Style="{StaticResource CaptionText}"
+                               HorizontalAlignment="Right" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                Margin="0,2,0,0">
+                        <TextBlock Text="{Binding SecondaryInline}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,6,1" />
+                        <TextBlock Text="{Binding SecondaryValue}"
+                                   FontSize="12.5" FontWeight="SemiBold"
+                                   Foreground="{Binding SecondaryValueBrush}" />
+                        <TextBlock Text="{Binding SecondaryUnit}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                Margin="0,-1,0,0"
+                                Visibility="{Binding HasQuaternary, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding QuaternaryInline}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,6,1" />
+                        <TextBlock Text="{Binding QuaternaryValue}"
+                                   FontSize="11.5" FontWeight="SemiBold"
+                                   Foreground="{Binding QuaternaryValueBrush}" />
+                        <TextBlock Text="{Binding QuaternaryUnit}" FontSize="9.5"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Border Width="1" Height="34" Margin="0,0,12,0"
+                        Background="{StaticResource BorderBrush}"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVis}}" />
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock Text="{Binding PrimaryLabel}" Style="{StaticResource CaptionText}"
+                               HorizontalAlignment="Right" Margin="0,0,0,2"
+                               Visibility="{Binding HasPrimaryLabel, Converter={StaticResource BoolToVis}}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="{Binding PrimaryValue}"
+                                   FontSize="19" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="{Binding PrimaryUnit}" Style="{StaticResource UnitText}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                                Margin="0,-2,0,0"
+                                Visibility="{Binding HasTertiary, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding TertiaryValue}"
+                                   FontSize="11.5" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                        <TextBlock Text="{Binding TertiaryUnit}" FontSize="9.5"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- Los mismos valores en columna, para la izquierda de las tarjetas. -->
+        <DataTemplate x:Key="ChartValuesColumnTemplate">
+            <StackPanel>
+                <TextBlock Text="{Binding PrimaryLabel}" Style="{StaticResource CaptionText}"
+                           Visibility="{Binding HasPrimaryLabel, Converter={StaticResource BoolToVis}}" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding PrimaryValue}" FontSize="22" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock Text="{Binding PrimaryUnit}" Style="{StaticResource UnitText}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,-2,0,0"
+                            Visibility="{Binding HasTertiary, Converter={StaticResource BoolToVis}}">
+                    <TextBlock Text="{Binding TertiaryValue}" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                    <TextBlock Text="{Binding TertiaryUnit}" FontSize="10"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                </StackPanel>
+
+                <StackPanel Margin="0,12,0,0"
+                            Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVis}}">
+                    <Border Height="1" Background="{StaticResource BorderBrush}" Margin="0,0,0,8" />
+                    <TextBlock Text="{Binding SecondaryLabel}" Style="{StaticResource CaptionText}" />
+                    <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                        <TextBlock Text="{Binding SecondaryInline}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,5,1" />
+                        <TextBlock Text="{Binding SecondaryValue}" FontSize="13" FontWeight="SemiBold"
+                                   Foreground="{Binding SecondaryValueBrush}" />
+                        <TextBlock Text="{Binding SecondaryUnit}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding HasQuaternary, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding QuaternaryInline}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,5,1" />
+                        <TextBlock Text="{Binding QuaternaryValue}" FontSize="12" FontWeight="SemiBold"
+                                   Foreground="{Binding QuaternaryValueBrush}" />
+                        <TextBlock Text="{Binding QuaternaryUnit}" FontSize="10"
+                                   Foreground="{StaticResource TextMutedBrush}"
+                                   VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </DataTemplate>
+
         <DataTemplate x:Key="ChartCardTemplate">
             <!-- Toda la tarjeta se puede arrastrar para reordenarla; el selector
                  y la ✕ manejan sus propios clics y no inician el arrastre. -->
-            <Border Padding="16,14,14,10" Margin="5" MinHeight="190"
+            <Border Padding="16,12,14,10" Margin="5" MinHeight="250"
                     AllowDrop="True"
                     MouseLeftButtonDown="ChartCard_MouseLeftButtonDown"
                     MouseMove="ChartCard_MouseMove"
@@ -67,14 +179,10 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel VerticalAlignment="Center">
-                            <StackPanel Orientation="Horizontal">
+                    <!-- Encabezado en una sola línea; los valores van a la izquierda del
+                         gráfico para dejarle todo el alto al eje vertical. -->
+                    <DockPanel LastChildFill="True">
+                            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
                                 <TextBlock Text="⠿" FontFamily="Segoe UI Symbol" FontSize="14"
                                            Foreground="{StaticResource TextMutedBrush}"
                                            VerticalAlignment="Center" Margin="-4,0,6,0"
@@ -96,55 +204,21 @@
                                         ToolTip="{l:Tr chart.removeTooltip}" />
                             </StackPanel>
                             <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MutedText}"
-                                       Margin="32,4,0,0" TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
+                                       Margin="10,0,0,0" VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
 
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <StackPanel Margin="0,0,12,0" VerticalAlignment="Center"
-                                        Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVis}}">
-                                <TextBlock Text="{Binding SecondaryLabel}" Style="{StaticResource CaptionText}"
-                                           HorizontalAlignment="Right" />
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                            Margin="0,2,0,0">
-                                    <TextBlock Text="{Binding SecondaryValue}"
-                                               FontSize="12.5" FontWeight="SemiBold"
-                                               Foreground="{Binding SecondaryValueBrush}" />
-                                    <TextBlock Text="{Binding SecondaryUnit}" FontSize="10"
-                                               Foreground="{StaticResource TextMutedBrush}"
-                                               VerticalAlignment="Bottom" Margin="0,0,0,1" />
-                                </StackPanel>
-                            </StackPanel>
+                    <Grid Grid.Row="1" Margin="0,8,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                            <Border Width="1" Height="34" Margin="0,0,12,0"
-                                    Background="{StaticResource BorderBrush}"
-                                    VerticalAlignment="Center"
-                                    Visibility="{Binding HasSecondary, Converter={StaticResource BoolToVis}}" />
+                        <ContentControl Content="{Binding}" Focusable="False"
+                                        ContentTemplate="{StaticResource ChartValuesColumnTemplate}"
+                                        VerticalAlignment="Top" Margin="0,10,6,0" />
 
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{Binding PrimaryLabel}" Style="{StaticResource CaptionText}"
-                                           HorizontalAlignment="Right" Margin="0,0,0,2"
-                                           Visibility="{Binding HasPrimaryLabel, Converter={StaticResource BoolToVis}}" />
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                    <TextBlock Text="{Binding PrimaryValue}"
-                                               FontSize="19" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}" />
-                                    <TextBlock Text="{Binding PrimaryUnit}" Style="{StaticResource UnitText}" />
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
-                                            Margin="0,-2,0,0"
-                                            Visibility="{Binding HasTertiary, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="{Binding TertiaryValue}"
-                                               FontSize="11.5" FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextSecondaryBrush}" />
-                                    <TextBlock Text="{Binding TertiaryUnit}" FontSize="9.5"
-                                               Foreground="{StaticResource TextMutedBrush}"
-                                               VerticalAlignment="Bottom" Margin="0,0,0,1" />
-                                </StackPanel>
-                            </StackPanel>
-                        </StackPanel>
-                    </Grid>
-
-                    <controls:LiveChart Grid.Row="1" Margin="0,8,0,0"
+                    <controls:LiveChart Grid.Column="1"
                                         Samples="{Binding DataContext.ChartSamples, RelativeSource={RelativeSource AncestorType=Window}}"
                                         WindowMinutes="{Binding DataContext.ChartWindowMinutes, RelativeSource={RelativeSource AncestorType=Window}}"
                                         Series="{Binding SeriesKey}"
@@ -153,12 +227,88 @@
                                         AxisMax="{Binding AxisMax}"
                                         AxisStep="{Binding AxisStep}"
                                         AutoScale="True" />
+                    </Grid>
                 </Grid>
             </Border>
         </DataTemplate>
+
+        <!-- Vista de lista (estilo Administrador de tareas): cada entrada tiene
+             un mini gráfico, el nombre de la métrica y un resumen de valores. -->
+        <Style x:Key="ChartListItem" TargetType="ListBoxItem">
+            <Setter Property="Padding" Value="8,7" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd" Background="Transparent" CornerRadius="8"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource CardHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="ChartListItemTemplate">
+            <!-- Se arrastra para ordenar la lista, con los mismos manejadores que las tarjetas. -->
+            <Grid Background="Transparent" AllowDrop="True"
+                  ToolTip="{l:Tr chart.listDragTooltip}"
+                  MouseLeftButtonDown="ChartCard_MouseLeftButtonDown"
+                  MouseMove="ChartCard_MouseMove"
+                  MouseLeftButtonUp="ChartCard_MouseLeftButtonUp"
+                  LostMouseCapture="ChartCard_LostMouseCapture"
+                  DragOver="ChartCard_DragOver"
+                  Drop="ChartCard_Drop">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsDragging}" Value="True">
+                                <Setter Property="Opacity" Value="0.3" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Border Width="78" Height="50" BorderThickness="1" CornerRadius="3"
+                        BorderBrush="{Binding Color}" Background="{StaticResource SurfaceBrush}">
+                    <controls:LiveChart Compact="True" IsHitTestVisible="False"
+                                        Samples="{Binding DataContext.ChartSamples, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        WindowMinutes="{Binding DataContext.ChartWindowMinutes, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        Series="{Binding SeriesKey}"
+                                        AxisMin="{Binding AxisMin}"
+                                        AxisMax="{Binding AxisMax}"
+                                        AxisStep="{Binding AxisStep}"
+                                        AutoScale="True" />
+                </Border>
+                <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding SelectedMetric.Title}" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Subtitle}" FontSize="10.5"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock Text="{Binding Summary}" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+            </Grid>
+        </DataTemplate>
     </Window.Resources>
 
-    <TabControl Style="{StaticResource NavTabControl}" SelectedIndex="0" TabStripPlacement="Left">
+    <TabControl Style="{StaticResource NavTabControl}" SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}" TabStripPlacement="Left">
 
         <!-- ============================================================ -->
         <!-- Resumen                                                      -->
@@ -433,6 +583,105 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Almacenamiento: espacio usado y libre de cada unidad -->
+                    <Border Style="{StaticResource Card}" Margin="0,16,0,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource IconBadge}" Width="30" Height="30">
+                                    <Path Data="{StaticResource DiskIconGeometry}"
+                                          Fill="{StaticResource AccentBrush}"
+                                          Width="18" Height="18" Stretch="Uniform" />
+                                </Border>
+                                <TextBlock Text="{l:Tr storage.title}" Style="{StaticResource CaptionText}"
+                                           Margin="9,0,0,0" VerticalAlignment="Center" />
+                            </StackPanel>
+
+                            <TextBlock Text="{l:Tr storage.loading}" Margin="0,12,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding HasVolumes}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!-- Un bloque por disco físico: salud, temperatura y desgaste
+                                 arriba, y sus unidades con el espacio debajo. -->
+                            <ItemsControl ItemsSource="{Binding StorageDisks}" Margin="0,14,0,0" Focusable="False">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <controls:ResponsiveGrid MinItemWidth="260" MaxColumns="3" Gap="24" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Title}" Style="{StaticResource SectionTitle}"
+                                                           VerticalAlignment="Center" />
+                                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding TemperatureText}" FontSize="12.5" FontWeight="SemiBold"
+                                                               Foreground="{Binding TemperatureBrush}" Margin="0,0,10,0"
+                                                               VerticalAlignment="Center"
+                                                               Visibility="{Binding HasTemperature, Converter={StaticResource BoolToVis}}" />
+                                                    <Border Style="{StaticResource Chip}" Padding="8,3"
+                                                            ToolTip="{l:Tr storage.healthTooltip}"
+                                                            Visibility="{Binding HasHealth, Converter={StaticResource BoolToVis}}">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <Ellipse Width="7" Height="7" Fill="{Binding HealthBrush}"
+                                                                     VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding HealthText}" FontSize="10.5" FontWeight="SemiBold"
+                                                                       Foreground="{Binding HealthBrush}" Margin="6,0,0,0" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </StackPanel>
+                                            </Grid>
+                                            <!-- Detalle en un renglón y vida siempre presente (vacía en
+                                                 discos sin ese dato): así las unidades de todos los discos
+                                                 empiezan a la misma altura. -->
+                                            <TextBlock Text="{Binding Detail}" Style="{StaticResource MutedText}"
+                                                       Margin="0,3,0,0" TextWrapping="NoWrap"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       ToolTip="{Binding Detail}" />
+                                            <TextBlock Text="{Binding LifeText}" Style="{StaticResource MutedText}"
+                                                       Margin="0,2,0,0" TextWrapping="NoWrap" />
+
+                                            <ItemsControl ItemsSource="{Binding Volumes}" Focusable="False">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Margin="0,12,0,0">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock Text="{Binding Letter}" FontSize="13.5" FontWeight="SemiBold"
+                                                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                                                                <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}"
+                                                                           Margin="8,0,0,0" VerticalAlignment="Bottom"
+                                                                           TextTrimming="CharacterEllipsis" />
+                                                            </StackPanel>
+                                                            <ProgressBar Style="{StaticResource MeterBar}" Minimum="0" Maximum="100"
+                                                                         Value="{Binding UsedPercent, Mode=OneWay}"
+                                                                         Foreground="{Binding BarBrush}" Margin="0,7,0,0" />
+                                                            <TextBlock Text="{Binding FreeText}" Style="{StaticResource SecondaryText}"
+                                                                       Margin="0,6,0,0" />
+                                                            <TextBlock Text="{Binding UsedText}" Style="{StaticResource MutedText}"
+                                                                       Margin="0,2,0,0" />
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
                 </StackPanel>
             </ScrollViewer>
         </TabItem>
@@ -466,6 +715,20 @@
 
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right"
                                 VerticalAlignment="Center" Margin="0,12,0,0">
+                        <!-- Vista de la sección: tarjetas o lista con gráfico grande. -->
+                        <Border Background="{StaticResource SurfaceBrush}"
+                                BorderBrush="{StaticResource BorderBrush}"
+                                BorderThickness="1" CornerRadius="9" Padding="2" Margin="0,0,12,0">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="{l:Tr chart.view.cards}" Style="{StaticResource SegmentButton}"
+                                             GroupName="ChartView"
+                                             IsChecked="{Binding IsChartCardView, Mode=TwoWay}" />
+                                <RadioButton Content="{l:Tr chart.view.list}" Style="{StaticResource SegmentButton}"
+                                             GroupName="ChartView"
+                                             IsChecked="{Binding IsChartListView, Mode=TwoWay}" />
+                            </StackPanel>
+                        </Border>
+
                         <Border Background="{StaticResource SurfaceBrush}"
                                 BorderBrush="{StaticResource BorderBrush}"
                                 BorderThickness="1" CornerRadius="9" Padding="2" Margin="0,0,12,0">
@@ -486,7 +749,7 @@
                                 Command="{Binding ClearChartCommand}" />
 
                         <StackPanel Orientation="Horizontal" Margin="12,0,0,0"
-                                    Visibility="{Binding HasAvailableChartMetrics, Converter={StaticResource BoolToVis}}">
+                                    Visibility="{Binding CanAddChartPanel, Converter={StaticResource BoolToVis}}">
                             <ComboBox Width="140" Height="34" MinWidth="0"
                                       ItemsSource="{Binding AvailableChartMetrics}"
                                       SelectedItem="{Binding NewChartMetric, Mode=TwoWay}"
@@ -501,9 +764,11 @@
 
                 <TextBlock Grid.Row="1" Margin="0,14,0,0"
                            Text="{l:Tr chart.hint}"
-                           Style="{StaticResource MutedText}" />
+                           Style="{StaticResource MutedText}"
+                           Visibility="{Binding IsChartCardView, Converter={StaticResource BoolToVis}}" />
 
                 <ItemsControl Grid.Row="2" Margin="-5,2,-5,-5"
+                              Visibility="{Binding IsChartCardView, Converter={StaticResource BoolToVis}}"
                               ItemsSource="{Binding ChartPanels}"
                               ItemTemplate="{StaticResource ChartCardTemplate}">
                     <ItemsControl.ItemContainerStyle>
@@ -530,7 +795,67 @@
                            Text="{l:Tr chart.empty}"
                            Style="{StaticResource MutedText}"
                            HorizontalAlignment="Center" VerticalAlignment="Top"
-                           Visibility="{Binding IsChartPanelsEmpty, Converter={StaticResource BoolToVis}}" />
+                           Visibility="{Binding ShowChartPanelsEmpty, Converter={StaticResource BoolToVis}}" />
+
+                <!-- Vista de lista: métricas a la izquierda y la elegida en grande. -->
+                <!-- Alto fijo al visible: la lista tiene su propio scroll y el
+                     gráfico grande ocupa la pantalla, como en el Administrador de tareas. -->
+                <Grid Grid.Row="1" Grid.RowSpan="2" Margin="0,16,0,0" VerticalAlignment="Top"
+                      Height="{Binding ViewportHeight, ElementName=ChartScroll, Converter={StaticResource Subtract}, ConverterParameter=110}"
+                      Visibility="{Binding IsChartListView, Converter={StaticResource BoolToVis}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="270" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <ListBox ItemsSource="{Binding ChartListItems}"
+                             SelectedItem="{Binding SelectedChartListItem, Mode=TwoWay}"
+                             ItemContainerStyle="{StaticResource ChartListItem}"
+                             ItemTemplate="{StaticResource ChartListItemTemplate}"
+                             Background="Transparent" BorderThickness="0" Padding="0"
+                             ScrollViewer.CanContentScroll="False"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+
+                    <Border Grid.Column="1" Style="{StaticResource Card}" Margin="14,0,0,0"
+                            DataContext="{Binding SelectedChartListItem}">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="10" Height="10" Fill="{Binding Color}"
+                                                 VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding SelectedMetric.Title}" FontSize="24"
+                                                   FontWeight="SemiBold" Margin="10,0,0,0"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MutedText}"
+                                               Margin="20,2,0,0" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <ContentControl Grid.Column="1" Content="{Binding}" Focusable="False"
+                                                ContentTemplate="{StaticResource ChartValuesTemplate}"
+                                                VerticalAlignment="Center" />
+                            </Grid>
+
+                            <controls:LiveChart Grid.Row="1" Margin="0,12,0,0" MinHeight="260"
+                                                Samples="{Binding DataContext.ChartSamples, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                WindowMinutes="{Binding DataContext.ChartWindowMinutes, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                Series="{Binding SeriesKey}"
+                                                Unit="{Binding AxisUnit}"
+                                                AxisMin="{Binding AxisMin}"
+                                                AxisMax="{Binding AxisMax}"
+                                                AxisStep="{Binding AxisStep}"
+                                                AutoScale="True" />
+                        </Grid>
+                    </Border>
+                </Grid>
                 </Grid>
             </ScrollViewer>
         </TabItem>
@@ -785,6 +1110,207 @@
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+
+        <!-- ============================================================ -->
+        <!-- Discos                                                       -->
+        <!-- ============================================================ -->
+        <TabItem Header="{l:Tr nav.disks}" Style="{StaticResource NavTabItem}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="24,20,24,24">
+
+                    <TextBlock Text="{l:Tr disks.title}" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="{l:Tr disks.subtitle}" Style="{StaticResource PageSubtitle}" />
+
+                    <TextBlock Text="{l:Tr disks.empty}" Margin="0,18,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasDiskDetails}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <ItemsControl ItemsSource="{Binding DiskDetails}" Margin="0,18,0,0" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                                    <StackPanel>
+                                        <!-- Encabezado: disco, modelo, estado y temperatura -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border Style="{StaticResource IconBadge}" Background="{Binding ConditionSoftBrush}">
+                                                <Path Data="{StaticResource DiskIconGeometry}" Fill="{Binding ConditionBrush}"
+                                                      Width="21" Height="21" Stretch="Uniform" />
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="11,0,12,0" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="{Binding Title}" Style="{StaticResource SectionTitle}" />
+                                                    <TextBlock Text="{Binding Model}" Style="{StaticResource SecondaryText}"
+                                                               Margin="10,0,0,0" VerticalAlignment="Bottom"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Subtitle}" Style="{StaticResource MutedText}"
+                                                           Margin="0,3,0,0" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <Image Source="{Binding LogoUri, TargetNullValue={x:Null}}" Height="18" Opacity="0.9"
+                                                       Margin="0,0,18,0" VerticalAlignment="Center"
+                                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                                       Visibility="{Binding HasLogo, Converter={StaticResource BoolToVis}}" />
+                                                <Border Style="{StaticResource BrandBadge}" Margin="0,0,18,0" VerticalAlignment="Center"
+                                                        Visibility="{Binding HasBrandText, Converter={StaticResource BoolToVis}}">
+                                                    <TextBlock Text="{Binding BrandText}" Style="{StaticResource BrandBadgeText}" />
+                                                </Border>
+                                                <TextBlock Text="{Binding TemperatureText}" FontSize="19" FontWeight="SemiBold"
+                                                           Foreground="{Binding TemperatureBrush}"
+                                                           VerticalAlignment="Center" Margin="0,0,14,0" />
+                                                <Border Style="{StaticResource Chip}" Background="{Binding ConditionSoftBrush}"
+                                                        Padding="11,5">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Ellipse Width="8" Height="8" Fill="{Binding ConditionBrush}"
+                                                                 VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding ConditionText}" FontSize="12.5" FontWeight="SemiBold"
+                                                                   Foreground="{Binding ConditionBrush}" Margin="7,0,0,0" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Motivos cuando el estado no es «Bueno» -->
+                                        <Border Margin="0,14,0,0" Padding="12,9" CornerRadius="8"
+                                                Background="{Binding ConditionSoftBrush}"
+                                                Visibility="{Binding HasIssues, Converter={StaticResource BoolToVis}}">
+                                            <StackPanel>
+                                                <TextBlock Text="{l:Tr disks.issuesTitle}" Style="{StaticResource CaptionText}" />
+                                                <ItemsControl ItemsSource="{Binding Issues}" Focusable="False" Margin="0,4,0,0">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <TextBlock Text="{Binding StringFormat=• {0}}" Style="{StaticResource SecondaryText}"
+                                                                       TextWrapping="Wrap" Margin="0,2,0,0" />
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Border>
+
+                                        <!-- Datos S.M.A.R.T. principales -->
+                                        <ItemsControl ItemsSource="{Binding Stats}" Margin="0,16,0,0" Focusable="False">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <controls:ResponsiveGrid MinItemWidth="180" MaxColumns="4" Gap="18" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="0,0,0,12">
+                                                        <TextBlock Text="{Binding Caption}" Style="{StaticResource CaptionText}" />
+                                                        <TextBlock Text="{Binding Value}" FontSize="16" FontWeight="SemiBold"
+                                                                   Foreground="{Binding ValueBrush}" Margin="0,3,0,0"
+                                                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding Value}" />
+                                                        <TextBlock Text="{Binding Note}" Style="{StaticResource MutedText}"
+                                                                   Margin="0,1,0,0" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!-- Espacio: un anillo por unidad con el % usado -->
+                                        <StackPanel Margin="0,6,0,14"
+                                                    Visibility="{Binding HasVolumes, Converter={StaticResource BoolToVis}}">
+                                            <TextBlock Text="{l:Tr disks.space}" Style="{StaticResource CaptionText}" />
+                                            <ItemsControl ItemsSource="{Binding Volumes}" Focusable="False" Margin="0,8,0,0">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <StackPanel Orientation="Horizontal" Margin="0,0,32,8">
+                                                            <controls:DonutChart Width="84" Height="84" Thickness="11"
+                                                                                 Value="{Binding UsedPercent}"
+                                                                                 Fill="{Binding BarBrush}"
+                                                                                 Track="{StaticResource TrackBrush}"
+                                                                                 Foreground="{StaticResource TextPrimaryBrush}" />
+                                                            <StackPanel Margin="14,0,0,0" VerticalAlignment="Center">
+                                                                <StackPanel Orientation="Horizontal">
+                                                                    <TextBlock Text="{Binding Letter}" FontSize="15" FontWeight="SemiBold"
+                                                                               Foreground="{StaticResource TextPrimaryBrush}" />
+                                                                    <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}"
+                                                                               Margin="8,0,0,0" VerticalAlignment="Bottom" />
+                                                                </StackPanel>
+                                                                <TextBlock Text="{Binding FreeText}" Style="{StaticResource SecondaryText}"
+                                                                           Margin="0,6,0,0" />
+                                                                <TextBlock Text="{Binding UsedText}" Style="{StaticResource MutedText}"
+                                                                           Margin="0,2,0,0" />
+                                                            </StackPanel>
+                                                        </StackPanel>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+
+                                        <!-- Tabla completa de atributos, plegada -->
+                                        <Expander Header="{Binding AttributesHeader}" Margin="0,4,0,0"
+                                                  Foreground="{StaticResource TextSecondaryBrush}"
+                                                  Visibility="{Binding HasAttributes, Converter={StaticResource BoolToVis}}">
+                                            <StackPanel Margin="0,10,0,0">
+                                                <Grid Margin="0,0,0,6">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="44" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="64" />
+                                                        <ColumnDefinition Width="64" />
+                                                        <ColumnDefinition Width="64" />
+                                                        <ColumnDefinition Width="150" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{l:Tr disks.column.id}" Style="{StaticResource CaptionText}" />
+                                                    <TextBlock Grid.Column="1" Text="{l:Tr disks.column.name}" Style="{StaticResource CaptionText}" />
+                                                    <TextBlock Grid.Column="2" Text="{l:Tr disks.column.current}" Style="{StaticResource CaptionText}" HorizontalAlignment="Right" />
+                                                    <TextBlock Grid.Column="3" Text="{l:Tr disks.column.worst}" Style="{StaticResource CaptionText}" HorizontalAlignment="Right" />
+                                                    <TextBlock Grid.Column="4" Text="{l:Tr disks.column.threshold}" Style="{StaticResource CaptionText}" HorizontalAlignment="Right" />
+                                                    <TextBlock Grid.Column="5" Text="{l:Tr disks.column.raw}" Style="{StaticResource CaptionText}" HorizontalAlignment="Right" />
+                                                </Grid>
+                                                <ItemsControl ItemsSource="{Binding Attributes}" Focusable="False">
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,3,0,0">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="44" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="64" />
+                                                                    <ColumnDefinition Width="64" />
+                                                                    <ColumnDefinition Width="64" />
+                                                                    <ColumnDefinition Width="150" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <TextBlock Text="{Binding Id}" Style="{StaticResource MutedText}" />
+                                                                <TextBlock Grid.Column="1" Text="{Binding Name}" Style="{StaticResource SecondaryText}"
+                                                                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Name}" />
+                                                                <TextBlock Grid.Column="2" Text="{Binding Current}" Style="{StaticResource SecondaryText}" HorizontalAlignment="Right" />
+                                                                <TextBlock Grid.Column="3" Text="{Binding Worst}" Style="{StaticResource SecondaryText}" HorizontalAlignment="Right" />
+                                                                <TextBlock Grid.Column="4" Text="{Binding Threshold}" Style="{StaticResource SecondaryText}" HorizontalAlignment="Right" />
+                                                                <TextBlock Grid.Column="5" Text="{Binding Raw}" Style="{StaticResource SecondaryText}" HorizontalAlignment="Right" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </StackPanel>
+                                        </Expander>
                                     </StackPanel>
                                 </Border>
                             </DataTemplate>
