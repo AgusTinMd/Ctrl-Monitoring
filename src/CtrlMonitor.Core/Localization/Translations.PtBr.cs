@@ -90,6 +90,7 @@ public static partial class Translations
         ["disks.issue.lowLife"] = "Vida útil restante baixa ({0:0} %).",
         ["disks.issue.toolkit"] = "Os valores S.M.A.R.T. superam os limites de alerta.",
         ["disks.issuesTitle"] = "Por quê",
+        ["disks.space"] = "ESPAÇO",
         ["storage.disk"] = "Disco {0}",
         ["storage.otherDrives"] = "Outras unidades",
         ["storage.health.healthy"] = "Saudável",

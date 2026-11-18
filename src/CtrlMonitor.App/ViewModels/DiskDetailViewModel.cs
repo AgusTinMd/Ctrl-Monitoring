@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CtrlMonitor.Core.Hardware;
+using CtrlMonitor.Core.Inventory;
 using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.ViewModels;
@@ -42,6 +43,23 @@ public sealed partial class DiskDetailViewModel : ObservableObject
     public ObservableCollection<string> Issues { get; } = new();
 
     public ObservableCollection<SmartAttributeRow> Attributes { get; } = new();
+
+    /// <summary>Unidades del disco, con su espacio usado y libre.</summary>
+    public ObservableCollection<VolumeViewModel> Volumes { get; } = new();
+
+    [ObservableProperty]
+    private bool _hasVolumes;
+
+    /// <summary>Reemplaza las unidades del disco (se leen al entrar a la sección).</summary>
+    public void SetVolumes(IEnumerable<VolumeUsage> volumes)
+    {
+        Volumes.Clear();
+
+        foreach (VolumeUsage volume in volumes)
+            Volumes.Add(new VolumeViewModel(volume));
+
+        HasVolumes = Volumes.Count > 0;
+    }
 
     [ObservableProperty]
     private string _title = string.Empty;
@@ -87,7 +105,13 @@ public sealed partial class DiskDetailViewModel : ObservableObject
     }
 
     /// <summary>Vuelve a armar los textos después de cambiar de idioma.</summary>
-    public void RefreshLanguage() => Apply();
+    public void RefreshLanguage()
+    {
+        Apply();
+
+        foreach (VolumeViewModel volume in Volumes)
+            volume.RefreshLanguage();
+    }
 
     private void Apply()
     {

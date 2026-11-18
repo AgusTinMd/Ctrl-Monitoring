@@ -174,6 +174,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private static readonly TimeSpan DiskDetailsInterval = TimeSpan.FromSeconds(5);
     private DateTime _diskDetailsUtc = DateTime.MinValue;
     private IReadOnlyDictionary<int, DiskCondition> _windowsDiskHealth = new Dictionary<int, DiskCondition>();
+    private IReadOnlyDictionary<int, IReadOnlyList<VolumeUsage>> _diskVolumes = new Dictionary<int, IReadOnlyList<VolumeUsage>>();
+    private bool _diskVolumesChanged;
 
     /// <summary>
     /// Al entrar a Discos se relee la salud que informa Windows (en segundo
@@ -183,13 +185,21 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         _diskDetailsUtc = DateTime.MinValue;
 
-        Task.Run(PhysicalDiskReader.Read).ContinueWith(
+        Task.Run(() => (Disks: PhysicalDiskReader.Read(), Volumes: VolumeUsageReader.Read())).ContinueWith(
             task => _dispatcher.BeginInvoke(new Action(() =>
             {
                 if (!task.IsCompletedSuccessfully || _disposed)
                     return;
 
-                _windowsDiskHealth = task.Result.ToDictionary(
+                // Unidades de cada disco para los gráficos de espacio.
+                _diskVolumes = task.Result.Disks.ToDictionary(
+                    disk => disk.Number,
+                    disk => (IReadOnlyList<VolumeUsage>)task.Result.Volumes
+                        .Where(volume => disk.Letters.Contains(volume.Letter, StringComparer.OrdinalIgnoreCase))
+                        .ToList());
+                _diskVolumesChanged = true;
+
+                _windowsDiskHealth = task.Result.Disks.ToDictionary(
                     disk => disk.Number,
                     disk => disk.Health switch
                     {
@@ -229,6 +239,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             {
                 detail = new DiskDetailViewModel(disk.Number);
                 DiskDetails.Add(detail);
+                detail.SetVolumes(_diskVolumes.TryGetValue(disk.Number, out IReadOnlyList<VolumeUsage>? fresh)
+                    ? fresh
+                    : Array.Empty<VolumeUsage>());
+            }
+            else if (_diskVolumesChanged)
+            {
+                detail.SetVolumes(_diskVolumes.TryGetValue(disk.Number, out IReadOnlyList<VolumeUsage>? volumes)
+                    ? volumes
+                    : Array.Empty<VolumeUsage>());
             }
 
             detail.Update(disk, _windowsDiskHealth.TryGetValue(disk.Number, out DiskCondition health)
@@ -236,6 +255,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 : DiskCondition.Unknown);
         }
 
+        _diskVolumesChanged = false;
         OnPropertyChanged(nameof(HasDiskDetails));
     }
 
