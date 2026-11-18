@@ -166,7 +166,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     public string VersionText { get; } = $"Ctrl Monitor {BuildShortVersion()}";
 
-    /// <summary>Versión corta para la cabecera de la barra lateral: «v2.8.0» o «dev».</summary>
+    /// <summary>Versión corta junto al estado «Monitorizando»: «v2.8.0» o «dev».</summary>
     public string ShortVersionText { get; } = BuildShortVersion();
 
     private static string BuildShortVersion()
