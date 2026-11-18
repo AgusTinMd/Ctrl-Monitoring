@@ -423,14 +423,13 @@
                                     <StackPanel Grid.Column="1" Margin="10,0,8,0" VerticalAlignment="Center">
                                         <TextBlock Text="Ctrl Monitor" FontSize="18" FontWeight="SemiBold"
                                                    Foreground="{StaticResource TextPrimaryBrush}" />
-                                        <!-- Versión discreta al lado del subtítulo: «Monitor de hardware · v2.8.0». -->
-                                        <StackPanel Orientation="Horizontal" ToolTip="{Binding VersionText}">
-                                            <TextBlock Text="{l:Tr app.subtitle}" FontSize="10"
-                                                       Foreground="{StaticResource TextMutedBrush}" />
-                                            <TextBlock FontSize="10"
-                                                       Text="{Binding ShortVersionText, StringFormat='{} · {0}'}"
-                                                       Foreground="{StaticResource TextMutedBrush}" />
-                                        </StackPanel>
+                                        <TextBlock Text="{l:Tr app.subtitle}" FontSize="10"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Foreground="{StaticResource TextMutedBrush}" />
+                                        <!-- Versión discreta en su propia línea: la barra es angosta. -->
+                                        <TextBlock Text="{Binding ShortVersionText}" FontSize="9.5" Opacity="0.75"
+                                                   Margin="0,1,0,0" ToolTip="{Binding VersionText}"
+                                                   Foreground="{StaticResource TextMutedBrush}" />
                                     </StackPanel>
 
                                     <ToggleButton Grid.Column="2" Style="{StaticResource NavToggleButton}"
