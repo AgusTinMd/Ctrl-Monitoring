@@ -140,9 +140,26 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// <summary>Unidades con letra para la tarjeta de almacenamiento de Inicio.</summary>
     public ObservableCollection<VolumeViewModel> Volumes { get; } = new();
 
-    private static readonly TimeSpan VolumeRefresh = TimeSpan.FromSeconds(30);
-    private DateTime _volumesReadUtc = DateTime.MinValue;
     private bool _readingVolumes;
+    private bool _volumesRequested = true;
+
+    /// <summary>Pestaña visible; 0 es Inicio.</summary>
+    [ObservableProperty]
+    private int _selectedTabIndex;
+
+    // El espacio en disco cambia poco: se relee solo al volver a Inicio, no en
+    // cada refresco del monitor.
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value == 0)
+            RequestVolumes();
+    }
+
+    private void RequestVolumes()
+    {
+        _volumesRequested = true;
+        UpdateVolumes();
+    }
 
     /// <summary>Vista filtrada de los ventiladores según «Solo activos».</summary>
     public ListCollectionView VisibleFans { get; private set; } = null!;
@@ -610,21 +627,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             inventory.Disks.Select(disk => $"{disk.Model} · {FormatBytes(disk.SizeBytes)}"));
 
     /// <summary>
-    /// Relee el espacio de las unidades cada 30 s, fuera del hilo de la
-    /// interfaz: una unidad extraíble lenta no debe trabar la ventana.
+    /// Lee el espacio de las unidades si se pidió (al arrancar o al entrar a
+    /// Inicio), fuera del hilo de la interfaz: una unidad extraíble lenta no
+    /// debe trabar la ventana.
     /// </summary>
     private void UpdateVolumes()
     {
-        if (_readingVolumes || DateTime.UtcNow - _volumesReadUtc < VolumeRefresh)
+        if (_readingVolumes || !_volumesRequested)
             return;
 
         _readingVolumes = true;
+        _volumesRequested = false;
 
         Task.Run(VolumeUsageReader.Read).ContinueWith(
             task => _dispatcher.BeginInvoke(new Action(() =>
             {
                 _readingVolumes = false;
-                _volumesReadUtc = DateTime.UtcNow;
 
                 if (task.IsCompletedSuccessfully && !_disposed)
                     ApplyVolumes(task.Result);

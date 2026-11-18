@@ -158,7 +158,7 @@
         </DataTemplate>
     </Window.Resources>
 
-    <TabControl Style="{StaticResource NavTabControl}" SelectedIndex="0" TabStripPlacement="Left">
+    <TabControl Style="{StaticResource NavTabControl}" SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}" TabStripPlacement="Left">
 
         <!-- ============================================================ -->
         <!-- Resumen                                                      -->
