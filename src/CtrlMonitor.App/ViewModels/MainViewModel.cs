@@ -162,6 +162,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public bool HasCpuLogo => CpuLogoUri is not null;
 
+    /// <summary>Logo de la marca de la placa de video (AMD, NVIDIA o Intel), si se reconoce.</summary>
+    public string? GpuLogoUri => LogoUri(GpuBrands.Detect(_hardware.GpuName));
+
+    public bool HasGpuLogo => GpuLogoUri is not null;
+
     private static string? LogoUri(HardwareBrand? brand) => brand?.LogoFile is { } file
         ? $"pack://application:,,,/Assets/{file}"
         : null;
@@ -254,6 +259,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     private string _vramText = "—";
+
+    /// <summary>RAM en uso, con el mismo formato que la VRAM.</summary>
+    [ObservableProperty]
+    private string _ramUsageText = "—";
 
     [ObservableProperty]
     private double? _netDownMbs;
@@ -804,6 +813,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         RamTotalGb = usage.TotalGb;
         RamUsedGb = usage.UsedGb;
         RamPercent = usage.UsedPercent;
+        RamUsageText = Loc.F("vram.text", RamUsedGb, RamTotalGb, RamPercent);
     }
 
     private void UpdateVideoMemory(IReadOnlyList<SensorReading> gpu)

@@ -89,3 +89,18 @@ public static class CpuBrands
     /// <summary>Marca del CPU, o <c>null</c> si no se reconoce.</summary>
     public static HardwareBrand? Detect(string? cpuName) => Matcher.Detect(cpuName);
 }
+
+/// <summary>
+/// Marca de la placa de video a partir de su nombre («AMD Radeon RX 6700 XT»,
+/// «NVIDIA GeForce RTX 4070», «Intel Arc A770»…).
+/// </summary>
+public static class GpuBrands
+{
+    private static readonly BrandMatcher Matcher = new(
+        (new HardwareBrand("NVIDIA", "nvidia.png"), new[] { "NVIDIA", "GeForce", "Quadro", "Tesla", "TITAN" }),
+        (new HardwareBrand("AMD", "amd.png"), new[] { "AMD", "Radeon", "ATI", "FirePro" }),
+        (new HardwareBrand("Intel", "intel.png"), new[] { "Intel", "Arc", "Iris" }));
+
+    /// <summary>Marca de la GPU, o <c>null</c> si no se reconoce.</summary>
+    public static HardwareBrand? Detect(string? gpuName) => Matcher.Detect(gpuName);
+}
