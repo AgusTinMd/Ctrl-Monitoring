@@ -13,11 +13,23 @@ public partial class App : Application
 {
     private const string MutexName = @"Global\CtrlMonitor.SingleInstance";
     private const string ShowEventName = @"Global\CtrlMonitor.ShowWindow";
+    private const string ExitEventName = @"Global\CtrlMonitor.Exit";
+
+    /// <summary>
+    /// Cierra la instancia que ya está corriendo y arranca en su lugar. Sirve
+    /// para probar una compilación nueva sin cerrar la app a mano: como corre
+    /// elevada, un proceso sin permisos de administrador no puede terminarla.
+    /// </summary>
+    public const string ReplaceArgument = "--replace";
+
+    private static readonly TimeSpan ReplaceTimeout = TimeSpan.FromSeconds(15);
 
     private Mutex? _mutex;
     private bool _ownsMutex;
     private EventWaitHandle? _showEvent;
     private RegisteredWaitHandle? _showWait;
+    private EventWaitHandle? _exitEvent;
+    private RegisteredWaitHandle? _exitWait;
 
     private ConfigStore? _store;
     private AppConfig? _config;
@@ -47,6 +59,10 @@ public partial class App : Application
         }
 
         _mutex = new Mutex(initiallyOwned: true, MutexName, out bool createdNew);
+
+        if (!createdNew && HasArgument(e.Args, ReplaceArgument))
+            createdNew = ReplaceExistingInstance(_mutex);
+
         _ownsMutex = createdNew;
 
         if (!createdNew)
@@ -63,6 +79,19 @@ public partial class App : Application
             null,
             Timeout.Infinite,
             executeOnlyOnce: false);
+
+        // Otra instancia lanzada con --replace pide que esta se cierre.
+        _exitEvent = new EventWaitHandle(false, EventResetMode.AutoReset, ExitEventName);
+        _exitWait = ThreadPool.RegisterWaitForSingleObject(
+            _exitEvent,
+            (_, _) => Dispatcher.BeginInvoke(new Action(() =>
+            {
+                AppLog.Info("Otra instancia pidió reemplazar a esta; cerrando.");
+                RequestExit();
+            })),
+            null,
+            Timeout.Infinite,
+            executeOnlyOnce: true);
 
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
@@ -279,6 +308,8 @@ public partial class App : Application
         {
             _showWait?.Unregister(null);
             _showEvent?.Dispose();
+            _exitWait?.Unregister(null);
+            _exitEvent?.Dispose();
         }
         catch
         {
@@ -330,6 +361,46 @@ public partial class App : Application
     private void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         AppLog.Error("Excepción no controlada", e.ExceptionObject as Exception);
+    }
+
+    private static bool HasArgument(string[] args, string argument) =>
+        args.Any(arg => arg.Equals(argument, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// Pide a la instancia existente que se cierre y espera a que suelte el
+    /// mutex. Devuelve <c>true</c> si esta instancia quedó como dueña.
+    /// </summary>
+    private static bool ReplaceExistingInstance(Mutex mutex)
+    {
+        try
+        {
+            using EventWaitHandle exit = EventWaitHandle.OpenExisting(ExitEventName);
+            exit.Set();
+        }
+        catch (Exception ex)
+        {
+            // Una versión vieja de la app no tiene este evento: hay que cerrarla a mano.
+            AppLog.Warn($"No se pudo pedir el cierre de la instancia existente: {ex.Message}");
+            return false;
+        }
+
+        try
+        {
+            if (mutex.WaitOne(ReplaceTimeout))
+            {
+                AppLog.Info("Instancia anterior reemplazada.");
+                return true;
+            }
+        }
+        catch (AbandonedMutexException)
+        {
+            // La anterior terminó sin liberar el mutex; igual queda tomado por esta.
+            AppLog.Info("Instancia anterior reemplazada (mutex abandonado).");
+            return true;
+        }
+
+        AppLog.Warn("La instancia anterior no se cerró a tiempo.");
+        return false;
     }
 
     private static void SignalExistingInstance()
