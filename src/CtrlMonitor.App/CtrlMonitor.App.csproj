@@ -41,6 +41,8 @@
     <Resource Include="Assets\seagate.png" />
     <Resource Include="Assets\toshiba.png" />
     <Resource Include="Assets\sandisk.png" />
+    <Resource Include="Assets\kingston.png" />
+    <Resource Include="Assets\micron.png" />
   </ItemGroup>
 
 </Project>

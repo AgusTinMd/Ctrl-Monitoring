@@ -78,7 +78,7 @@ public class HardwareBrandTests
     [InlineData("ST1000DM010-2EP102", "Seagate", "seagate.png")]
     [InlineData("TOSHIBA DT01ACA100", "Toshiba", "toshiba.png")]
     [InlineData("SanDisk SDSSDA240G", "SanDisk", "sandisk.png")]
-    [InlineData("KINGSTON SNV2S500G", "Kingston", null)]
+    [InlineData("KINGSTON SNV2S500G", "Kingston", "kingston.png")]
     [InlineData("CT500MX500SSD1", "Crucial", null)]
     public void Disk_KnownBrands(string model, string name, string? logo)
     {
