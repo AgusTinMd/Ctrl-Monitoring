@@ -1398,6 +1398,137 @@
         </TabItem>
 
         <!-- ============================================================ -->
+        <!-- Procesos                                                     -->
+        <!-- ============================================================ -->
+        <TabItem Header="{l:Tr nav.processes}" Style="{StaticResource NavTabItem}">
+            <!-- Sin ScrollViewer de página: la lista tiene su propio scroll. -->
+            <Grid Margin="24,20,24,24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="{l:Tr processes.title}" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="{l:Tr processes.subtitle}" Style="{StaticResource PageSubtitle}" />
+                </StackPanel>
+
+                <!-- Búsqueda y acciones -->
+                <Grid Grid.Row="1" Margin="0,16,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" MaxWidth="360" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Style="{StaticResource SearchBox}" Tag="{l:Tr processes.search}"
+                             Text="{Binding Processes.SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <Button Content="{l:Tr processes.endTree}" Style="{StaticResource SecondaryButton}"
+                                Command="{Binding Processes.EndTreeCommand}" Margin="0,0,10,0"
+                                ToolTip="{l:Tr processes.endTreeTooltip}" />
+                        <Button Content="{l:Tr processes.endTask}" Style="{StaticResource DangerButton}"
+                                Command="{Binding Processes.EndTaskCommand}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Lista -->
+                <Border Grid.Row="2" Style="{StaticResource Card}" Padding="8,6,8,8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Margin="8,0,24,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="110" />
+                            </Grid.ColumnDefinitions>
+                        <Button Grid.Column="1" Style="{StaticResource GhostButton}" Padding="6,4"
+                                HorizontalAlignment="Left" Command="{Binding Processes.SortByCommand}" CommandParameter="Name">
+                            <TextBlock Style="{StaticResource CaptionText}">
+                                <Run Text="{l:Tr processes.column.name}" /><Run Text="{Binding Processes.NameArrow, Mode=OneWay}" />
+                            </TextBlock>
+                        </Button>
+                        <Button Grid.Column="2" Style="{StaticResource GhostButton}" Padding="6,4"
+                                HorizontalAlignment="Right" Command="{Binding Processes.SortByCommand}" CommandParameter="Id">
+                            <TextBlock Style="{StaticResource CaptionText}">
+                                <Run Text="{l:Tr processes.column.pid}" /><Run Text="{Binding Processes.IdArrow, Mode=OneWay}" />
+                            </TextBlock>
+                        </Button>
+                        <Button Grid.Column="3" Style="{StaticResource GhostButton}" Padding="6,4"
+                                HorizontalAlignment="Right" Command="{Binding Processes.SortByCommand}" CommandParameter="Cpu">
+                            <TextBlock Style="{StaticResource CaptionText}">
+                                <Run Text="{l:Tr processes.column.cpu}" /><Run Text="{Binding Processes.CpuArrow, Mode=OneWay}" />
+                            </TextBlock>
+                        </Button>
+                        <Button Grid.Column="4" Style="{StaticResource GhostButton}" Padding="6,4"
+                                HorizontalAlignment="Right" Command="{Binding Processes.SortByCommand}" CommandParameter="Memory">
+                            <TextBlock Style="{StaticResource CaptionText}">
+                                <Run Text="{l:Tr processes.column.memory}" /><Run Text="{Binding Processes.MemoryArrow, Mode=OneWay}" />
+                            </TextBlock>
+                        </Button>
+                        </Grid>
+
+                        <ListBox Grid.Row="1" ItemsSource="{Binding Processes.View}"
+                                 SelectedItem="{Binding Processes.Selected, Mode=TwoWay}"
+                                 ItemContainerStyle="{StaticResource ChartListItem}"
+                                 Background="Transparent" BorderThickness="0" Padding="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.VirtualizationMode="Recycling"
+                                 VirtualizingPanel.ScrollUnit="Pixel">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,-3">
+                                        <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="30" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="110" />
+                            </Grid.ColumnDefinitions>
+                                        <Image Source="{Binding Icon}" Width="16" Height="16" VerticalAlignment="Center"
+                                               HorizontalAlignment="Left"
+                                               Visibility="{Binding HasIcon, Converter={StaticResource BoolToVis}}" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Description}" FontSize="12.5"
+                                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                                       TextTrimming="CharacterEllipsis" ToolTip="{Binding Path}" />
+                                            <TextBlock Text="{Binding Name, StringFormat={}  {0}}" Style="{StaticResource MutedText}"
+                                                       VerticalAlignment="Center" />
+                                            <TextBlock Text=" 🔒" FontSize="11" VerticalAlignment="Center"
+                                                       ToolTip="{l:Tr processes.protectedTooltip}"
+                                                       Visibility="{Binding IsProtected, Converter={StaticResource BoolToVis}}" />
+                                        </StackPanel>
+                                        <TextBlock Grid.Column="2" Text="{Binding Id}" Style="{StaticResource MutedText}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <TextBlock Grid.Column="3" Text="{Binding CpuText}" Style="{StaticResource SecondaryText}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                        <TextBlock Grid.Column="4" Text="{Binding MemoryText}" Style="{StaticResource SecondaryText}"
+                                                   HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                </Border>
+
+                <!-- Resumen y resultado de la última acción -->
+                <Grid Grid.Row="3" Margin="2,10,2,0">
+                    <TextBlock Text="{Binding Processes.Summary}" Style="{StaticResource MutedText}" />
+                    <TextBlock Text="{Binding Processes.Status}" Style="{StaticResource SecondaryText}"
+                               HorizontalAlignment="Right" />
+                </Grid>
+            </Grid>
+        </TabItem>
+
+        <!-- ============================================================ -->
         <!-- Ajustes                                                      -->
         <!-- ============================================================ -->
         <TabItem Header="{l:Tr nav.settings}" Style="{StaticResource NavTabItem}">
