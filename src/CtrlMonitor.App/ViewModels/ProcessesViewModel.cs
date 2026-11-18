@@ -126,6 +126,13 @@ public sealed class ProcessLeaf : ProcessNode
 
     public string? Path { get; }
 
+    /// <summary>
+    /// Programa en el que quedó el proceso. Se fija al crearlo: a veces Windows
+    /// deja leer la ruta del ejecutable en una lectura y no en la siguiente, y
+    /// el proceso no debe cambiar de grupo por eso.
+    /// </summary>
+    public string GroupKey { get; init; } = string.Empty;
+
     private bool Protected { get; }
 
     public override bool IsProtected => Protected;
@@ -518,7 +525,10 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
             if (_leaves.TryGetValue(sample.Key, out ProcessLeaf? leaf))
             {
                 leaf.Update(sample);
-                touched.Add(_groups[GroupKey(sample)]);
+
+                if (_groups.TryGetValue(leaf.GroupKey, out ProcessGroup? current))
+                    touched.Add(current);
+
                 continue;
             }
 
@@ -527,10 +537,9 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
                 : (string.Empty, null);
 
             string label = description.Length > 0 ? description : sample.Name;
-            leaf = new ProcessLeaf(sample, label, icon);
-            _leaves[sample.Key] = leaf;
-
             string key = GroupKey(sample);
+            leaf = new ProcessLeaf(sample, label, icon) { GroupKey = key };
+            _leaves[sample.Key] = leaf;
 
             if (!_groups.TryGetValue(key, out ProcessGroup? group))
             {
@@ -549,7 +558,7 @@ public sealed partial class ProcessesViewModel : ObservableObject, IDisposable
             ProcessLeaf leaf = _leaves[key];
             _leaves.Remove(key);
 
-            if (_groups.TryGetValue(GroupKey(leaf.Sample), out ProcessGroup? group))
+            if (_groups.TryGetValue(leaf.GroupKey, out ProcessGroup? group))
             {
                 group.Children.Remove(leaf);
                 touched.Add(group);
