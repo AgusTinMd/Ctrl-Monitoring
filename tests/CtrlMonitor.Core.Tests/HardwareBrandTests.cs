@@ -69,4 +69,39 @@ public class HardwareBrandTests
     {
         Assert.Null(CpuBrands.Detect(cpuName));
     }
+
+    [Theory]
+    [InlineData("WDC WD10EZEX-22MFCA0", "Western Digital", "wd.png")]
+    [InlineData("WDC PC SN530 SDBPNPZ-256G-1002", "Western Digital", "wd.png")]
+    [InlineData("WD_BLACK SN850X 1000GB", "Western Digital", "wd.png")]
+    [InlineData("Samsung SSD 970 EVO Plus 1TB", "Samsung", "samsung.png")]
+    [InlineData("ST1000DM010-2EP102", "Seagate", "seagate.png")]
+    [InlineData("TOSHIBA DT01ACA100", "Toshiba", "toshiba.png")]
+    [InlineData("SanDisk SDSSDA240G", "SanDisk", "sandisk.png")]
+    [InlineData("KINGSTON SNV2S500G", "Kingston", "kingston.png")]
+    [InlineData("CT500MX500SSD1", "Crucial", "crucial.png")]
+    [InlineData("KIOXIA EXCERIA PLUS G3 SSD", "KIOXIA", "kioxia.png")]
+    [InlineData("ADATA SU800", "ADATA", "adata.png")]
+    [InlineData("XPG GAMMIX S70 BLADE", "ADATA", "adata.png")]
+    [InlineData("Corsair MP600 PRO", "Corsair", "corsair.png")]
+    [InlineData("SK hynix P41", "SK hynix", "skhynix.png")]
+    [InlineData("HGST HTS721010A9E630", "HGST", "hgst.png")]
+    [InlineData("Hitachi HDS721010CLA332", "Hitachi", "hitachi.png")]
+    [InlineData("Lexar SSD NM790 1TB", "Lexar", "lexar.png")]
+    [InlineData("T-FORCE TM8FP7001T", "Teamgroup", "teamgroup.png")]
+    [InlineData("Patriot P300 512GB", "Patriot", "patriot.png")]
+    [InlineData("PNY CS900 1TB SSD", "PNY", "pny.png")]
+    public void Disk_KnownBrands(string model, string name, string? logo)
+    {
+        HardwareBrand? brand = DiskBrands.Detect(model);
+        Assert.Equal(name, brand?.Name);
+        Assert.Equal(logo, brand?.LogoFile);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("Generic SSD 256GB")]
+    [InlineData("STORAGE DEVICE")]
+    public void Disk_Unknown_ReturnsNull(string? model) =>
+        Assert.Null(DiskBrands.Detect(model));
 }

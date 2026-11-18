@@ -8,7 +8,7 @@ namespace CtrlMonitor.Core.Hardware;
 /// (el Super I/O no es thread-safe) y publica snapshots inmutables.
 /// Esta versión es de solo lectura: nunca escribe PWM ni modifica el BIOS.
 /// </summary>
-public sealed class HardwareService : IDisposable
+public sealed partial class HardwareService : IDisposable
 {
     private readonly Computer _computer;
     private readonly object _gate = new();

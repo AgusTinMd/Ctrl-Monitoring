@@ -201,13 +201,110 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (value == 0)
             RequestVolumes();
 
-        // Temperatura y desgaste de los discos solo se consultan mientras se
-        // ven: en Inicio y en Sensores.
-        _hardware.StorageUpdatesEnabled = value is HomeTabIndex or SensorsTabIndex;
+        // Los datos de los discos solo se consultan mientras se ven: en
+        // Inicio, en Sensores y en Discos.
+        _hardware.StorageUpdatesEnabled = value is HomeTabIndex or SensorsTabIndex or DisksTabIndex;
+
+        if (value == DisksTabIndex)
+            RequestDiskDetails();
     }
 
     private const int HomeTabIndex = 0;
     private const int SensorsTabIndex = 3;
+    private const int DisksTabIndex = 4;
+
+    /// <summary>Ficha de cada disco para la sección Discos.</summary>
+    public ObservableCollection<DiskDetailViewModel> DiskDetails { get; } = new();
+
+    public bool HasDiskDetails => DiskDetails.Count > 0;
+
+    private static readonly TimeSpan DiskDetailsInterval = TimeSpan.FromSeconds(5);
+    private DateTime _diskDetailsUtc = DateTime.MinValue;
+    private IReadOnlyDictionary<int, DiskCondition> _windowsDiskHealth = new Dictionary<int, DiskCondition>();
+    private IReadOnlyDictionary<int, IReadOnlyList<VolumeUsage>> _diskVolumes = new Dictionary<int, IReadOnlyList<VolumeUsage>>();
+    private bool _diskVolumesChanged;
+
+    /// <summary>
+    /// Al entrar a Discos se relee la salud que informa Windows (en segundo
+    /// plano) y se fuerza a actualizar las fichas en el próximo refresco.
+    /// </summary>
+    private void RequestDiskDetails()
+    {
+        _diskDetailsUtc = DateTime.MinValue;
+
+        Task.Run(() => (Disks: PhysicalDiskReader.Read(), Volumes: VolumeUsageReader.Read())).ContinueWith(
+            task => _dispatcher.BeginInvoke(new Action(() =>
+            {
+                if (!task.IsCompletedSuccessfully || _disposed)
+                    return;
+
+                // Unidades de cada disco para los gráficos de espacio.
+                _diskVolumes = task.Result.Disks.ToDictionary(
+                    disk => disk.Number,
+                    disk => (IReadOnlyList<VolumeUsage>)task.Result.Volumes
+                        .Where(volume => disk.Letters.Contains(volume.Letter, StringComparer.OrdinalIgnoreCase))
+                        .ToList());
+                _diskVolumesChanged = true;
+
+                _windowsDiskHealth = task.Result.Disks.ToDictionary(
+                    disk => disk.Number,
+                    disk => disk.Health switch
+                    {
+                        DiskHealth.Healthy => DiskCondition.Good,
+                        DiskHealth.Warning => DiskCondition.Caution,
+                        DiskHealth.Unhealthy => DiskCondition.Bad,
+                        _ => DiskCondition.Unknown
+                    });
+
+                UpdateDiskDetails(force: true);
+            })),
+            TaskScheduler.Default);
+    }
+
+    private void UpdateDiskDetails(bool force = false)
+    {
+        if (SelectedTabIndex != DisksTabIndex)
+            return;
+
+        if (!force && DateTime.UtcNow - _diskDetailsUtc < DiskDetailsInterval)
+            return;
+
+        _diskDetailsUtc = DateTime.UtcNow;
+        IReadOnlyList<DiskSmartInfo> disks = _hardware.GetDiskSmart();
+
+        for (int i = DiskDetails.Count - 1; i >= 0; i--)
+        {
+            if (!disks.Any(disk => disk.Number == DiskDetails[i].Number))
+                DiskDetails.RemoveAt(i);
+        }
+
+        foreach (DiskSmartInfo disk in disks)
+        {
+            DiskDetailViewModel? detail = DiskDetails.FirstOrDefault(item => item.Number == disk.Number);
+
+            if (detail is null)
+            {
+                detail = new DiskDetailViewModel(disk.Number);
+                DiskDetails.Add(detail);
+                detail.SetVolumes(_diskVolumes.TryGetValue(disk.Number, out IReadOnlyList<VolumeUsage>? fresh)
+                    ? fresh
+                    : Array.Empty<VolumeUsage>());
+            }
+            else if (_diskVolumesChanged)
+            {
+                detail.SetVolumes(_diskVolumes.TryGetValue(disk.Number, out IReadOnlyList<VolumeUsage>? volumes)
+                    ? volumes
+                    : Array.Empty<VolumeUsage>());
+            }
+
+            detail.Update(disk, _windowsDiskHealth.TryGetValue(disk.Number, out DiskCondition health)
+                ? health
+                : DiskCondition.Unknown);
+        }
+
+        _diskVolumesChanged = false;
+        OnPropertyChanged(nameof(HasDiskDetails));
+    }
 
     private void RequestVolumes()
     {
@@ -629,6 +726,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (StorageDiskViewModel disk in StorageDisks)
             disk.RefreshLanguage();
 
+        foreach (DiskDetailViewModel disk in DiskDetails)
+            disk.RefreshLanguage();
+
         foreach (ChartPanelViewModel item in ChartListItems)
             item.RefreshLanguage();
 
@@ -840,6 +940,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdateMemory();
         UpdateVolumes();
         UpdateStorageSensors(snapshot.Sensors);
+        UpdateDiskDetails();
         UpdateNetwork();
         UpdateDisks();
 
