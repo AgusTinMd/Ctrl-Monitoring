@@ -34,6 +34,9 @@ public sealed class AppConfig
     /// <summary>Orden de las métricas en la vista de lista; las que faltan van al final.</summary>
     public List<string> ChartListOrder { get; set; } = new();
 
+    /// <summary>Ancho de las columnas CPU, Memoria, Disco y Red del administrador de procesos.</summary>
+    public List<double> ProcessColumnWidths { get; set; } = new() { 96, 116, 100, 96 };
+
     /// <summary>
     /// Idioma de la interfaz: «auto» (el de Windows) o «es», «en», «pt-BR».
     /// </summary>
@@ -50,6 +53,12 @@ public sealed class AppConfig
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(32)
             .ToList();
+
+        // Anchos razonables aunque el archivo traiga valores raros.
+        List<double> widths = ProcessColumnWidths ?? new List<double>();
+        ProcessColumnWidths = widths.Count == 4 && widths.All(w => w is >= 50 and <= 600)
+            ? widths
+            : new List<double> { 96, 116, 100, 96 };
 
         ChartListOrder = (ChartListOrder ?? new List<string>())
             .Where(key => !string.IsNullOrWhiteSpace(key))

@@ -94,6 +94,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         };
 
         InitializeChartPanels();
+        Processes.Attach(_config, SaveSoon);
 
         _hardware.SnapshotUpdated += OnSnapshotUpdated;
 
@@ -207,7 +208,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         if (value == DisksTabIndex)
             RequestDiskDetails();
+
+        // El administrador de procesos solo lee mientras está a la vista.
+        Processes.IsActive = value == ProcessesTabIndex;
     }
+
+    private const int ProcessesTabIndex = 5;
+
+    /// <summary>Administrador de procesos (pestaña Procesos).</summary>
+    public ProcessesViewModel Processes { get; } = new();
 
     private const int HomeTabIndex = 0;
     private const int SensorsTabIndex = 3;
@@ -684,6 +693,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
 
         _diskUsage.Dispose();
+        Processes.Dispose();
         SaveNow();
         AppLog.Info("Monitor de hardware cerrado.");
     }
@@ -737,6 +747,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         foreach (DiskDetailViewModel disk in DiskDetails)
             disk.RefreshLanguage();
+
+        Processes.RefreshLanguage();
 
         foreach (ChartPanelViewModel item in ChartListItems)
             item.RefreshLanguage();
@@ -950,6 +962,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdateVolumes();
         UpdateStorageSensors(snapshot.Sensors);
         UpdateDiskDetails();
+        UpdateProcessTotals();
         UpdateNetwork();
         UpdateDisks();
 
@@ -1274,6 +1287,24 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         RefreshAvailableChartMetrics();
         SyncChartListItems();
+    }
+
+    /// <summary>Totales del equipo para los encabezados del administrador de procesos.</summary>
+    private void UpdateProcessTotals()
+    {
+        if (!Processes.IsActive)
+            return;
+
+        double? disk = _disks.Count > 0 ? _disks.Values.Max(d => d.ActivePercent) : null;
+        double? network = null;
+
+        if (_networkUsage.LinkBitsPerSecond > 0 && NetDownMbs is { } down && NetUpMbs is { } up)
+        {
+            double bits = (down + up) * 1024 * 1024 * 8;
+            network = Math.Clamp(bits / _networkUsage.LinkBitsPerSecond * 100, 0, 100);
+        }
+
+        Processes.SetTotals(CpuLoad, RamPercent, disk, network);
     }
 
     private void UpdateNetwork()
