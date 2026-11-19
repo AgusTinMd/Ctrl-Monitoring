@@ -67,6 +67,42 @@ public static class BoardBrands
         (new HardwareBrand("HP", "hp.png"), new[] { "HP", "Hewlett-Packard" }),
         (new HardwareBrand("Lenovo", "lenovo.png"), new[] { "Lenovo" }),
         (new HardwareBrand("Acer", "acer.png"), new[] { "Acer" }),
+        // Notebooks y PCs de marca: la marca suele aparecer en el fabricante del
+        // equipo y no en la placa. Alienware va antes que Dell y VAIO antes que Sony.
+        (new HardwareBrand("Alienware", "alienware.png"), new[] { "Alienware" }),
+        (new HardwareBrand("Apple", "apple.png"), new[] { "Apple", "Apple Inc." }),
+        (new HardwareBrand("Microsoft", "microsoft.png"), new[] { "Microsoft", "Surface" }),
+        (new HardwareBrand("Samsung", "samsung.png"), new[] { "Samsung" }),
+        (new HardwareBrand("Dynabook", "dynabook.png"), new[] { "Dynabook" }),
+        (new HardwareBrand("Toshiba", "toshiba.png"), new[] { "Toshiba" }),
+        (new HardwareBrand("VAIO", null), new[] { "VAIO" }),
+        (new HardwareBrand("Sony", "sony.png"), new[] { "Sony" }),
+        (new HardwareBrand("Huawei", "huawei.png"), new[] { "Huawei", "Honor" }),
+        (new HardwareBrand("Xiaomi", "xiaomi.png"), new[] { "Xiaomi", "TIMI", "Redmi" }),
+        (new HardwareBrand("Razer", "razer.png"), new[] { "Razer" }),
+        (new HardwareBrand("LG", "lg.png"), new[] { "LG", "LG Electronics" }),
+        (new HardwareBrand("Fujitsu", "fujitsu.png"), new[] { "Fujitsu" }),
+        (new HardwareBrand("Framework", "framework.png"), new[] { "Framework" }),
+        (new HardwareBrand("System76", "system76.png"), new[] { "System76" }),
+        (new HardwareBrand("Packard Bell", "packardbell.png"), new[] { "Packard Bell" }),
+        (new HardwareBrand("Gateway", null), new[] { "Gateway" }),
+        (new HardwareBrand("MEDION", null), new[] { "Medion" }),
+        (new HardwareBrand("CHUWI", null), new[] { "Chuwi" }),
+        // Fabricantes de placas y equipos chicos.
+        (new HardwareBrand("ZOTAC", "zotac.png"), new[] { "Zotac" }),
+        (new HardwareBrand("ECS", "ecs.png"), new[] { "ECS", "Elitegroup" }),
+        (new HardwareBrand("Foxconn", "foxconn.png"), new[] { "Foxconn" }),
+        (new HardwareBrand("Clevo", "clevo.png"), new[] { "Clevo" }),
+        (new HardwareBrand("HUANANZHI", null), new[] { "Huananzhi" }),
+        (new HardwareBrand("MACHINIST", null), new[] { "Machinist" }),
+        // Marcas argentinas de notebooks: suelen usar placas genéricas, así que
+        // la marca aparece en los datos del equipo y no en el nombre de la placa.
+        (new HardwareBrand("ENOVA", null), new[] { "Enova" }),
+        (new HardwareBrand("Positivo", "positivo.png"), new[] { "Positivo" }),
+        (new HardwareBrand("BGH", "bgh.png"), new[] { "BGH" }),
+        (new HardwareBrand("Bangho", null), new[] { "Bangho" }),
+        (new HardwareBrand("EXO", "exo.png"), new[] { "EXO", "Exomate" }),
+        (new HardwareBrand("Noblex", "noblex.png"), new[] { "Noblex" }),
         (new HardwareBrand("Intel", "intel.png"), new[] { "Intel" }));
 
     /// <summary>
