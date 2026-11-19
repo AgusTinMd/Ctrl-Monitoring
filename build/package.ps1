@@ -112,6 +112,13 @@ if (-not (Test-Path $exe)) {
     throw "No se genero $exe"
 }
 
+# La licencia y los avisos de terceros viajan con el zip y el instalador.
+Invoke-Step 'Licencia y avisos de terceros' {
+    Copy-Item (Join-Path $root 'LICENSE') $publishDir -Force
+    Copy-Item (Join-Path $root 'THIRD-PARTY-NOTICES.md') $publishDir -Force
+    Copy-Item (Join-Path $root 'LICENSES') $publishDir -Recurse -Force
+}
+
 $zip = Join-Path $artifacts "CtrlMonitor-$Version-win-x64-portable.zip"
 Invoke-Step 'Zip portable' {
     Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zip -CompressionLevel Optimal
