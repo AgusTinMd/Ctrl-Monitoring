@@ -73,7 +73,7 @@ public static class BoardBrands
         (new HardwareBrand("Apple", "apple.png"), new[] { "Apple", "Apple Inc." }),
         (new HardwareBrand("Microsoft", "microsoft.png"), new[] { "Microsoft", "Surface" }),
         (new HardwareBrand("Samsung", "samsung.png"), new[] { "Samsung" }),
-        (new HardwareBrand("Dynabook", null), new[] { "Dynabook" }),
+        (new HardwareBrand("Dynabook", "dynabook.png"), new[] { "Dynabook" }),
         (new HardwareBrand("Toshiba", "toshiba.png"), new[] { "Toshiba" }),
         (new HardwareBrand("VAIO", null), new[] { "VAIO" }),
         (new HardwareBrand("Sony", "sony.png"), new[] { "Sony" }),
@@ -89,10 +89,10 @@ public static class BoardBrands
         (new HardwareBrand("MEDION", null), new[] { "Medion" }),
         (new HardwareBrand("CHUWI", null), new[] { "Chuwi" }),
         // Fabricantes de placas y equipos chicos.
-        (new HardwareBrand("ZOTAC", null), new[] { "Zotac" }),
-        (new HardwareBrand("ECS", null), new[] { "ECS", "Elitegroup" }),
+        (new HardwareBrand("ZOTAC", "zotac.png"), new[] { "Zotac" }),
+        (new HardwareBrand("ECS", "ecs.png"), new[] { "ECS", "Elitegroup" }),
         (new HardwareBrand("Foxconn", "foxconn.png"), new[] { "Foxconn" }),
-        (new HardwareBrand("Clevo", null), new[] { "Clevo" }),
+        (new HardwareBrand("Clevo", "clevo.png"), new[] { "Clevo" }),
         (new HardwareBrand("HUANANZHI", null), new[] { "Huananzhi" }),
         (new HardwareBrand("MACHINIST", null), new[] { "Machinist" }),
         // Marcas argentinas de notebooks: suelen usar placas genéricas, así que
@@ -101,8 +101,8 @@ public static class BoardBrands
         (new HardwareBrand("Positivo", "positivo.png"), new[] { "Positivo" }),
         (new HardwareBrand("BGH", "bgh.png"), new[] { "BGH" }),
         (new HardwareBrand("Bangho", null), new[] { "Bangho" }),
-        (new HardwareBrand("EXO", null), new[] { "EXO", "Exomate" }),
-        (new HardwareBrand("Noblex", null), new[] { "Noblex" }),
+        (new HardwareBrand("EXO", "exo.png"), new[] { "EXO", "Exomate" }),
+        (new HardwareBrand("Noblex", "noblex.png"), new[] { "Noblex" }),
         (new HardwareBrand("Intel", "intel.png"), new[] { "Intel" }));
 
     /// <summary>

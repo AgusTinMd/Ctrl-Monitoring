@@ -61,6 +61,12 @@
     <Resource Include="Assets\packardbell.png" />
     <Resource Include="Assets\positivo.png" />
     <Resource Include="Assets\bgh.png" />
+    <Resource Include="Assets\dynabook.png" />
+    <Resource Include="Assets\zotac.png" />
+    <Resource Include="Assets\ecs.png" />
+    <Resource Include="Assets\clevo.png" />
+    <Resource Include="Assets\noblex.png" />
+    <Resource Include="Assets\exo.png" />
     <Resource Include="Assets\nvidia.png" />
     <Resource Include="Assets\wd.png" />
     <Resource Include="Assets\samsung.png" />
