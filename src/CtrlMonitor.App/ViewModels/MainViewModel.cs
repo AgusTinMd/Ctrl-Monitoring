@@ -327,7 +327,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public string MotherboardName => _hardware.MotherboardName;
 
     /// <summary>Marca de la placa detectada a partir de su nombre, o <c>null</c>.</summary>
-    private HardwareBrand? BoardBrand => BoardBrands.Detect(_hardware.MotherboardName);
+    private HardwareBrand? BoardBrand => BoardBrands.Detect(_hardware.MotherboardBrandText);
 
     /// <summary>Logo de la marca de la placa, si hay uno en Assets.</summary>
     public string? BoardLogoUri => LogoUri(BoardBrand);
