@@ -2,12 +2,26 @@
 
 Ctrl Monitor is distributed under the MIT License (see [LICENSE](LICENSE)). It includes or depends on the following third-party software and assets.
 
-## LibreHardwareMonitorLib 0.9.6 — MPL-2.0
+## MPL-2.0 components
 
-- Project and source code: https://github.com/LibreHardwareMonitor/LibreHardwareMonitor
-- License: Mozilla Public License 2.0 — see [LICENSES/MPL-2.0.txt](LICENSES/MPL-2.0.txt)
+These libraries are used without modification and remain under the Mozilla Public License 2.0 (see [LICENSES/MPL-2.0.txt](LICENSES/MPL-2.0.txt)). Their source code is available at the links below. The MIT License of Ctrl Monitor applies only to Ctrl Monitor's own code.
 
-`LibreHardwareMonitorLib.dll` is used to read hardware sensors. It remains under MPL-2.0; the MIT License of Ctrl Monitor applies only to Ctrl Monitor's own code.
+| Component | Version | Copyright | Source code |
+|---|---|---|---|
+| LibreHardwareMonitorLib | 0.9.6 | LibreHardwareMonitor contributors | https://github.com/LibreHardwareMonitor/LibreHardwareMonitor |
+| DiskInfoToolkit | 1.1.2 | Florian K. | https://github.com/Blacktempel/DiskInfoToolkit |
+| BlackSharp.Core | 1.0.7 | Florian K. | https://github.com/Blacktempel/BlackSharp |
+| RAMSPDToolkit-NDD | 1.4.2 | Florian K. | https://github.com/Blacktempel/RAMSPDToolkit |
+
+`LibreHardwareMonitorLib.dll` reads the hardware sensors. DiskInfoToolkit (the CrystalDiskInfo engine used for S.M.A.R.T.), BlackSharp.Core and RAMSPDToolkit-NDD are dependencies of LibreHardwareMonitorLib.
+
+## Apache-2.0 components
+
+| Component | Version | Copyright | Project |
+|---|---|---|---|
+| HidSharp | 2.6.4 | Copyright 2010-2025 James F. Bellinger | http://software.seekye.com/hidsharp |
+
+HidSharp is a dependency of LibreHardwareMonitorLib and is used without modification. It is licensed under the Apache License, Version 2.0 — see [LICENSES/Apache-2.0.txt](LICENSES/Apache-2.0.txt).
 
 ## MIT-licensed components
 
@@ -16,9 +30,17 @@ Ctrl Monitor is distributed under the MIT License (see [LICENSE](LICENSE)). It i
 | .NET runtime and WPF | 10.0 | Copyright (c) .NET Foundation and Contributors |
 | CommunityToolkit.Mvvm | 8.4.2 | Copyright (c) .NET Foundation and Contributors |
 | H.NotifyIcon.Wpf | 2.4.1 | Copyright (c) 2020 havendv |
+| H.NotifyIcon | 2.4.1 | Copyright (c) 2020 havendv |
+| H.GeneratedIcons.System.Drawing | 2.4.1 | Copyright (c) 2020 havendv |
 | Microsoft.Diagnostics.Tracing.TraceEvent | 4.0.0 | Copyright (c) Microsoft Corporation |
+| Microsoft.Diagnostics.NETCore.Client | 0.2.661903 | Copyright (c) Microsoft Corporation |
+| Microsoft.Extensions.DependencyInjection.Abstractions | 8.0.2 | Copyright (c) Microsoft Corporation |
+| Microsoft.Extensions.Logging.Abstractions | 8.0.3 | Copyright (c) Microsoft Corporation |
 | System.Diagnostics.PerformanceCounter | 10.0.2 | Copyright (c) Microsoft Corporation |
 | System.Management | 10.0.2 | Copyright (c) Microsoft Corporation |
+| System.IO.Ports | 10.0.3 | Copyright (c) Microsoft Corporation |
+| System.IO.FileSystem.AccessControl | 5.0.0 | Copyright (c) Microsoft Corporation |
+| System.Reflection.TypeExtensions | 4.7.0 | Copyright (c) Microsoft Corporation |
 
 The MIT License text that applies to these components is reproduced below.
 
@@ -47,6 +69,16 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
+
+## Other components
+
+| Component | Version | Copyright | License |
+|---|---|---|---|
+| Mono.Posix.NETStandard | 1.0.0 | Copyright (c) Microsoft Corporation | As declared by the package: https://go.microsoft.com/fwlink/?linkid=869050 |
+
+Mono.Posix.NETStandard is a dependency of LibreHardwareMonitorLib.
+
+## .NET runtime
 
 The self-contained build also includes the .NET runtime. Its third-party notices are available at https://github.com/dotnet/runtime/blob/main/THIRD-PARTY-NOTICES.TXT.
 
