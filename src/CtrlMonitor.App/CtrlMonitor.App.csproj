@@ -23,6 +23,16 @@
     <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
   </ItemGroup>
 
+  <!-- PresentMon (Intel, MIT) mide los FPS del overlay. Se baja con
+       build\get-presentmon.ps1; si falta, la app funciona igual y los FPS quedan sin dato. -->
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\..\tools\presentmon\PresentMon.exe')">
+    <None Include="$(MSBuildThisFileDirectory)..\..\tools\presentmon\PresentMon.exe"
+          Link="PresentMon.exe"
+          CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest"
+          ExcludeFromSingleFile="true" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\CtrlMonitor.Core\CtrlMonitor.Core.csproj" />
   </ItemGroup>

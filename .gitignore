@@ -486,3 +486,5 @@ tools/opencode-monitor/
 probe-output.txt
 *.log
 
+# PresentMon se descarga con build/get-presentmon.ps1
+tools/presentmon/

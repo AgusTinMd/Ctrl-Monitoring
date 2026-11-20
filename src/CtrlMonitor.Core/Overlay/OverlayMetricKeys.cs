@@ -10,6 +10,10 @@ public static class OverlayMetricKeys
     public const string GpuGroup = "gpu";
     public const string RamGroup = "ram";
     public const string NetGroup = "net";
+    public const string FpsGroup = "fps";
+
+    /// <summary>Cuadros por segundo del juego en primer plano (PresentMon).</summary>
+    public const string Fps = "fps";
 
     public const string CpuLoad = "cpu.load";
     public const string CpuTemperature = "cpu.temp";
@@ -32,6 +36,7 @@ public static class OverlayMetricKeys
     /// <summary>Todas las métricas disponibles, en el orden del selector.</summary>
     public static readonly IReadOnlyList<string> All = new[]
     {
+        Fps,
         CpuLoad, CpuTemperature, CpuClock, CpuPower, CpuFan,
         GpuLoad, GpuTemperature, GpuHotspot, GpuVram, GpuPower, GpuFan,
         RamUsed, RamPercent,
@@ -41,6 +46,7 @@ public static class OverlayMetricKeys
     /// <summary>Selección inicial: lo que muestra la barra al activarla.</summary>
     public static readonly IReadOnlyList<string> Defaults = new[]
     {
+        Fps,
         CpuLoad, CpuTemperature, CpuClock,
         GpuLoad, GpuTemperature, GpuVram,
         RamUsed
@@ -49,7 +55,7 @@ public static class OverlayMetricKeys
     /// <summary>Grupos con color propio.</summary>
     public static readonly IReadOnlyList<string> Groups = new[]
     {
-        CpuGroup, GpuGroup, RamGroup, NetGroup
+        FpsGroup, CpuGroup, GpuGroup, RamGroup, NetGroup
     };
 
     private static readonly HashSet<string> Known = new(All, StringComparer.OrdinalIgnoreCase);
@@ -60,6 +66,9 @@ public static class OverlayMetricKeys
     /// <summary>Grupo al que pertenece una clave; vacío si no se reconoce.</summary>
     public static string GroupOf(string key)
     {
+        if (string.Equals(key, Fps, StringComparison.OrdinalIgnoreCase))
+            return FpsGroup;
+
         if (key.StartsWith("cpu.", StringComparison.OrdinalIgnoreCase))
             return CpuGroup;
 
@@ -79,6 +88,7 @@ public static class OverlayMetricKeys
     public static bool IsGpu(string key) => GroupOf(key) == GpuGroup;
     public static bool IsRam(string key) => GroupOf(key) == RamGroup;
     public static bool IsNet(string key) => GroupOf(key) == NetGroup;
+    public static bool IsFps(string key) => GroupOf(key) == FpsGroup;
 
     /// <summary>
     /// Colores iniciales por grupo, al estilo de la barra de NVIDIA: CPU
@@ -87,6 +97,7 @@ public static class OverlayMetricKeys
     public static Dictionary<string, string> DefaultGroupColors() =>
         new(StringComparer.OrdinalIgnoreCase)
         {
+            [FpsGroup] = "#FFFF9F43",
             [CpuGroup] = "#FFFFD166",
             [GpuGroup] = "#FF7BD88F",
             [RamGroup] = "#FFC792EA",

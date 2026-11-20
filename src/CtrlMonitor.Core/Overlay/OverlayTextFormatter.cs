@@ -18,7 +18,16 @@ public static class OverlayTextFormatter
     {
         var selected = new HashSet<string>(selectedMetrics ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
         CultureInfo text = culture ?? CultureInfo.CurrentCulture;
-        var result = new List<OverlaySegment>(4);
+        var result = new List<OverlaySegment>(5);
+
+        // FPS primero, como en las barras de rendimiento habituales. Con frame
+        // generation se rotula "FG" para no confundirlo con cuadros reales.
+        if (selected.Contains(OverlayMetricKeys.Fps))
+        {
+            string label = snapshot.FrameGeneration ? "FG" : "FPS";
+            string value = snapshot.Fps is { } fps ? fps.ToString("0", text) : "--";
+            result.Add(new OverlaySegment(OverlayMetricKeys.FpsGroup, label + " " + value));
+        }
 
         if (selected.Any(OverlayMetricKeys.IsCpu))
             result.Add(new OverlaySegment(OverlayMetricKeys.CpuGroup, FormatCpu(snapshot, selected, text)));
