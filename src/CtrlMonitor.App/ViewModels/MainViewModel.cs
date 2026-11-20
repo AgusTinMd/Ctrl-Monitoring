@@ -14,6 +14,7 @@ using CtrlMonitor.Core.Diagnostics;
 using CtrlMonitor.Core.Hardware;
 using CtrlMonitor.Core.Inventory;
 using CtrlMonitor.Core.Localization;
+using CtrlMonitor.Core.Overlay;
 
 namespace CtrlMonitor.App.ViewModels;
 
@@ -72,6 +73,13 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private bool _disposed;
 
+    private readonly List<OverlayMetricOption> _overlayMetrics = new();
+    private readonly List<OverlayGroupColorOption> _overlayGroupColors = new();
+    private IReadOnlyList<OverlaySegmentViewModel> _overlaySegments = Array.Empty<OverlaySegmentViewModel>();
+    private Brush _overlayBackgroundBrush = Brushes.Transparent;
+    private bool _isOverlayEditing;
+    private bool _suppressOverlayUpdates;
+
     public MainViewModel(ConfigStore store, AppConfig config, HardwareService hardware)
     {
         _store = store;
@@ -95,6 +103,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         InitializeChartPanels();
         Processes.Attach(_config, SaveSoon);
+        InitializeOverlay();
 
         _hardware.SnapshotUpdated += OnSnapshotUpdated;
 
@@ -211,9 +220,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         // El administrador de procesos solo lee mientras está a la vista.
         Processes.IsActive = value == ProcessesTabIndex;
+
+        // El modo edición solo tiene sentido mientras se ve la sección Overlay.
+        if (value != OverlayTabIndex)
+            IsOverlayEditing = false;
     }
 
     private const int ProcessesTabIndex = 5;
+    private const int OverlayTabIndex = 6;
 
     /// <summary>Administrador de procesos (pestaña Procesos).</summary>
     public ProcessesViewModel Processes { get; } = new();
@@ -527,6 +541,335 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public string RefreshIntervalText => $"{RefreshIntervalMs / 1000.0:0.#} s";
 
+    // ===================== Overlay =====================
+
+    /// <summary>Opciones de color del selector global.</summary>
+    public IReadOnlyList<OverlayColorOption> OverlayColorOptions => OverlayColorPalette.All;
+
+    /// <summary>Colores por grupo; la primera opción es "usar el color global".</summary>
+    public IReadOnlyList<OverlayColorOption> OverlayGroupColorOptions => OverlayColorPalette.WithGlobal;
+
+    public IReadOnlyList<OverlayMetricOption> OverlayMetrics => _overlayMetrics;
+
+    public IReadOnlyList<OverlayGroupColorOption> OverlayGroupColors => _overlayGroupColors;
+
+    public bool OverlayEnabled
+    {
+        get => _config.Overlay.Enabled;
+        set
+        {
+            if (_config.Overlay.Enabled == value)
+                return;
+
+            _config.Overlay.Enabled = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(OverlaySettingsEnabled));
+            OnPropertyChanged(nameof(OverlayLocked));
+
+            if (!value)
+                IsOverlayEditing = false;
+
+            SaveSoon();
+        }
+    }
+
+    /// <summary>La sección de ajustes se habilita solo con el overlay activo.</summary>
+    public bool OverlaySettingsEnabled => OverlayEnabled;
+
+    public bool OverlayLocked => !OverlayEnabled;
+
+    public string OverlayTextColor
+    {
+        get => _config.Overlay.TextColor;
+        set
+        {
+            string normalized = OverlayColors.TryNormalize(value, out string hex)
+                ? hex
+                : OverlayColors.DefaultText;
+
+            if (string.Equals(_config.Overlay.TextColor, normalized, StringComparison.Ordinal))
+                return;
+
+            _config.Overlay.TextColor = normalized;
+            OnPropertyChanged();
+            RebuildOverlaySegments();
+            SaveSoon();
+        }
+    }
+
+    public double OverlayTextSize
+    {
+        get => _config.Overlay.TextSize;
+        set
+        {
+            double clamped = Math.Clamp(value, 10, 24);
+
+            if (Math.Abs(clamped - _config.Overlay.TextSize) < 0.01)
+                return;
+
+            _config.Overlay.TextSize = clamped;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(OverlayTextSizeText));
+            SaveSoon();
+        }
+    }
+
+    public string OverlayTextSizeText => $"{OverlayTextSize:0} px";
+
+    public double OverlayBackgroundOpacity
+    {
+        get => _config.Overlay.BackgroundOpacity;
+        set
+        {
+            double clamped = Math.Clamp(value, 0, 100);
+
+            if (Math.Abs(clamped - _config.Overlay.BackgroundOpacity) < 0.01)
+                return;
+
+            _config.Overlay.BackgroundOpacity = clamped;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(OverlayBackgroundOpacityText));
+            UpdateOverlayBackgroundBrush();
+            SaveSoon();
+        }
+    }
+
+    public string OverlayBackgroundOpacityText => $"{OverlayBackgroundOpacity:0} %";
+
+    /// <summary>Fondo negro con la opacidad elegida; 0 lo deja transparente.</summary>
+    public Brush OverlayBackgroundBrush => _overlayBackgroundBrush;
+
+    /// <summary>Textos y colores de la barra; la vista previa y la ventana real comparten esta lista.</summary>
+    public IReadOnlyList<OverlaySegmentViewModel> OverlaySegments
+    {
+        get => _overlaySegments;
+        private set
+        {
+            _overlaySegments = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasOverlayMetrics));
+        }
+    }
+
+    public bool HasOverlayMetrics => _overlaySegments.Count > 0;
+
+    /// <summary>
+    /// Modo de edición: la ventana deja de ser click-through para poder
+    /// arrastrarla. No se guarda; es solo una herramienta de ajuste.
+    /// </summary>
+    public bool IsOverlayEditing
+    {
+        get => _isOverlayEditing;
+        set
+        {
+            if (_isOverlayEditing == value)
+                return;
+
+            _isOverlayEditing = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string OverlayHotkeyText => "Ctrl+Alt+O";
+
+    public double? OverlayLeft => _config.Overlay.Left;
+
+    public double? OverlayTop => _config.Overlay.Top;
+
+    /// <summary>El arrastre de la ventana guarda la posición final.</summary>
+    public void SetOverlayPosition(double left, double top)
+    {
+        if (!double.IsFinite(left) || !double.IsFinite(top))
+            return;
+
+        _config.Overlay.Left = left;
+        _config.Overlay.Top = top;
+        OnPropertyChanged(nameof(OverlayLeft));
+        OnPropertyChanged(nameof(OverlayTop));
+        SaveSoon();
+    }
+
+    [RelayCommand]
+    private void ResetOverlayPosition()
+    {
+        _config.Overlay.Left = null;
+        _config.Overlay.Top = null;
+        OnPropertyChanged(nameof(OverlayLeft));
+        OnPropertyChanged(nameof(OverlayTop));
+        SaveSoon();
+    }
+
+    [RelayCommand]
+    private void ResetOverlayMetrics()
+    {
+        var defaults = new HashSet<string>(OverlayMetricKeys.Defaults, StringComparer.OrdinalIgnoreCase);
+
+        _suppressOverlayUpdates = true;
+
+        try
+        {
+            foreach (OverlayMetricOption option in _overlayMetrics)
+                option.IsSelected = defaults.Contains(option.Key);
+        }
+        finally
+        {
+            _suppressOverlayUpdates = false;
+        }
+
+        OnOverlayMetricsChanged();
+    }
+
+    private void InitializeOverlay()
+    {
+        var selected = new HashSet<string>(
+            _config.Overlay.Metrics ?? new List<string>(),
+            StringComparer.OrdinalIgnoreCase);
+
+        _overlayMetrics.Clear();
+
+        foreach (string key in OverlayMetricKeys.All)
+        {
+            _overlayMetrics.Add(new OverlayMetricOption(
+                key,
+                MetricLabelKey(key),
+                selected.Contains(key),
+                OnOverlayMetricsChanged));
+        }
+
+        _overlayGroupColors.Clear();
+
+        foreach (string group in OverlayMetricKeys.Groups)
+        {
+            string hex = _config.Overlay.GroupColors.TryGetValue(group, out string? value)
+                ? value
+                : string.Empty;
+
+            _overlayGroupColors.Add(new OverlayGroupColorOption(
+                group,
+                $"overlay.group.{group}",
+                hex,
+                OverlayColorPalette.WithGlobal,
+                OnOverlayGroupColorChanged));
+        }
+
+        UpdateOverlayBackgroundBrush();
+        RebuildOverlaySegments();
+    }
+
+    private void OnOverlayMetricsChanged()
+    {
+        if (_suppressOverlayUpdates)
+            return;
+
+        _config.Overlay.Metrics = _overlayMetrics
+            .Where(option => option.IsSelected)
+            .Select(option => option.Key)
+            .ToList();
+
+        RebuildOverlaySegments();
+        SaveSoon();
+    }
+
+    private void OnOverlayGroupColorChanged()
+    {
+        var colors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (OverlayGroupColorOption option in _overlayGroupColors)
+            colors[option.GroupKey] = option.SelectedHex;
+
+        _config.Overlay.GroupColors = colors;
+        RebuildOverlaySegments();
+        SaveSoon();
+    }
+
+    private void UpdateOverlayBackgroundBrush()
+    {
+        byte alpha = (byte)Math.Round(Math.Clamp(_config.Overlay.BackgroundOpacity, 0, 100) * 255 / 100);
+        var brush = new SolidColorBrush(Color.FromArgb(alpha, 0, 0, 0));
+        brush.Freeze();
+
+        _overlayBackgroundBrush = brush;
+        OnPropertyChanged(nameof(OverlayBackgroundBrush));
+    }
+
+    /// <summary>
+    /// Arma la lista que consumen la vista previa y la ventana del overlay.
+    /// Se llama en cada refresco de sensores y al cambiar cualquier ajuste.
+    /// </summary>
+    private void RebuildOverlaySegments()
+    {
+        if (_overlayMetrics.Count == 0)
+            return;
+
+        var snapshot = new OverlaySnapshot
+        {
+            CpuLoad = CpuLoad,
+            CpuTemperature = CpuTemperature,
+            CpuClockGhz = CpuClockGhz,
+            CpuPower = CpuPower,
+            CpuFanRpm = CpuFanRpm,
+            GpuLoad = GpuLoad,
+            GpuTemperature = GpuTemperature,
+            GpuHotspot = GpuHotspot,
+            GpuPower = GpuPower,
+            GpuFanRpm = GpuFanRpm,
+            VramUsedGb = VramUsedGb,
+            VramTotalGb = VramTotalGb,
+            RamUsedGb = RamUsedGb,
+            RamTotalGb = RamTotalGb,
+            RamPercent = RamPercent,
+            NetDownMbs = NetDownMbs,
+            NetUpMbs = NetUpMbs
+        };
+
+        var selected = _overlayMetrics
+            .Where(option => option.IsSelected)
+            .Select(option => option.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        IReadOnlyList<OverlaySegment> segments = OverlayTextFormatter.Format(snapshot, selected);
+        var result = new List<OverlaySegmentViewModel>(segments.Count * 2);
+
+        foreach (OverlaySegment segment in segments)
+        {
+            if (result.Count > 0)
+                result.Add(new OverlaySegmentViewModel("|", OverlayBrushes.Separator, isSeparator: true));
+
+            result.Add(new OverlaySegmentViewModel(segment.Text, GroupBrush(segment.GroupKey)));
+        }
+
+        OverlaySegments = result;
+    }
+
+    private Brush GroupBrush(string groupKey)
+    {
+        string hex = _config.Overlay.GroupColors.TryGetValue(groupKey, out string? value)
+                     && !string.IsNullOrWhiteSpace(value)
+            ? value
+            : _config.Overlay.TextColor;
+
+        return OverlayBrushes.FromHex(hex);
+    }
+
+    private static string MetricLabelKey(string key) => key switch
+    {
+        OverlayMetricKeys.CpuLoad => "overlay.metric.cpuLoad",
+        OverlayMetricKeys.CpuTemperature => "overlay.metric.cpuTemp",
+        OverlayMetricKeys.CpuClock => "overlay.metric.cpuClock",
+        OverlayMetricKeys.CpuPower => "overlay.metric.cpuPower",
+        OverlayMetricKeys.CpuFan => "overlay.metric.cpuFan",
+        OverlayMetricKeys.GpuLoad => "overlay.metric.gpuLoad",
+        OverlayMetricKeys.GpuTemperature => "overlay.metric.gpuTemp",
+        OverlayMetricKeys.GpuHotspot => "overlay.metric.gpuHotspot",
+        OverlayMetricKeys.GpuVram => "overlay.metric.gpuVram",
+        OverlayMetricKeys.GpuPower => "overlay.metric.gpuPower",
+        OverlayMetricKeys.GpuFan => "overlay.metric.gpuFan",
+        OverlayMetricKeys.RamUsed => "overlay.metric.ramUsed",
+        OverlayMetricKeys.RamPercent => "overlay.metric.ramPercent",
+        OverlayMetricKeys.NetThroughput => "overlay.metric.net",
+        _ => key
+    };
+
     public bool StartMinimized
     {
         get => _config.StartMinimized;
@@ -759,6 +1102,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (SensorGroupViewModel group in Groups)
             group.RefreshLanguage();
 
+        OverlayColorPalette.RefreshLanguage();
+
+        foreach (OverlayMetricOption option in _overlayMetrics)
+            option.RefreshLanguage();
+
+        foreach (OverlayGroupColorOption option in _overlayGroupColors)
+            option.RefreshLanguage();
+
+        RebuildOverlaySegments();
         ApplyInventoryTexts();
 
         // Solo textos: no se vuelve a leer la red ni se agrega una muestra al
@@ -970,6 +1322,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         {
             UpdateVideoMemory(Array.Empty<SensorReading>());
             RefreshChartPanels();
+            RebuildOverlaySegments();
             LastUpdateText = Loc.T("update.noSensors");
             UpdateStatus();
             return;
@@ -1012,6 +1365,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         UpdateGroups(snapshot);
         UpdateFans(snapshot.Sensors);
+        RebuildOverlaySegments();
 
         LastUpdateText = Loc.F("update.updated", DateTime.Now.ToString("HH:mm:ss"));
         UpdateStatus();

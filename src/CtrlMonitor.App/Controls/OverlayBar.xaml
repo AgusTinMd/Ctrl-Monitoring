@@ -1,0 +1,33 @@
+<UserControl x:Class="CtrlMonitor.App.Controls.OverlayBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             FontFamily="{StaticResource AppFont}"
+             UseLayoutRounding="True"
+             SnapsToDevicePixels="True">
+    <!-- La barra real y la vista previa usan este mismo control: así lo que se
+         configura es exactamente lo que se ve sobre el juego. -->
+    <Border Background="{Binding OverlayBackgroundBrush}"
+            CornerRadius="7"
+            Padding="12,5"
+            HorizontalAlignment="Left">
+        <ItemsControl ItemsSource="{Binding OverlaySegments}"
+                      VerticalAlignment="Center">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Text}"
+                               Foreground="{Binding Brush}"
+                               FontSize="{Binding DataContext.OverlayTextSize,
+                                                  RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                               FontWeight="SemiBold"
+                               Margin="{Binding Margin}"
+                               VerticalAlignment="Center" />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </Border>
+</UserControl>
