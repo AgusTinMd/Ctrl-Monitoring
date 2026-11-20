@@ -671,6 +671,33 @@
         </Setter>
     </Style>
 
+    <!-- Opción grande seleccionable (por ejemplo, el estilo de colores del overlay). -->
+    <Style x:Key="OptionTile" TargetType="RadioButton">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Root" Background="{StaticResource SurfaceBrush}"
+                            BorderBrush="{StaticResource BorderStrongBrush}" BorderThickness="1.5"
+                            CornerRadius="8" Padding="12,10">
+                        <ContentPresenter />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{StaticResource CardHoverBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Root" Property="BorderBrush" Value="{StaticResource AccentBrush}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- ===================== Slider ===================== -->
     <Style x:Key="SliderThumb" TargetType="Thumb">
         <Setter Property="Width" Value="18" />

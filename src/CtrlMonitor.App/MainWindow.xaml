@@ -27,6 +27,17 @@
             <TextBlock Text="{Binding DisplayName}" />
         </DataTemplate>
 
+        <!-- Color del overlay: muestra la muestra de color junto al nombre. -->
+        <DataTemplate x:Key="OverlayColorTemplate">
+            <StackPanel Orientation="Horizontal">
+                <Border Width="13" Height="13" CornerRadius="3"
+                        Background="{Binding Brush}"
+                        BorderBrush="#33FFFFFF" BorderThickness="1"
+                        VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Name}" Margin="8,0,0,0" VerticalAlignment="Center" />
+            </StackPanel>
+        </DataTemplate>
+
         <!-- Valores de una métrica (principal, secundario, terciario y cuarto);
              lo usan las tarjetas y el gráfico grande de la vista de lista. -->
         <DataTemplate x:Key="ChartValuesTemplate">
@@ -1685,6 +1696,350 @@
                                HorizontalAlignment="Right" />
                 </Grid>
             </Grid>
+        </TabItem>
+
+        <!-- ============================================================ -->
+        <!-- Overlay                                                      -->
+        <!-- ============================================================ -->
+        <TabItem Header="{l:Tr nav.overlay}" Style="{StaticResource NavTabItem}">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="24,20,24,24">
+
+                    <TextBlock Text="{l:Tr nav.overlay}" Style="{StaticResource PageTitle}" />
+                    <TextBlock Text="{l:Tr overlay.subtitle}"
+                               Style="{StaticResource PageSubtitle}" TextWrapping="Wrap" />
+
+                    <!-- Activación: siempre habilitada, incluso con el overlay apagado. -->
+                    <Border Style="{StaticResource Card}" Margin="0,18,0,0">
+                        <StackPanel>
+                            <CheckBox Content="{l:Tr overlay.enable}"
+                                      IsChecked="{Binding OverlayEnabled, Mode=TwoWay}"
+                                      FontSize="14" FontWeight="SemiBold" />
+                            <TextBlock Text="{l:Tr overlay.enableHint}"
+                                       Style="{StaticResource MutedText}" Margin="28,7,0,0"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{l:Tr overlay.safeHint}"
+                                       Style="{StaticResource MutedText}" Margin="28,4,0,0"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Text="{l:Tr overlay.lockedHint}"
+                                       Style="{StaticResource SecondaryText}"
+                                       Margin="28,10,0,0" FontWeight="SemiBold"
+                                       Visibility="{Binding OverlayLocked, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- El resto queda bloqueado y atenuado mientras el overlay esté apagado. -->
+                    <StackPanel IsEnabled="{Binding OverlaySettingsEnabled}" Margin="0,16,0,0">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding OverlayLocked}" Value="True">
+                                        <Setter Property="Opacity" Value="0.42" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+
+                        <!-- Vista previa a todo el ancho: con muchas métricas la barra
+                             es larga. Si aun así no entra, se achica en lugar de cortarse. -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+                            <StackPanel>
+                                <TextBlock Text="{l:Tr overlay.preview}" Style="{StaticResource SectionTitle}" />
+                                <TextBlock Text="{l:Tr overlay.previewHint}"
+                                           Style="{StaticResource MutedText}" Margin="0,4,0,14"
+                                           TextWrapping="Wrap" />
+                                <Border CornerRadius="7" Padding="14" MinHeight="88">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#233A3D" Offset="0" />
+                                            <GradientStop Color="#141B2A" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Viewbox Stretch="Uniform" StretchDirection="DownOnly"
+                                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <controls:OverlayBar />
+                                    </Viewbox>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <controls:ResponsiveGrid MinItemWidth="400" MaxColumns="2" Gap="18">
+
+                            <!-- Apariencia -->
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="{l:Tr overlay.appearance}" Style="{StaticResource SectionTitle}" />
+
+                                    <!-- Estilo de colores: la primera elección. Con colores a
+                                         medida activos queda atenuado porque no se aplica. -->
+                                    <TextBlock Text="{l:Tr overlay.colorStyle}"
+                                               Style="{StaticResource SecondaryText}" Margin="0,12,0,8" />
+                                    <Grid IsEnabled="{Binding OverlayStylesEnabled}">
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding OverlayCustomColors}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.42" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="10" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <RadioButton Style="{StaticResource OptionTile}" GroupName="OverlayStyle"
+                                                     IsChecked="{Binding OverlayStyleMinimal, Mode=TwoWay}">
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="10" Height="10" Fill="#FFFFFFFF" Margin="0,0,4,0" />
+                                                    <Ellipse Width="10" Height="10" Fill="#FFFFFFFF" Margin="0,0,4,0" />
+                                                    <Ellipse Width="10" Height="10" Fill="#FFFFFFFF" />
+                                                </StackPanel>
+                                                <TextBlock Text="{l:Tr overlay.style.minimal}"
+                                                           FontWeight="SemiBold" Margin="0,8,0,0" />
+                                                <TextBlock Text="{l:Tr overlay.style.minimalHint}"
+                                                           Style="{StaticResource MutedText}"
+                                                           TextWrapping="Wrap" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                        </RadioButton>
+
+                                        <RadioButton Grid.Column="2" Style="{StaticResource OptionTile}" GroupName="OverlayStyle"
+                                                     IsChecked="{Binding OverlayStyleVaried, Mode=TwoWay}">
+                                            <StackPanel>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="10" Height="10" Fill="#FFFFD166" Margin="0,0,4,0" />
+                                                    <Ellipse Width="10" Height="10" Fill="#FF7BD88F" Margin="0,0,4,0" />
+                                                    <Ellipse Width="10" Height="10" Fill="#FFC792EA" Margin="0,0,4,0" />
+                                                    <Ellipse Width="10" Height="10" Fill="#FF56B6C2" />
+                                                </StackPanel>
+                                                <TextBlock Text="{l:Tr overlay.style.varied}"
+                                                           FontWeight="SemiBold" Margin="0,8,0,0" />
+                                                <TextBlock Text="{l:Tr overlay.style.variedHint}"
+                                                           Style="{StaticResource MutedText}"
+                                                           TextWrapping="Wrap" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                        </RadioButton>
+                                    </Grid>
+                                    <TextBlock Text="{l:Tr overlay.style.overridden}"
+                                               Style="{StaticResource MutedText}" Margin="0,6,0,0"
+                                               TextWrapping="Wrap"
+                                               Visibility="{Binding OverlayCustomColors, Converter={StaticResource BoolToVis}}" />
+
+                                    <Grid Margin="0,16,0,0">
+                                        <TextBlock Text="{l:Tr overlay.textSize}"
+                                                   Style="{StaticResource SecondaryText}" />
+                                        <TextBlock HorizontalAlignment="Right"
+                                                   Text="{Binding OverlayTextSizeText}"
+                                                   FontSize="11.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Slider Minimum="10" Maximum="24"
+                                            SmallChange="1" LargeChange="2"
+                                            TickFrequency="1" IsSnapToTickEnabled="True"
+                                            Value="{Binding OverlayTextSize, Mode=TwoWay}"
+                                            Margin="0,7,0,0" />
+
+                                    <Grid Margin="0,10,0,0">
+                                        <TextBlock Text="{l:Tr overlay.backgroundOpacity}"
+                                                   Style="{StaticResource SecondaryText}" />
+                                        <TextBlock HorizontalAlignment="Right"
+                                                   Text="{Binding OverlayBackgroundOpacityText}"
+                                                   FontSize="11.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                                    </Grid>
+                                    <Slider Minimum="0" Maximum="100"
+                                            SmallChange="5" LargeChange="10"
+                                            TickFrequency="5" IsSnapToTickEnabled="True"
+                                            Value="{Binding OverlayBackgroundOpacity, Mode=TwoWay}"
+                                            Margin="0,7,0,0" />
+
+                                    <CheckBox Content="{l:Tr overlay.squareCorners}"
+                                              IsChecked="{Binding OverlaySquareCorners, Mode=TwoWay}"
+                                              Margin="0,14,0,0" />
+                                    <TextBlock Text="{l:Tr overlay.squareCornersHint}"
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Métricas y colores por grupo -->
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <TextBlock Text="{l:Tr overlay.metrics}" Style="{StaticResource SectionTitle}" />
+                                    <TextBlock Text="{l:Tr overlay.metricsHint}"
+                                               Style="{StaticResource MutedText}" Margin="0,4,0,12"
+                                               TextWrapping="Wrap" />
+
+                                    <ItemsControl ItemsSource="{Binding OverlayMetrics}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <CheckBox Content="{Binding Label}"
+                                                          IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                          Margin="0,0,18,9" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </controls:ResponsiveGrid>
+
+                        <!-- Colores a medida: apagados por defecto. Mientras estén
+                             apagados, los controles quedan bloqueados y manda el estilo. -->
+                        <Border Style="{StaticResource Card}" Margin="0,18,0,0">
+                            <StackPanel>
+                                <CheckBox Content="{l:Tr overlay.customColors}"
+                                          IsChecked="{Binding OverlayCustomColors, Mode=TwoWay}"
+                                          FontSize="14" FontWeight="SemiBold" />
+                                <TextBlock Text="{l:Tr overlay.customColorsHint}"
+                                           Style="{StaticResource MutedText}" Margin="28,7,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <StackPanel IsEnabled="{Binding OverlayCustomColors}" Margin="0,14,0,0">
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding OverlayCustomColors}" Value="False">
+                                                    <Setter Property="Opacity" Value="0.42" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </StackPanel.Style>
+
+                                    <Grid Margin="0,0,0,8" MaxWidth="560" HorizontalAlignment="Left">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" MinWidth="160" />
+                                            <ColumnDefinition Width="200" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{l:Tr overlay.textColor}"
+                                                   Style="{StaticResource SecondaryText}"
+                                                   VerticalAlignment="Center" />
+                                        <ComboBox Grid.Column="1"
+                                                  ItemsSource="{Binding OverlayColorOptions}"
+                                                  ItemTemplate="{StaticResource OverlayColorTemplate}"
+                                                  SelectedValuePath="Hex"
+                                                  SelectedValue="{Binding OverlayTextColor, Mode=TwoWay}" />
+                                    </Grid>
+
+                                    <TextBlock Text="{l:Tr overlay.groupColorsHint}"
+                                               Style="{StaticResource MutedText}" Margin="0,4,0,10"
+                                               TextWrapping="Wrap" />
+
+                                    <ItemsControl ItemsSource="{Binding OverlayGroupColors}"
+                                                  MaxWidth="560" HorizontalAlignment="Left">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,0,0,8">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*" MinWidth="160" />
+                                                        <ColumnDefinition Width="200" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Label}"
+                                                               Style="{StaticResource SecondaryText}"
+                                                               VerticalAlignment="Center" />
+                                                    <ComboBox Grid.Column="1"
+                                                              ItemsSource="{Binding Options}"
+                                                              ItemTemplate="{StaticResource OverlayColorTemplate}"
+                                                              SelectedValuePath="Hex"
+                                                              SelectedValue="{Binding SelectedHex, Mode=TwoWay}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Posición, atajo y alcance -->
+                        <Border Style="{StaticResource Card}" Margin="0,18,0,0">
+                            <StackPanel>
+                                <TextBlock Text="{l:Tr overlay.position}" Style="{StaticResource SectionTitle}" />
+                                <TextBlock Text="{l:Tr overlay.positionHint}"
+                                           Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <!-- Posiciones predefinidas: la barra queda anclada a ese lugar. -->
+                                <TextBlock Text="{l:Tr overlay.presetPositions}"
+                                           Style="{StaticResource SecondaryText}" Margin="0,12,0,8" />
+                                <ItemsControl ItemsSource="{Binding OverlayAnchorOptions}"
+                                              HorizontalAlignment="Left">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="3" Rows="3" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <RadioButton Style="{StaticResource SegmentButton}"
+                                                         GroupName="OverlayAnchor"
+                                                         IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                         ToolTip="{Binding Label}"
+                                                         Width="44" Height="34">
+                                                <TextBlock Text="{Binding Glyph}" FontSize="15" />
+                                            </RadioButton>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{l:Tr overlay.presetPositionsHint}"
+                                           Style="{StaticResource MutedText}" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <!-- Bloqueado por defecto: la barra no recibe clics y no se
+                                     puede tocar sin querer mientras se juega. -->
+                                <CheckBox Content="{l:Tr overlay.lock}"
+                                          IsChecked="{Binding OverlayPositionLocked, Mode=TwoWay}"
+                                          FontWeight="SemiBold" Margin="0,12,0,0" />
+                                <TextBlock Text="{l:Tr overlay.lockHint}"
+                                           Style="{StaticResource MutedText}" Margin="28,6,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <WrapPanel Margin="0,10,0,0">
+                                    <Button Content="{l:Tr overlay.resetPosition}"
+                                            Command="{Binding ResetOverlayPositionCommand}"
+                                            Style="{StaticResource GhostButton}"
+                                            Margin="0,0,8,8" />
+                                    <Button Content="{l:Tr overlay.resetMetrics}"
+                                            Command="{Binding ResetOverlayMetricsCommand}"
+                                            Style="{StaticResource GhostButton}"
+                                            Margin="0,0,8,8" />
+                                </WrapPanel>
+
+                                <TextBlock Text="{l:Tr overlay.editingHint}"
+                                           Style="{StaticResource SecondaryText}"
+                                           FontWeight="SemiBold" Margin="0,2,0,0"
+                                           Visibility="{Binding IsOverlayEditing, Converter={StaticResource BoolToVis}}" />
+
+                                <Grid Margin="0,14,0,0">
+                                    <TextBlock Text="{l:Tr overlay.hotkey}"
+                                               Style="{StaticResource SecondaryText}"
+                                               VerticalAlignment="Center" />
+                                    <Border HorizontalAlignment="Right"
+                                            Background="{StaticResource SurfaceBrush}"
+                                            BorderBrush="{StaticResource BorderStrongBrush}"
+                                            BorderThickness="1" CornerRadius="6" Padding="9,4">
+                                        <TextBlock Text="{Binding OverlayHotkeyText}"
+                                                   FontFamily="Consolas" FontSize="12"
+                                                   FontWeight="SemiBold" />
+                                    </Border>
+                                </Grid>
+                                <TextBlock Text="{l:Tr overlay.hotkeyHint}"
+                                           Style="{StaticResource MutedText}" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+                                <TextBlock Text="{l:Tr overlay.fullscreenHint}"
+                                           Style="{StaticResource MutedText}" Margin="0,8,0,0"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
         </TabItem>
 
         <!-- ============================================================ -->

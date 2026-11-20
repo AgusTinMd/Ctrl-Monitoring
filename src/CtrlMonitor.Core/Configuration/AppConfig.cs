@@ -42,10 +42,16 @@ public sealed class AppConfig
     /// </summary>
     public string Language { get; set; } = AppLanguage.Auto;
 
+    /// <summary>Preferencias del overlay de métricas.</summary>
+    public OverlayConfig Overlay { get; set; } = new();
+
     public void Normalize()
     {
         RefreshIntervalMs = Math.Clamp(RefreshIntervalMs, 500, 10000);
         Language = AppLanguage.NormalizeSetting(Language);
+
+        Overlay ??= new OverlayConfig();
+        Overlay.Normalize();
 
         ChartMetrics = (ChartMetrics ?? new List<string>())
             .Where(key => !string.IsNullOrWhiteSpace(key))
