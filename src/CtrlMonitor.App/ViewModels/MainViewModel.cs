@@ -959,14 +959,34 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         IReadOnlyList<OverlaySegment> segments = OverlayTextFormatter.Format(snapshot, selected);
+
+        // Si los grupos son los mismos, solo se cambian textos y colores: así
+        // los controles de la barra no se recrean y no parpadea.
+        bool sameShape = _overlaySegments.Count == Math.Max(0, (segments.Count * 2) - 1);
+
+        for (int i = 0; sameShape && i < segments.Count; i++)
+            sameShape = _overlaySegments[i * 2].GroupKey == segments[i].GroupKey;
+
+        if (sameShape)
+        {
+            for (int i = 0; i < segments.Count; i++)
+            {
+                OverlaySegmentViewModel item = _overlaySegments[i * 2];
+                item.Text = segments[i].Text;
+                item.Brush = GroupBrush(segments[i].GroupKey);
+            }
+
+            return;
+        }
+
         var result = new List<OverlaySegmentViewModel>(segments.Count * 2);
 
         foreach (OverlaySegment segment in segments)
         {
             if (result.Count > 0)
-                result.Add(new OverlaySegmentViewModel("|", OverlayBrushes.Separator, isSeparator: true));
+                result.Add(new OverlaySegmentViewModel(string.Empty, "|", OverlayBrushes.Separator, isSeparator: true));
 
-            result.Add(new OverlaySegmentViewModel(segment.Text, GroupBrush(segment.GroupKey)));
+            result.Add(new OverlaySegmentViewModel(segment.GroupKey, segment.Text, GroupBrush(segment.GroupKey)));
         }
 
         OverlaySegments = result;

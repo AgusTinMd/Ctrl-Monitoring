@@ -24,8 +24,11 @@
                                FontSize="{Binding DataContext.OverlayTextSize,
                                                   RelativeSource={RelativeSource AncestorType=ItemsControl}}"
                                FontWeight="SemiBold"
+                               Typography.NumeralAlignment="Tabular"
                                Margin="{Binding Margin}"
-                               VerticalAlignment="Center" />
+                               VerticalAlignment="Center"
+                               Loaded="OnSegmentLoaded"
+                               Unloaded="OnSegmentUnloaded" />
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

@@ -131,18 +131,39 @@ public sealed class OverlayMetricOption : ObservableObject
     public void RefreshLanguage() => OnPropertyChanged(nameof(Label));
 }
 
-/// <summary>Un trozo de la barra: texto y color, o un separador.</summary>
-public sealed class OverlaySegmentViewModel
+/// <summary>
+/// Un trozo de la barra: texto y color, o un separador. El texto y el color se
+/// actualizan en el lugar para no recrear los controles en cada lectura, que
+/// hacía parpadear la barra.
+/// </summary>
+public sealed class OverlaySegmentViewModel : ObservableObject
 {
-    public OverlaySegmentViewModel(string text, Brush brush, bool isSeparator = false)
+    private string _text;
+    private Brush _brush;
+
+    public OverlaySegmentViewModel(string groupKey, string text, Brush brush, bool isSeparator = false)
     {
-        Text = text;
-        Brush = brush;
+        GroupKey = groupKey;
+        _text = text;
+        _brush = brush;
         IsSeparator = isSeparator;
     }
 
-    public string Text { get; }
-    public Brush Brush { get; }
+    /// <summary>Grupo del trozo (vacío en los separadores).</summary>
+    public string GroupKey { get; }
+
+    public string Text
+    {
+        get => _text;
+        set => SetProperty(ref _text, value);
+    }
+
+    public Brush Brush
+    {
+        get => _brush;
+        set => SetProperty(ref _brush, value);
+    }
+
     public bool IsSeparator { get; }
 
     public Thickness Margin => IsSeparator ? new Thickness(2, 0, 8, 0) : new Thickness(0, 0, 8, 0);
