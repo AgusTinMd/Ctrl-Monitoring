@@ -26,6 +26,10 @@ public sealed class OverlayWindowManager : IDisposable
     private const uint ModNoRepeat = 0x4000;
     private const uint MonitorDefaultToNearest = 0x00000002;
     private const int HalfVisibleMargin = 80;
+    private const uint SwpNoSize = 0x0001;
+    private const uint SwpNoMove = 0x0002;
+    private const uint SwpNoActivate = 0x0010;
+    private static readonly IntPtr HwndTopmost = new(-1);
 
     private readonly MainViewModel _viewModel;
     private readonly DispatcherTimer _timer;
@@ -91,6 +95,23 @@ public sealed class OverlayWindowManager : IDisposable
         }
 
         ApplyVisibility();
+        KeepOnTop();
+    }
+
+    /// <summary>
+    /// Algunos juegos en borderless también se marcan como topmost y quedan
+    /// por encima de la barra. Se reafirma el orden en cada tick, sin activar
+    /// la ventana ni quitarle el foco al juego.
+    /// </summary>
+    private void KeepOnTop()
+    {
+        if (_window?.IsVisible != true)
+            return;
+
+        IntPtr handle = new WindowInteropHelper(_window).Handle;
+
+        if (handle != IntPtr.Zero)
+            SetWindowPos(handle, HwndTopmost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -382,6 +403,10 @@ public sealed class OverlayWindowManager : IDisposable
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(IntPtr hWnd, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
 
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int index);
