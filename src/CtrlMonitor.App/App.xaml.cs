@@ -37,6 +37,7 @@ public partial class App : Application
     private MainViewModel? _viewModel;
     private TrayService? _tray;
     private MainWindow? _window;
+    private OverlayWindowManager? _overlay;
 
     private bool _exiting;
     private bool _cleaned;
@@ -209,6 +210,18 @@ public partial class App : Application
         _window = new MainWindow(_viewModel);
         _window.Closed += OnMainWindowClosed;
 
+        try
+        {
+            _overlay = new OverlayWindowManager(_viewModel);
+            _overlay.Start();
+        }
+        catch (Exception ex)
+        {
+            // El overlay es opcional: si falla, la monitorización sigue igual.
+            AppLog.Error("No se pudo iniciar el overlay", ex);
+            _overlay = null;
+        }
+
         _hardware.StartMonitoring(TimeSpan.FromMilliseconds(_config.RefreshIntervalMs));
 
         bool startHidden = args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase))
@@ -274,6 +287,15 @@ public partial class App : Application
         catch (Exception ex)
         {
             AppLog.Error("Error al cerrar el icono de bandeja", ex);
+        }
+
+        try
+        {
+            _overlay?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Error al cerrar el overlay", ex);
         }
 
         try
