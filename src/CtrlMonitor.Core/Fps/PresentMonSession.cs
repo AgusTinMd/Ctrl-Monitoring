@@ -16,6 +16,11 @@ public sealed class PresentMonSession : IDisposable
     /// <summary>Si no llegan cuadros en este tiempo, la lectura deja de valer.</summary>
     private const long StaleAfterMs = 2000;
 
+    /// <summary>Tiempo que se sigue midiendo un juego después de salir de él.</summary>
+    private const long IdleGraceMs = 30_000;
+
+    private long _idleSince;
+
     private readonly string _executable;
     private readonly FpsCalculator _calculator = new();
     private readonly object _gate = new();
@@ -44,20 +49,45 @@ public sealed class PresentMonSession : IDisposable
     }
 
     /// <summary>
-    /// Mide el proceso indicado. Si cambia, se reinicia PresentMon; con 0 se
-    /// detiene la medición.
+    /// Mide el proceso indicado. Si cambia, se reinicia PresentMon. Con 0 la
+    /// medición sigue un rato (<see cref="IdleGraceMs"/>) y después se detiene.
     /// </summary>
     public void SetTarget(int processId)
     {
         lock (_gate)
         {
-            if (_disposed || processId == _targetId && (processId == 0 || _process is { HasExited: false }))
+            if (_disposed)
+                return;
+
+            long now = Environment.TickCount64;
+
+            // Salir un momento del juego (Alt+Tab, abrir la app) no corta la
+            // medición: así al volver los FPS aparecen al instante y no se
+            // reinicia PresentMon a cada rato.
+            if (processId == 0)
+            {
+                if (_targetId != 0 && _idleSince == 0)
+                    _idleSince = now;
+
+                if (_targetId != 0 && now - _idleSince > IdleGraceMs)
+                {
+                    StopLocked();
+                    _targetId = 0;
+                    _idleSince = 0;
+                }
+
+                return;
+            }
+
+            _idleSince = 0;
+
+            if (processId == _targetId && _process is { HasExited: false })
                 return;
 
             StopLocked();
             _targetId = processId;
 
-            if (processId != 0 && IsAvailable)
+            if (IsAvailable)
                 StartLocked(processId);
         }
     }
@@ -165,6 +195,40 @@ public sealed class PresentMonSession : IDisposable
         finally
         {
             process.Dispose();
+        }
+
+        // Al cerrar PresentMon a la fuerza, su sesión de ETW queda abierta en
+        // Windows: se le pide a PresentMon que la cierre.
+        TerminateSession();
+    }
+
+    private void TerminateSession()
+    {
+        if (!IsAvailable)
+            return;
+
+        try
+        {
+            var info = new ProcessStartInfo(_executable)
+            {
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            info.ArgumentList.Add("--session_name");
+            info.ArgumentList.Add(SessionName);
+            info.ArgumentList.Add("--terminate_existing_session");
+
+            using Process? cleanup = Process.Start(info);
+
+            if (cleanup is not null && !cleanup.WaitForExit(3000))
+                cleanup.Kill();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn("No se pudo cerrar la sesión de PresentMon: " + ex.Message);
         }
     }
 
