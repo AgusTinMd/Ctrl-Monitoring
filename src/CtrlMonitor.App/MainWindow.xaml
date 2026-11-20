@@ -1740,30 +1740,37 @@
                             </Style>
                         </StackPanel.Style>
 
+                        <!-- Vista previa a todo el ancho: con muchas métricas la barra
+                             es larga. Si aun así no entra, se achica en lugar de cortarse. -->
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,18">
+                            <StackPanel>
+                                <TextBlock Text="{l:Tr overlay.preview}" Style="{StaticResource SectionTitle}" />
+                                <TextBlock Text="{l:Tr overlay.previewHint}"
+                                           Style="{StaticResource MutedText}" Margin="0,4,0,14"
+                                           TextWrapping="Wrap" />
+                                <Border CornerRadius="7" Padding="14" MinHeight="88">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#233A3D" Offset="0" />
+                                            <GradientStop Color="#141B2A" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Viewbox Stretch="Uniform" StretchDirection="DownOnly"
+                                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <controls:OverlayBar />
+                                    </Viewbox>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
                         <controls:ResponsiveGrid MinItemWidth="400" MaxColumns="2" Gap="18">
 
                             <!-- Apariencia -->
                             <Border Style="{StaticResource Card}">
                                 <StackPanel>
                                     <TextBlock Text="{l:Tr overlay.appearance}" Style="{StaticResource SectionTitle}" />
-                                    <TextBlock Text="{l:Tr overlay.previewHint}"
-                                               Style="{StaticResource MutedText}" Margin="0,4,0,14"
-                                               TextWrapping="Wrap" />
 
-                                    <TextBlock Text="{l:Tr overlay.preview}"
-                                               Style="{StaticResource CaptionText}" Margin="0,0,0,6" />
-                                    <Border CornerRadius="7" Padding="14" MinHeight="88">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                                <GradientStop Color="#233A3D" Offset="0" />
-                                                <GradientStop Color="#141B2A" Offset="1" />
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                        <controls:OverlayBar HorizontalAlignment="Center"
-                                                             VerticalAlignment="Center" />
-                                    </Border>
-
-                                    <Grid Margin="0,16,0,0">
+                                    <Grid Margin="0,12,0,0">
                                         <TextBlock Text="{l:Tr overlay.textColor}"
                                                    Style="{StaticResource SecondaryText}"
                                                    VerticalAlignment="Center" />
