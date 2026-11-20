@@ -75,6 +75,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private readonly List<OverlayMetricOption> _overlayMetrics = new();
     private readonly List<OverlayGroupColorOption> _overlayGroupColors = new();
+    private readonly List<OverlayAnchorOption> _overlayAnchorOptions = new();
     private IReadOnlyList<OverlaySegmentViewModel> _overlaySegments = Array.Empty<OverlaySegmentViewModel>();
     private Brush _overlayBackgroundBrush = Brushes.Transparent;
     private bool _isOverlayEditing;
@@ -744,26 +745,83 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public double? OverlayTop => _config.Overlay.Top;
 
-    /// <summary>El arrastre de la ventana guarda la posición final.</summary>
-    public void SetOverlayPosition(double left, double top)
+    /// <summary>Posición predefinida actual, o <c>custom</c> si se arrastró libremente.</summary>
+    public string OverlayAnchor => _config.Overlay.Anchor;
+
+    /// <summary>Las nueve posiciones predefinidas para el selector de la pestaña.</summary>
+    public IReadOnlyList<OverlayAnchorOption> OverlayAnchorOptions => _overlayAnchorOptions;
+
+    /// <summary>Bordes rectos: la barra encaja mejor contra las esquinas.</summary>
+    public bool OverlaySquareCorners
     {
-        if (!double.IsFinite(left) || !double.IsFinite(top))
+        get => _config.Overlay.SquareCorners;
+        set
+        {
+            if (_config.Overlay.SquareCorners == value)
+                return;
+
+            _config.Overlay.SquareCorners = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(OverlayCornerRadius));
+            OnPropertyChanged(nameof(OverlayEditCornerRadius));
+            SaveSoon();
+        }
+    }
+
+    public System.Windows.CornerRadius OverlayCornerRadius => new(OverlaySquareCorners ? 0 : 7);
+
+    public System.Windows.CornerRadius OverlayEditCornerRadius => new(OverlaySquareCorners ? 0 : 8);
+
+    /// <summary>Elige una posición predefinida: la barra queda anclada a ese lugar.</summary>
+    public void SetOverlayAnchor(string anchor)
+    {
+        if (!OverlayAnchors.IsKnown(anchor) || anchor == OverlayAnchors.Custom)
             return;
 
-        _config.Overlay.Left = left;
-        _config.Overlay.Top = top;
-        OnPropertyChanged(nameof(OverlayLeft));
-        OnPropertyChanged(nameof(OverlayTop));
-        SaveSoon();
+        _config.Overlay.Anchor = anchor;
+        OnOverlayPositionChanged();
+    }
+
+    /// <summary>
+    /// El arrastre guarda la posición final. Si el imán la alineó en los dos
+    /// ejes, llega como ancla; si no, como posición libre.
+    /// </summary>
+    public void SetOverlayPosition(double left, double top, string anchor)
+    {
+        if (anchor != OverlayAnchors.Custom && OverlayAnchors.IsKnown(anchor))
+        {
+            _config.Overlay.Anchor = anchor;
+        }
+        else
+        {
+            if (!double.IsFinite(left) || !double.IsFinite(top))
+                return;
+
+            _config.Overlay.Anchor = OverlayAnchors.Custom;
+            _config.Overlay.Left = left;
+            _config.Overlay.Top = top;
+        }
+
+        OnOverlayPositionChanged();
     }
 
     [RelayCommand]
     private void ResetOverlayPosition()
     {
+        _config.Overlay.Anchor = OverlayAnchors.Default;
         _config.Overlay.Left = null;
         _config.Overlay.Top = null;
+        OnOverlayPositionChanged();
+    }
+
+    private void OnOverlayPositionChanged()
+    {
+        foreach (OverlayAnchorOption option in _overlayAnchorOptions)
+            option.Refresh(_config.Overlay.Anchor);
+
         OnPropertyChanged(nameof(OverlayLeft));
         OnPropertyChanged(nameof(OverlayTop));
+        OnPropertyChanged(nameof(OverlayAnchor));
         SaveSoon();
     }
 
@@ -803,6 +861,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                 selected.Contains(key),
                 OnOverlayMetricsChanged));
         }
+
+        _overlayAnchorOptions.Clear();
+
+        foreach (string anchor in OverlayAnchors.All)
+            _overlayAnchorOptions.Add(new OverlayAnchorOption(anchor, _config.Overlay.Anchor, SetOverlayAnchor));
 
         _overlayGroupColors.Clear();
 
@@ -1169,6 +1232,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             option.RefreshLanguage();
 
         foreach (OverlayGroupColorOption option in _overlayGroupColors)
+            option.RefreshLanguage();
+
+        foreach (OverlayAnchorOption option in _overlayAnchorOptions)
             option.RefreshLanguage();
 
         RebuildOverlaySegments();

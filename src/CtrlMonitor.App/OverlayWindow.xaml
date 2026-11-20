@@ -20,7 +20,7 @@
           MouseLeftButtonDown="OnRootMouseLeftButtonDown">
         <Border x:Name="EditBorder"
                 BorderThickness="1"
-                CornerRadius="8"
+                CornerRadius="{Binding OverlayEditCornerRadius}"
                 Padding="2">
             <Border.Style>
                 <Style TargetType="Border">

@@ -7,7 +7,7 @@
     <!-- La barra real y la vista previa usan este mismo control: así lo que se
          configura es exactamente lo que se ve sobre el juego. -->
     <Border Background="{Binding OverlayBackgroundBrush}"
-            CornerRadius="7"
+            CornerRadius="{Binding OverlayCornerRadius}"
             Padding="12,5"
             HorizontalAlignment="Left">
         <ItemsControl ItemsSource="{Binding OverlaySegments}"

@@ -19,6 +19,12 @@ public partial class OverlayWindow : Window
         DataContext = viewModel;
     }
 
+    /// <summary>
+    /// Se dispara al soltar la barra. El administrador del overlay aplica el
+    /// imán y guarda la posición.
+    /// </summary>
+    public event EventHandler? DragCompleted;
+
     private void OnRootMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (!_viewModel.IsOverlayEditing)
@@ -26,8 +32,7 @@ public partial class OverlayWindow : Window
 
         try
         {
-            // DragMove bloquea hasta soltar el botón; después se guarda la
-            // posición final en la configuración.
+            // DragMove bloquea hasta soltar el botón.
             DragMove();
         }
         catch (InvalidOperationException)
@@ -36,6 +41,6 @@ public partial class OverlayWindow : Window
             return;
         }
 
-        _viewModel.SetOverlayPosition(Left, Top);
+        DragCompleted?.Invoke(this, EventArgs.Empty);
     }
 }

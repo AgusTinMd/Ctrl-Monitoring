@@ -43,7 +43,16 @@ public sealed class OverlayConfig
     public Dictionary<string, string> GroupColors { get; set; } =
         new(OverlayMetricKeys.DefaultGroupColors(), StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Posición guardada de la barra, en unidades de WPF. Null = arriba al centro.</summary>
+    /// <summary>Bordes rectos en lugar de redondeados; encaja mejor en las esquinas.</summary>
+    public bool SquareCorners { get; set; }
+
+    /// <summary>
+    /// Posición predefinida (ver <see cref="OverlayAnchors"/>) o <c>custom</c>
+    /// para usar <see cref="Left"/> y <see cref="Top"/>.
+    /// </summary>
+    public string Anchor { get; set; } = OverlayAnchors.Default;
+
+    /// <summary>Posición libre de la barra, en unidades de WPF. Solo con <c>Anchor = custom</c>.</summary>
     public double? Left { get; set; }
 
     public double? Top { get; set; }
@@ -134,5 +143,13 @@ public sealed class OverlayConfig
 
         if (Top is { } top && !double.IsFinite(top))
             Top = null;
+
+        Anchor = OverlayAnchors.IsKnown(Anchor)
+            ? Anchor.Trim().ToLowerInvariant()
+            : OverlayAnchors.Default;
+
+        // Una posición libre sin coordenadas no sirve: se vuelve a la predefinida.
+        if (Anchor == OverlayAnchors.Custom && (Left is null || Top is null))
+            Anchor = OverlayAnchors.Default;
     }
 }

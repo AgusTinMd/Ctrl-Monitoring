@@ -179,3 +179,65 @@ public static class OverlayColorPalette
             option.RefreshLanguage();
     }
 }
+
+/// <summary>Una de las nueve posiciones predefinidas del selector.</summary>
+public sealed class OverlayAnchorOption : ObservableObject
+{
+    private readonly Action<string> _select;
+    private bool _isSelected;
+
+    public OverlayAnchorOption(string key, string current, Action<string> select)
+    {
+        Key = key;
+        _select = select;
+        _isSelected = string.Equals(key, current, StringComparison.OrdinalIgnoreCase);
+    }
+
+    public string Key { get; }
+
+    /// <summary>Flecha que apunta al lugar de la pantalla.</summary>
+    public string Glyph => Key switch
+    {
+        OverlayAnchors.TopLeft => "↖",
+        OverlayAnchors.TopCenter => "↑",
+        OverlayAnchors.TopRight => "↗",
+        OverlayAnchors.MiddleLeft => "←",
+        OverlayAnchors.MiddleCenter => "•",
+        OverlayAnchors.MiddleRight => "→",
+        OverlayAnchors.BottomLeft => "↙",
+        OverlayAnchors.BottomCenter => "↓",
+        _ => "↘"
+    };
+
+    public string Label => Loc.T("overlay.anchor." + Key);
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (_isSelected == value)
+                return;
+
+            _isSelected = value;
+            OnPropertyChanged();
+
+            if (value)
+                _select(Key);
+        }
+    }
+
+    /// <summary>Marca esta opción si coincide con la posición actual, sin volver a elegirla.</summary>
+    public void Refresh(string current)
+    {
+        bool selected = string.Equals(Key, current, StringComparison.OrdinalIgnoreCase);
+
+        if (_isSelected == selected)
+            return;
+
+        _isSelected = selected;
+        OnPropertyChanged(nameof(IsSelected));
+    }
+
+    public void RefreshLanguage() => OnPropertyChanged(nameof(Label));
+}

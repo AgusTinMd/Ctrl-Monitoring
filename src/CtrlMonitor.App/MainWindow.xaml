@@ -1855,6 +1855,13 @@
                                             TickFrequency="5" IsSnapToTickEnabled="True"
                                             Value="{Binding OverlayBackgroundOpacity, Mode=TwoWay}"
                                             Margin="0,7,0,0" />
+
+                                    <CheckBox Content="{l:Tr overlay.squareCorners}"
+                                              IsChecked="{Binding OverlaySquareCorners, Mode=TwoWay}"
+                                              Margin="0,14,0,0" />
+                                    <TextBlock Text="{l:Tr overlay.squareCornersHint}"
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0"
+                                               TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
 
@@ -1956,6 +1963,32 @@
                                 <TextBlock Text="{l:Tr overlay.position}" Style="{StaticResource SectionTitle}" />
                                 <TextBlock Text="{l:Tr overlay.positionHint}"
                                            Style="{StaticResource MutedText}" Margin="0,4,0,0"
+                                           TextWrapping="Wrap" />
+
+                                <!-- Posiciones predefinidas: la barra queda anclada a ese lugar. -->
+                                <TextBlock Text="{l:Tr overlay.presetPositions}"
+                                           Style="{StaticResource SecondaryText}" Margin="0,12,0,8" />
+                                <ItemsControl ItemsSource="{Binding OverlayAnchorOptions}"
+                                              HorizontalAlignment="Left">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Columns="3" Rows="3" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <RadioButton Style="{StaticResource SegmentButton}"
+                                                         GroupName="OverlayAnchor"
+                                                         IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                         ToolTip="{Binding Label}"
+                                                         Width="44" Height="34">
+                                                <TextBlock Text="{Binding Glyph}" FontSize="15" />
+                                            </RadioButton>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="{l:Tr overlay.presetPositionsHint}"
+                                           Style="{StaticResource MutedText}" Margin="0,6,0,0"
                                            TextWrapping="Wrap" />
 
                                 <!-- Bloqueado por defecto: la barra no recibe clics y no se
