@@ -4,7 +4,7 @@
 
 <a id="english"></a>
 
-Windows desktop app that **shows in real time** temperatures, fan speeds, power, voltages, load, PWM, RAM and VRAM usage and network traffic. It is **strictly read-only**: it never writes PWM, never applies fan curves and never changes the BIOS.
+Windows desktop app that **shows in real time** temperatures, fan speeds, power, voltages, load, PWM, RAM and VRAM usage and network traffic. It also includes **disk health (S.M.A.R.T.)** and a **process manager**. Hardware access is **strictly read-only**: it never writes PWM, never applies fan curves and never changes the BIOS. The only actions that change the system are the ones you ask for in the process manager (ending a process) and, if you enable it, the startup scheduled task.
 
 The interface is available in **English, Spanish and Portuguese (Brazil)**, lives in the system tray and can start with Windows. It includes **configurable chart panels**, a **fan view with RPM and PWM**, CPU/GPU/motherboard icons and the **logo of the detected brand**. **Fan control is left to the BIOS.**
 
@@ -14,16 +14,18 @@ The interface is available in **English, Spanish and Portuguese (Brazil)**, live
 
 ## Features
 
-- **Home** with the key CPU, GPU and motherboard values: temperature, hottest core, hot spot, power, load, RPM and GPU VRAM.
-- **Live charts** with independent panels and a metric selector on each one: CPU, GPU, board, hot spot, RAM, VRAM and network. CPU, GPU and RAM are shown by default; the rest can be added from the top bar, any card can be removed with **✕** and cards can be **dragged** to reorder them (the order is saved). Each panel scales its vertical axis automatically and they all share a 1, 5 or 10 minute window. Fan RPM and current power draw are shown next to the temperature; RAM and VRAM show GB used out of the total and a percentage; network shows download and upload in MB/s.
+- **Home** with the key CPU, GPU, motherboard and storage values: temperature, hottest core, hot spot, power, load, RPM, GPU VRAM, disk health and disk temperature.
+- **Live charts** with independent panels and a metric selector on each one: CPU, GPU, CPU/GPU load, board, hot spot, RAM, VRAM, disk and network. CPU, GPU and RAM are shown by default; the rest can be added from the top bar, any card can be removed with **✕** and cards can be **dragged** to reorder them (the order is saved). Each panel scales its vertical axis automatically and they all share a 1, 5 or 10 minute window. Fan RPM and current power draw are shown next to the temperature; RAM and VRAM show GB used out of the total and a percentage; network shows download and upload in MB/s; disk shows activity and read/write speed.
 - **Fans** with every detected channel, its RPM and the PWM the BIOS is applying. The **Active only** box hides stopped channels.
 - **Sensors** with every detected reading, grouped by component: temperatures, fans, power, voltages, load, PWM and GPU memory. Each group can be collapsed.
+- **Disks** with the health and S.M.A.R.T. data of every drive, using the same engine as CrystalDiskInfo: condition (good, caution, bad), temperature, remaining life, power-on hours, data written and read, reallocated, pending and uncorrectable sectors, interface, firmware, serial number, the full attribute table and the volumes on each disk. Each card can be collapsed.
+- **Processes** grouped by app, with CPU, memory, disk and network use, machine totals, sortable and resizable columns, search by name or PID, expandable groups and a context menu to open the file location, search online, view properties or end the task / process tree. Critical Windows processes are protected and can't be ended.
 - **Detected hardware**: CPU, GPU, motherboard, Super I/O, installed RAM (modules and speed) and physical disks.
 - **Live refresh** every 0.5–10 seconds.
 - **Resizable, responsive window**: cards and charts switch between one and two columns depending on the width, designed with vertical 1080p monitors in mind.
 - **Collapsible sidebar** with its own button or `Ctrl+B`; when hidden, a button brings it back.
 - **Vector icons** for CPU, GPU and motherboard.
-- **Brand detection:** shows the motherboard logo (ASUS, GIGABYTE, MSI, ASRock) and the CPU logo (Intel, AMD). Other known brands (BIOSTAR, EVGA, Dell, HP, Lenovo…) appear as a text badge.
+- **Brand detection:** shows the logo of the motherboard, CPU, GPU and disk brand when it's recognized. There are **56 brand logos** (see [Brand logos](#brand-logos)); known brands without a logo — Bangho, CHUWI, ENOVA, Gateway, HUANANZHI, MACHINIST, MEDION and VAIO — appear as a text badge.
 - **System tray** icon with a CPU/GPU tooltip and a menu to open or exit.
 - **Start with Windows** through a scheduled task with elevated permissions.
 - **Multilingual**: English, Spanish and Portuguese (Brazil). It follows the Windows display language by default (English if that language isn't supported) and can be switched instantly from **Settings → Language**.
@@ -44,13 +46,13 @@ Download the latest version from [Releases](https://github.com/AgusTinMd/Ctrl-Mo
 
 | File | What it's for |
 |---|---|
-| `CtrlMonitorSetup-X.Y.Z.exe` | **Installer (recommended).** Installs to `C:\Program Files\Ctrl Monitor`, adds a Start menu shortcut (and optionally a desktop one) and can be removed from *Add or remove programs*. |
+| `CtrlMonitorSetup-X.Y.Z.exe` | **Installer (recommended).** Installs to `C:\Program Files\Ctrl Monitor`, adds a Start menu shortcut (and optionally a desktop one), lets you choose the language and can install PawnIO for you; it can be removed from *Add or remove programs*. |
 | `CtrlMonitor-X.Y.Z-win-x64-portable.zip` | Portable version. Extract the folder anywhere and run `CtrlMonitor.exe`. |
 | `SHA256SUMS.txt` | Hashes to check that the downloaded files weren't modified. |
 
 You don't need to install .NET: it's bundled in the executable.
 
-Before or after installing, install **[PawnIO](https://pawnio.eu/)**: it's the driver that lets the app read the motherboard sensors. The installer warns you if it's missing and offers to open the download page.
+The installer can download and install **[PawnIO](https://pawnio.eu/) 2.2.0** for you: it's offered as a checked task and the official installer is verified against its SHA-256 before running. PawnIO is the driver that lets the app read the motherboard sensors; without it the app still opens but shows fewer sensors. You can also install it later from [pawnio.eu](https://pawnio.eu/).
 
 > **Windows SmartScreen warning.** The executable isn't digitally signed, so Windows may show *"Windows protected your PC"*. To continue, click **More info → Run anyway**. Some antivirus products are also wary of apps that read sensors at a low level; if you're concerned, compare the file against `SHA256SUMS.txt` or build it yourself.
 
@@ -62,7 +64,7 @@ Uninstalling closes the app and removes the startup task. Your settings stay in 
 
 - Windows 10/11, 64-bit.
 - To build: .NET 10 SDK. Release downloads already include the runtime; a build of your own with `dotnet build` needs the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
-- **PawnIO 2.2** installed. It's the signed driver LibreHardwareMonitor uses to access the Super I/O. Without it, the app can't see the motherboard sensor chip and shows fewer sensors.
+- **PawnIO 2.2** installed. The installer offers to download and install it (SHA-256 verified). It's the signed driver LibreHardwareMonitor uses to access the Super I/O. Without it, the app can't see the motherboard sensor chip and shows fewer sensors.
 - Administrator rights. The app manifest requires elevation (`requireAdministrator`); if it starts without them, it relaunches itself and asks for UAC.
 
 ## Build and run
@@ -176,12 +178,15 @@ src/CtrlMonitor.App/       WPF
   Converters/              Time window, columns and UI converters
   ViewModels/              MainViewModel, chart panels, sensor groups and fans
   Services/                Tray, start with Windows and elevation
-  Assets/*.png             Brand logos (ASUS, GIGABYTE, MSI, ASRock, Intel, AMD)
+  Assets/*.png             Brand logos (56 brands)
 tests/CtrlMonitor.Core.Tests/  xUnit tests
 tools/CtrlMonitor.Probe/   Read-only probe for elevated diagnostics
 build/package.ps1          Packaging: self-contained exe, zip, installer and hashes
 installer/CtrlMonitor.iss  Inno Setup installer
 .github/workflows/         Automatic release when a vX.Y.Z tag is pushed
+LICENSE                    MIT license
+LICENSES/                  Third-party license texts
+THIRD-PARTY-NOTICES.md     Third-party notices and brand trademarks
 ```
 
 ## Diagnostic probe
@@ -208,9 +213,23 @@ It writes `probe-output.txt` next to the executable. It never writes PWM or touc
 - **Antivirus / anti-cheat**: some of them block direct Super I/O access. If sensors are missing, check the logs and PawnIO.
 - **Translations**: sensor names that come from the hardware (for example "CPU Package" or "Fan #4") and the logs aren't translated. Numbers follow the Windows regional format.
 
+## Brand logos
+
+Ctrl Monitor includes logos for these brands:
+
+- **Motherboards, GPUs and chips:** ASUS, GIGABYTE, MSI, ASRock, BIOSTAR, EVGA, NZXT, Supermicro, COLORFUL, MAXSUN, Intel, AMD, NVIDIA, ZOTAC, ECS, Foxconn, Clevo.
+- **Prebuilt PCs and laptops:** Dell, Alienware, HP, Lenovo, Acer, Apple, Microsoft, Samsung, Dynabook, Toshiba, Sony, Huawei, Xiaomi, Razer, LG, Fujitsu, Framework, System76, Packard Bell, Positivo, BGH, EXO, Noblex.
+- **Storage:** Western Digital, Seagate, SanDisk, Kingston, Crucial, KIOXIA, ADATA, Corsair, SK hynix, Micron, HGST, Hitachi, Lexar, Teamgroup, Patriot, PNY.
+
+Known brands without a logo — Bangho, CHUWI, ENOVA, Gateway, HUANANZHI, MACHINIST, MEDION and VAIO — are shown as a text badge.
+
 ## Trademarks
 
-ASUS, GIGABYTE, MSI, ASRock, Intel and AMD are trademarks of their respective owners. Ctrl Monitor is not affiliated with or endorsed by any of them. Their logos are used only to identify the detected hardware.
+All product names, brands and logos are trademarks or registered trademarks of their respective owners. Ctrl Monitor is not affiliated with or endorsed by any of them. The logos are used only to identify the detected hardware.
+
+## License
+
+MIT — see [LICENSE](LICENSE). You can use, modify and redistribute the source code and the original assets as long as you keep the copyright notice. Brand logos are trademarks of their respective owners and are not covered by this license; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ---
 
@@ -220,7 +239,7 @@ ASUS, GIGABYTE, MSI, ASRock, Intel and AMD are trademarks of their respective ow
 
 **[English](#english) · [Español](#espanol)**
 
-Aplicación de escritorio para Windows que **muestra en tiempo real** las temperaturas, la velocidad de los ventiladores, la potencia, los voltajes, la carga, el PWM, el uso de RAM y VRAM y el tráfico de red. Es **estrictamente de solo lectura**: no escribe PWM, no aplica curvas y no modifica el BIOS.
+Aplicación de escritorio para Windows que **muestra en tiempo real** las temperaturas, la velocidad de los ventiladores, la potencia, los voltajes, la carga, el PWM, el uso de RAM y VRAM y el tráfico de red. También incluye la **salud de los discos (S.M.A.R.T.)** y un **administrador de procesos**. El acceso al hardware es **estrictamente de solo lectura**: no escribe PWM, no aplica curvas y no modifica el BIOS. Las únicas acciones que cambian el sistema son las que pedís desde el administrador de procesos (finalizar un proceso) y, si la activás, la tarea programada de inicio.
 
 La interfaz está en **español, inglés y portugués (Brasil)**, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el **logo de la marca detectada**. El **control de los ventiladores queda a cargo del BIOS**.
 
@@ -228,16 +247,18 @@ La interfaz está en **español, inglés y portugués (Brasil)**, vive en la ban
 
 ## Qué hace
 
-- **Inicio** con los valores destacados de CPU, GPU y placa: temperatura, máxima de núcleos, hotspot, potencia, carga, RPM y VRAM de la GPU.
-- **Gráfico en vivo** con paneles independientes y un selector de métrica en cada uno: CPU, GPU, placa, hotspot, RAM, VRAM y red. Por defecto se muestran CPU, GPU y RAM; el resto se agrega desde la barra superior, cualquier tarjeta se puede quitar con la **✕** y se reordenan **arrastrándolas** (el orden se guarda). Cada panel ajusta su escala vertical y comparte las ventanas de 1, 5 o 10 minutos. Las RPM del ventilador y el consumo actual en vatios aparecen junto a la temperatura; RAM y VRAM muestran GB en uso sobre el total y porcentaje; la red muestra bajada y subida en MB/s.
+- **Inicio** con los valores destacados de CPU, GPU, placa y almacenamiento: temperatura, máxima de núcleos, hotspot, potencia, carga, RPM, VRAM de la GPU, salud y temperatura de los discos.
+- **Gráfico en vivo** con paneles independientes y un selector de métrica en cada uno: CPU, GPU, carga de CPU/GPU, placa, hotspot, RAM, VRAM, disco y red. Por defecto se muestran CPU, GPU y RAM; el resto se agrega desde la barra superior, cualquier tarjeta se puede quitar con la **✕** y se reordenan **arrastrándolas** (el orden se guarda). Cada panel ajusta su escala vertical y comparte las ventanas de 1, 5 o 10 minutos. Las RPM del ventilador y el consumo actual en vatios aparecen junto a la temperatura; RAM y VRAM muestran GB en uso sobre el total y porcentaje; la red muestra bajada y subida en MB/s; el disco muestra actividad y velocidad de lectura/escritura.
 - **Ventiladores** con cada canal detectado, sus RPM y el PWM que está aplicando el BIOS. La casilla **Solo activos** oculta los canales detenidos.
 - **Sensores** con todas las lecturas detectadas, agrupadas por componente: temperaturas, ventiladores, potencia, voltajes, carga, PWM y memoria de la GPU. Cada grupo se puede plegar o desplegar.
+- **Discos** con la salud y los datos S.M.A.R.T. de cada unidad, con el mismo motor que CrystalDiskInfo: estado (bueno, en riesgo, malo), temperatura, vida útil restante, horas de encendido, datos escritos y leídos, sectores reasignados, pendientes e incorregibles, interfaz, firmware, número de serie, la tabla completa de atributos y los volúmenes de cada disco. Cada ficha se puede plegar.
+- **Procesos** agrupados por aplicación, con uso de CPU, memoria, disco y red, totales del equipo, columnas ordenables y redimensionables, búsqueda por nombre o PID, grupos desplegables y un menú contextual para abrir la ubicación del archivo, buscar en línea, ver las propiedades o finalizar la tarea / el árbol de procesos. Los procesos críticos de Windows están protegidos y no se pueden finalizar.
 - **Hardware detectado** con CPU, GPU, placa, Super I/O, cantidad de RAM (módulos y velocidad) y discos físicos.
 - **Actualización en vivo** cada 0,5–10 segundos.
 - **Ventana redimensionable y adaptable**: las tarjetas y los gráficos pasan a una o dos columnas según el ancho, pensado para monitores verticales de 1080p.
 - **Barra lateral colapsable** con el botón integrado en su cabecera o `Ctrl+B`; al ocultarla queda un botón para reabrirla.
 - **Iconos vectoriales** de CPU, GPU y placa madre.
-- **Detección de marca:** muestra el logo de la placa (ASUS, GIGABYTE, MSI, ASRock) y el del CPU (Intel, AMD). Otras marcas conocidas (BIOSTAR, EVGA, Dell, HP, Lenovo…) aparecen como una insignia de texto.
+- **Detección de marca:** muestra el logo de la placa, del CPU, de la GPU y del disco cuando reconoce la marca. Hay **56 logos de marcas** (ver [Logos de marcas](#logos-de-marcas)); las marcas conocidas sin logo —Bangho, CHUWI, ENOVA, Gateway, HUANANZHI, MACHINIST, MEDION y VAIO— aparecen como una insignia de texto.
 - **Bandeja del sistema** con tooltip de CPU/GPU y menú para abrir o salir.
 - **Inicio con Windows** mediante tarea programada con permisos altos.
 - **Multilenguaje**: español, inglés y portugués (Brasil). Por defecto sigue el idioma de Windows (inglés si no está soportado) y se cambia al instante desde **Ajustes → Idioma**.
@@ -258,13 +279,13 @@ Descargá la última versión desde [Releases](https://github.com/AgusTinMd/Ctrl
 
 | Archivo | Para qué |
 |---|---|
-| `CtrlMonitorSetup-X.Y.Z.exe` | **Instalador (recomendado).** Instala en `C:\Program Files\Ctrl Monitor`, crea el acceso directo en el menú Inicio (y opcionalmente en el escritorio) y se desinstala desde *Agregar o quitar programas*. |
+| `CtrlMonitorSetup-X.Y.Z.exe` | **Instalador (recomendado).** Instala en `C:\Program Files\Ctrl Monitor`, crea el acceso directo en el menú Inicio (y opcionalmente en el escritorio), permite elegir el idioma y puede instalar PawnIO por vos; se desinstala desde *Agregar o quitar programas*. |
 | `CtrlMonitor-X.Y.Z-win-x64-portable.zip` | Versión portable. Descomprimí la carpeta donde quieras y ejecutá `CtrlMonitor.exe`. |
 | `SHA256SUMS.txt` | Hashes para verificar que los archivos descargados no se modificaron. |
 
 No hace falta instalar .NET: el ejecutable ya lo incluye.
 
-Antes o después de instalar, instalá **[PawnIO](https://pawnio.eu/)**: es el driver que permite leer los sensores de la placa madre. El instalador avisa si no lo encuentra y ofrece abrir la página de descarga.
+El instalador puede descargar e instalar **[PawnIO](https://pawnio.eu/) 2.2.0** por vos: aparece como una tarea marcada y el instalador oficial se verifica contra su SHA-256 antes de ejecutarse. PawnIO es el driver que permite leer los sensores de la placa madre; sin él la app igual abre, pero muestra menos sensores. También podés instalarlo después desde [pawnio.eu](https://pawnio.eu/).
 
 > **Aviso de Windows SmartScreen.** El ejecutable no está firmado digitalmente, así que Windows puede mostrar *«Windows protegió su PC»*. Para continuar tocá **Más información → Ejecutar de todas formas**. Algunos antivirus también desconfían de las apps que leen sensores a bajo nivel; si te preocupa, compará el archivo con `SHA256SUMS.txt` o compilalo vos mismo.
 
@@ -276,7 +297,7 @@ Al desinstalar se cierra la app y se borra la tarea de inicio automático. Tu co
 
 - Windows 10/11 de 64 bits.
 - Para compilar: .NET 10 SDK. Las versiones de Releases ya incluyen el runtime; un build propio con `dotnet build` necesita el [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
-- **PawnIO 2.2** instalado. Es el driver firmado que usa LibreHardwareMonitor para acceder al Super I/O. Sin él, la app no detecta el chip de sensores de la placa y muestra menos sensores.
+- **PawnIO 2.2** instalado. El instalador ofrece descargarlo e instalarlo (con verificación SHA-256). Es el driver firmado que usa LibreHardwareMonitor para acceder al Super I/O. Sin él, la app no detecta el chip de sensores de la placa y muestra menos sensores.
 - Permisos de administrador. El manifiesto de la app exige elevación (`requireAdministrator`); si se inicia sin privilegios, se relanza sola y pide UAC.
 
 ## Compilar y ejecutar
@@ -390,12 +411,15 @@ src/CtrlMonitor.App/       WPF
   Converters/              Ventana temporal, columnas y conversores de UI
   ViewModels/              MainViewModel, paneles de gráfico, grupos y ventiladores
   Services/                Bandeja, inicio con Windows y elevación
-  Assets/*.png             Logos de marcas (ASUS, GIGABYTE, MSI, ASRock, Intel, AMD)
+  Assets/*.png             Logos de marcas (56 marcas)
 tests/CtrlMonitor.Core.Tests/  Tests xUnit
 tools/CtrlMonitor.Probe/   Sonda de solo lectura para diagnóstico elevado
 build/package.ps1          Empaquetado: exe autocontenido, zip, instalador y hashes
 installer/CtrlMonitor.iss  Instalador de Inno Setup
 .github/workflows/         Release automática al subir un tag vX.Y.Z
+LICENSE                    Licencia MIT
+LICENSES/                  Textos de licencias de terceros
+THIRD-PARTY-NOTICES.md     Avisos de terceros y marcas
 ```
 
 ## Sonda de diagnóstico
@@ -422,6 +446,20 @@ Escribe `probe-output.txt` junto al ejecutable. No escribe PWM ni toca el BIOS. 
 - **Antivirus/anti-cheat**: algunos sistemas bloquean el acceso directo al Super I/O. Si faltan sensores, revisá los logs y PawnIO.
 - **Traducciones**: los nombres de sensores que vienen del hardware (por ejemplo «CPU Package» o «Fan #4») y los logs no se traducen. Los números siguen el formato regional de Windows.
 
+## Logos de marcas
+
+Ctrl Monitor incluye logos de estas marcas:
+
+- **Placas madre, GPU y chips:** ASUS, GIGABYTE, MSI, ASRock, BIOSTAR, EVGA, NZXT, Supermicro, COLORFUL, MAXSUN, Intel, AMD, NVIDIA, ZOTAC, ECS, Foxconn, Clevo.
+- **PCs y notebooks de marca:** Dell, Alienware, HP, Lenovo, Acer, Apple, Microsoft, Samsung, Dynabook, Toshiba, Sony, Huawei, Xiaomi, Razer, LG, Fujitsu, Framework, System76, Packard Bell, Positivo, BGH, EXO, Noblex.
+- **Almacenamiento:** Western Digital, Seagate, SanDisk, Kingston, Crucial, KIOXIA, ADATA, Corsair, SK hynix, Micron, HGST, Hitachi, Lexar, Teamgroup, Patriot, PNY.
+
+Las marcas conocidas sin logo —Bangho, CHUWI, ENOVA, Gateway, HUANANZHI, MACHINIST, MEDION y VAIO— se muestran como una insignia de texto.
+
 ## Marcas
 
-ASUS, GIGABYTE, MSI, ASRock, Intel y AMD son marcas registradas de sus respectivos dueños. Ctrl Monitor no está afiliado ni respaldado por ninguna de ellas. Sus logos se usan únicamente para identificar el hardware detectado.
+Todos los nombres de productos, marcas y logos son marcas comerciales o marcas registradas de sus respectivos dueños. Ctrl Monitor no está afiliado ni respaldado por ninguna de ellas. Los logos se usan únicamente para identificar el hardware detectado.
+
+## Licencia
+
+MIT — ver [LICENSE](LICENSE). Podés usar, modificar y redistribuir el código fuente y los recursos originales siempre que conserves el aviso de copyright. Los logos de marcas son marcas de sus respectivos dueños y no están cubiertos por esta licencia; ver [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
