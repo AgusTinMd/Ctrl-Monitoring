@@ -578,6 +578,63 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public bool OverlayLocked => !OverlayEnabled;
 
+    /// <summary>Estilo minimalista: todo en un solo color.</summary>
+    public bool OverlayStyleMinimal
+    {
+        get => string.Equals(_config.Overlay.ColorStyle, OverlayColors.StyleMinimal, StringComparison.OrdinalIgnoreCase);
+        set
+        {
+            if (value)
+                SetOverlayColorStyle(OverlayColors.StyleMinimal);
+        }
+    }
+
+    /// <summary>Estilo variado: un color por grupo.</summary>
+    public bool OverlayStyleVaried
+    {
+        get => string.Equals(_config.Overlay.ColorStyle, OverlayColors.StyleVaried, StringComparison.OrdinalIgnoreCase);
+        set
+        {
+            if (value)
+                SetOverlayColorStyle(OverlayColors.StyleVaried);
+        }
+    }
+
+    private void SetOverlayColorStyle(string style)
+    {
+        if (string.Equals(_config.Overlay.ColorStyle, style, StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _config.Overlay.ColorStyle = style;
+        OnPropertyChanged(nameof(OverlayStyleMinimal));
+        OnPropertyChanged(nameof(OverlayStyleVaried));
+        RebuildOverlaySegments();
+        SaveSoon();
+    }
+
+    /// <summary>
+    /// Colores a medida, apagados por defecto. Mientras estén apagados, la
+    /// tarjeta de colores queda bloqueada y manda el estilo elegido.
+    /// </summary>
+    public bool OverlayCustomColors
+    {
+        get => _config.Overlay.CustomColors;
+        set
+        {
+            if (_config.Overlay.CustomColors == value)
+                return;
+
+            _config.Overlay.CustomColors = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(OverlayStylesEnabled));
+            RebuildOverlaySegments();
+            SaveSoon();
+        }
+    }
+
+    /// <summary>Los estilos predefinidos solo mandan sin colores a medida.</summary>
+    public bool OverlayStylesEnabled => !OverlayCustomColors;
+
     public string OverlayTextColor
     {
         get => _config.Overlay.TextColor;
@@ -667,7 +724,18 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
             _isOverlayEditing = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(OverlayPositionLocked));
         }
+    }
+
+    /// <summary>
+    /// Inverso del modo edición, para la casilla "Bloquear overlay". Arranca
+    /// siempre bloqueado: desbloquearlo es solo para elegir el lugar.
+    /// </summary>
+    public bool OverlayPositionLocked
+    {
+        get => !IsOverlayEditing;
+        set => IsOverlayEditing = !value;
     }
 
     public string OverlayHotkeyText => "Ctrl+Alt+O";
@@ -841,15 +909,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         OverlaySegments = result;
     }
 
-    private Brush GroupBrush(string groupKey)
-    {
-        string hex = _config.Overlay.GroupColors.TryGetValue(groupKey, out string? value)
-                     && !string.IsNullOrWhiteSpace(value)
-            ? value
-            : _config.Overlay.TextColor;
-
-        return OverlayBrushes.FromHex(hex);
-    }
+    private Brush GroupBrush(string groupKey) =>
+        OverlayBrushes.FromHex(_config.Overlay.ResolveGroupColor(groupKey));
 
     private static string MetricLabelKey(string key) => key switch
     {

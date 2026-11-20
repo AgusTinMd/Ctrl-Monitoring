@@ -12,7 +12,19 @@ public sealed class OverlayConfig
     /// <summary>Apagado por defecto: nadie ve una barra sin pedirlo.</summary>
     public bool Enabled { get; set; }
 
-    /// <summary>Color base del texto en <c>#AARRGGBB</c>.</summary>
+    /// <summary>
+    /// Estilo de colores predefinido (<c>minimal</c> o <c>varied</c>). Se usa
+    /// mientras <see cref="CustomColors"/> esté apagado.
+    /// </summary>
+    public string ColorStyle { get; set; } = OverlayColors.DefaultStyle;
+
+    /// <summary>
+    /// Apagado por defecto. Al activarlo, <see cref="TextColor"/> y
+    /// <see cref="GroupColors"/> reemplazan al estilo predefinido.
+    /// </summary>
+    public bool CustomColors { get; set; }
+
+    /// <summary>Color base del texto a medida, en <c>#AARRGGBB</c>.</summary>
     public string TextColor { get; set; } = OverlayColors.DefaultText;
 
     /// <summary>Tamaño del texto en píxeles (10 a 24).</summary>
@@ -36,8 +48,33 @@ public sealed class OverlayConfig
 
     public double? Top { get; set; }
 
+    /// <summary>
+    /// Color final de un grupo: el estilo elegido o, con colores a medida, el
+    /// color del grupo (o el color base si el grupo usa el global).
+    /// </summary>
+    public string ResolveGroupColor(string group)
+    {
+        if (CustomColors)
+        {
+            return GroupColors.TryGetValue(group, out string? custom) && !string.IsNullOrWhiteSpace(custom)
+                ? custom
+                : TextColor;
+        }
+
+        if (string.Equals(ColorStyle, OverlayColors.StyleMinimal, StringComparison.OrdinalIgnoreCase))
+            return OverlayColors.DefaultText;
+
+        return OverlayMetricKeys.DefaultGroupColors().TryGetValue(group, out string? styled)
+            ? styled
+            : OverlayColors.DefaultText;
+    }
+
     public void Normalize()
     {
+        ColorStyle = OverlayColors.IsKnownStyle(ColorStyle)
+            ? ColorStyle.Trim().ToLowerInvariant()
+            : OverlayColors.DefaultStyle;
+
         TextColor = OverlayColors.TryNormalize(TextColor, out string textColor)
             ? textColor
             : OverlayColors.DefaultText;

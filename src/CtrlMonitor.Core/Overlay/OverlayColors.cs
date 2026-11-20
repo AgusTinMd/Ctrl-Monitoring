@@ -9,6 +9,18 @@ public static class OverlayColors
     /// <summary>Blanco opaco; se usa si la configuración trae un color inválido.</summary>
     public const string DefaultText = "#FFFFFFFF";
 
+    /// <summary>Estilo minimalista: todo en un solo color, sin distracciones.</summary>
+    public const string StyleMinimal = "minimal";
+
+    /// <summary>Estilo variado: cada grupo (CPU, GPU, RAM, red) con su color.</summary>
+    public const string StyleVaried = "varied";
+
+    public const string DefaultStyle = StyleVaried;
+
+    public static bool IsKnownStyle(string? style) =>
+        string.Equals(style, StyleMinimal, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(style, StyleVaried, StringComparison.OrdinalIgnoreCase);
+
     /// <summary>
     /// Acepta <c>#RRGGBB</c> o <c>#AARRGGBB</c> (con o sin almohadilla) y
     /// devuelve siempre <c>#AARRGGBB</c> en mayúsculas.
