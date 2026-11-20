@@ -177,7 +177,10 @@ begin
 
   if not Exec(Installer, '-install -silent', '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
-    SuppressibleMsgBox(CustomMessage('PawnIoInstallFailed'), mbError, MB_OK, IDOK);
+    // Exec deja en ResultCode el error de Windows; se muestra igual que el código de salida.
+    SuppressibleMsgBox(
+      FmtMessage(CustomMessage('PawnIoInstallFailed'), [IntToStr(ResultCode)]),
+      mbError, MB_OK, IDOK);
     Exit;
   end;
 
