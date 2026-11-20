@@ -184,6 +184,9 @@ tools/CtrlMonitor.Probe/   Read-only probe for elevated diagnostics
 build/package.ps1          Packaging: self-contained exe, zip, installer and hashes
 installer/CtrlMonitor.iss  Inno Setup installer
 .github/workflows/         Automatic release when a vX.Y.Z tag is pushed
+LICENSE                    MIT license
+LICENSES/                  Third-party license texts
+THIRD-PARTY-NOTICES.md     Third-party notices and brand trademarks
 ```
 
 ## Diagnostic probe
@@ -223,6 +226,10 @@ Known brands without a logo — Bangho, CHUWI, ENOVA, Gateway, HUANANZHI, MACHIN
 ## Trademarks
 
 All product names, brands and logos are trademarks or registered trademarks of their respective owners. Ctrl Monitor is not affiliated with or endorsed by any of them. The logos are used only to identify the detected hardware.
+
+## License
+
+MIT — see [LICENSE](LICENSE). You can use, modify and redistribute the source code and the original assets as long as you keep the copyright notice. Brand logos are trademarks of their respective owners and are not covered by this license; see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ---
 
@@ -410,6 +417,9 @@ tools/CtrlMonitor.Probe/   Sonda de solo lectura para diagnóstico elevado
 build/package.ps1          Empaquetado: exe autocontenido, zip, instalador y hashes
 installer/CtrlMonitor.iss  Instalador de Inno Setup
 .github/workflows/         Release automática al subir un tag vX.Y.Z
+LICENSE                    Licencia MIT
+LICENSES/                  Textos de licencias de terceros
+THIRD-PARTY-NOTICES.md     Avisos de terceros y marcas
 ```
 
 ## Sonda de diagnóstico
@@ -449,3 +459,7 @@ Las marcas conocidas sin logo —Bangho, CHUWI, ENOVA, Gateway, HUANANZHI, MACHI
 ## Marcas
 
 Todos los nombres de productos, marcas y logos son marcas comerciales o marcas registradas de sus respectivos dueños. Ctrl Monitor no está afiliado ni respaldado por ninguna de ellas. Los logos se usan únicamente para identificar el hardware detectado.
+
+## Licencia
+
+MIT — ver [LICENSE](LICENSE). Podés usar, modificar y redistribuir el código fuente y los recursos originales siempre que conserves el aviso de copyright. Los logos de marcas son marcas de sus respectivos dueños y no están cubiertos por esta licencia; ver [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
