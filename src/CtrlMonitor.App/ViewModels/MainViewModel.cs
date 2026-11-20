@@ -11,6 +11,7 @@ using CtrlMonitor.App.Models;
 using CtrlMonitor.App.Services;
 using CtrlMonitor.Core.Configuration;
 using CtrlMonitor.Core.Diagnostics;
+using CtrlMonitor.Core.Fps;
 using CtrlMonitor.Core.Hardware;
 using CtrlMonitor.Core.Inventory;
 using CtrlMonitor.Core.Localization;
@@ -76,6 +77,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly List<OverlayMetricOption> _overlayMetrics = new();
     private readonly List<OverlayGroupColorOption> _overlayGroupColors = new();
     private readonly List<OverlayAnchorOption> _overlayAnchorOptions = new();
+    private readonly PresentMonSession _fps = new();
     private IReadOnlyList<OverlaySegmentViewModel> _overlaySegments = Array.Empty<OverlaySegmentViewModel>();
     private Brush _overlayBackgroundBrush = Brushes.Transparent;
     private bool _isOverlayEditing;
@@ -924,6 +926,19 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     }
 
     /// <summary>
+    /// El administrador del overlay avisa qué proceso está en pantalla
+    /// completa (0 si ninguno). PresentMon solo corre si el overlay está
+    /// activo y la métrica FPS elegida, para no gastar recursos de más.
+    /// </summary>
+    public void UpdateFpsTarget(int processId)
+    {
+        bool wanted = OverlayEnabled
+                      && _overlayMetrics.Any(option => option.IsSelected && option.Key == OverlayMetricKeys.Fps);
+
+        _fps.SetTarget(wanted ? processId : 0);
+    }
+
+    /// <summary>
     /// Arma la lista que consumen la vista previa y la ventana del overlay.
     /// Se llama en cada refresco de sensores y al cambiar cualquier ajuste.
     /// </summary>
@@ -931,6 +946,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     {
         if (_overlayMetrics.Count == 0)
             return;
+
+        FpsReading? fps = _fps.Current();
 
         var snapshot = new OverlaySnapshot
         {
@@ -950,7 +967,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             RamTotalGb = RamTotalGb,
             RamPercent = RamPercent,
             NetDownMbs = NetDownMbs,
-            NetUpMbs = NetUpMbs
+            NetUpMbs = NetUpMbs,
+            Fps = fps?.Fps,
+            FrameGeneration = fps?.FrameGeneration == true
         };
 
         var selected = _overlayMetrics
@@ -997,6 +1016,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     private static string MetricLabelKey(string key) => key switch
     {
+        OverlayMetricKeys.Fps => "overlay.metric.fps",
         OverlayMetricKeys.CpuLoad => "overlay.metric.cpuLoad",
         OverlayMetricKeys.CpuTemperature => "overlay.metric.cpuTemp",
         OverlayMetricKeys.CpuClock => "overlay.metric.cpuClock",
@@ -1178,6 +1198,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _saveTimer.Tick -= OnSaveTimerTick;
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
+        _fps.Dispose();
 
         _diskUsage.Dispose();
         Processes.Dispose();

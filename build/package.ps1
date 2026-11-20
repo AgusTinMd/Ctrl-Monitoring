@@ -93,6 +93,10 @@ if (-not $SkipTests) {
     }
 }
 
+Invoke-Step 'PresentMon para los FPS del overlay' {
+    & (Join-Path $PSScriptRoot 'get-presentmon.ps1')
+}
+
 Invoke-Step 'Publicar exe unico autocontenido (win-x64)' {
     dotnet publish $project `
         -c Release `
@@ -113,6 +117,10 @@ if (-not (Test-Path $exe)) {
 }
 
 # La licencia y los avisos de terceros viajan con el zip y el instalador.
+if (-not (Test-Path (Join-Path $publishDir 'PresentMon.exe'))) {
+    throw 'Falta PresentMon.exe en la publicacion: los FPS del overlay no funcionarian.'
+}
+
 Invoke-Step 'Licencia y avisos de terceros' {
     Copy-Item (Join-Path $root 'LICENSE') $publishDir -Force
     Copy-Item (Join-Path $root 'THIRD-PARTY-NOTICES.md') $publishDir -Force

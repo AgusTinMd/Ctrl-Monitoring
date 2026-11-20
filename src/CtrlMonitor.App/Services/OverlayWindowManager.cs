@@ -83,7 +83,7 @@ public sealed class OverlayWindowManager : IDisposable
             AppLog.Warn("No se pudo registrar el atajo Ctrl+Alt+O del overlay.");
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-        _lastFullscreen = IsForegroundFullscreen(out IntPtr monitor);
+        _lastFullscreen = IsForegroundFullscreen(out IntPtr monitor, out _);
 
         if (_lastFullscreen)
             _targetMonitor = monitor;
@@ -97,7 +97,10 @@ public sealed class OverlayWindowManager : IDisposable
         if (_disposed)
             return;
 
-        bool fullscreen = IsForegroundFullscreen(out IntPtr monitor);
+        bool fullscreen = IsForegroundFullscreen(out IntPtr monitor, out int processId);
+
+        // Los FPS se miden del juego en pantalla completa.
+        _viewModel.UpdateFpsTarget(fullscreen ? processId : 0);
 
         // La barra va al monitor del juego en pantalla completa.
         if (fullscreen && monitor != _targetMonitor && !_viewModel.IsOverlayEditing)
@@ -398,9 +401,10 @@ public sealed class OverlayWindowManager : IDisposable
     /// excluyen el escritorio, la barra de tareas y las ventanas maximizadas
     /// normales, que nunca deben disparar el overlay.
     /// </summary>
-    private static bool IsForegroundFullscreen(out IntPtr monitor)
+    private static bool IsForegroundFullscreen(out IntPtr monitor, out int processIdOut)
     {
         monitor = IntPtr.Zero;
+        processIdOut = 0;
         IntPtr window = GetForegroundWindow();
 
         if (window == IntPtr.Zero || !IsWindowVisible(window) || IsIconic(window) || IsZoomed(window))
@@ -445,7 +449,10 @@ public sealed class OverlayWindowManager : IDisposable
                           && rect.Bottom >= info.Monitor.Bottom - tolerance;
 
         if (fullscreen)
+        {
             monitor = candidate;
+            processIdOut = (int)processId;
+        }
 
         return fullscreen;
     }

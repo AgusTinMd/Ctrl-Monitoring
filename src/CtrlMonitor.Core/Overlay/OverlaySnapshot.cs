@@ -6,6 +6,12 @@ namespace CtrlMonitor.Core.Overlay;
 /// </summary>
 public sealed class OverlaySnapshot
 {
+    /// <summary>Cuadros mostrados por segundo del juego en primer plano.</summary>
+    public double? Fps { get; init; }
+
+    /// <summary>True si parte de los cuadros los genera el driver o el SDK (frame generation).</summary>
+    public bool FrameGeneration { get; init; }
+
     public double? CpuLoad { get; init; }
     public double? CpuTemperature { get; init; }
     public double? CpuClockGhz { get; init; }

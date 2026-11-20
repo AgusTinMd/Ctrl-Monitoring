@@ -29,7 +29,9 @@ public class OverlayTextFormatterTests
             OverlayMetricKeys.Defaults,
             CultureInfo.InvariantCulture);
 
-        Assert.Equal(3, segments.Count);
+        // Los FPS vienen marcados por defecto; sin juego se ven como "--".
+        Assert.Equal(4, segments.Count);
+        Assert.Equal("FPS --", TextOf(segments, OverlayMetricKeys.FpsGroup));
         Assert.Equal("CPU 12% 52°C 3.98GHz", TextOf(segments, OverlayMetricKeys.CpuGroup));
         Assert.Equal("GPU 91% 48°C 4.9/12.0GB", TextOf(segments, OverlayMetricKeys.GpuGroup));
         Assert.Equal("RAM 17.2/31.9GB", TextOf(segments, OverlayMetricKeys.RamGroup));
