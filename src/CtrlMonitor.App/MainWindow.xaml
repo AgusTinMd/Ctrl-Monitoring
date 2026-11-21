@@ -350,7 +350,7 @@
                                     <TextBlock Text="°C" Style="{StaticResource UnitText}" />
                                 </StackPanel>
                                 <TextBlock Style="{StaticResource MutedText}" Margin="0,1,0,0"
-                                           Text="{Binding CpuMaxTemperature, StringFormat={}Máx {0:0} °C, TargetNullValue=Máx —}" />
+                                           Text="{Binding CpuMaxText}" />
                             </StackPanel>
                         </Border>
 
@@ -368,7 +368,7 @@
                                     <TextBlock Text="°C" Style="{StaticResource UnitText}" />
                                 </StackPanel>
                                 <TextBlock Style="{StaticResource MutedText}" Margin="0,1,0,0"
-                                           Text="{Binding GpuHotspot, StringFormat={}Hotspot {0:0} °C, TargetNullValue=Hotspot —}" />
+                                           Text="{Binding GpuHotspotText}" />
                             </StackPanel>
                         </Border>
 
@@ -386,7 +386,7 @@
                                     <TextBlock Text="W" Style="{StaticResource UnitText}" />
                                 </StackPanel>
                                 <TextBlock Style="{StaticResource MutedText}" Margin="0,1,0,0"
-                                           Text="{Binding CpuLoad, StringFormat={}Carga {0:0} %, TargetNullValue=Carga —}" />
+                                           Text="{Binding CpuLoadText}" />
                             </StackPanel>
                         </Border>
 
@@ -404,7 +404,7 @@
                                     <TextBlock Text="W" Style="{StaticResource UnitText}" />
                                 </StackPanel>
                                 <TextBlock Style="{StaticResource MutedText}" Margin="0,1,0,0"
-                                           Text="{Binding GpuLoad, StringFormat={}Carga {0:0} %, TargetNullValue=Carga —}" />
+                                           Text="{Binding GpuLoadText}" />
                             </StackPanel>
                         </Border>
                     </controls:ResponsiveGrid>
