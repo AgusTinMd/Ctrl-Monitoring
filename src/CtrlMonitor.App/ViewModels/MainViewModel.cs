@@ -222,7 +222,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             RequestDiskDetails();
 
         // El administrador de procesos solo lee mientras está a la vista.
-        Processes.IsActive = value == ProcessesTabIndex;
+        Processes.IsActive = _monitoring && value == ProcessesTabIndex;
 
         // El modo edición solo tiene sentido mientras se ve la sección Overlay.
         if (value != OverlayTabIndex)
@@ -537,7 +537,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             _config.RefreshIntervalMs = clamped;
             OnPropertyChanged();
             OnPropertyChanged(nameof(RefreshIntervalText));
-            _hardware.StartMonitoring(TimeSpan.FromMilliseconds(clamped));
+            if (_monitoring)
+                _hardware.StartMonitoring(TimeSpan.FromMilliseconds(clamped));
+
             SaveSoon();
         }
     }
@@ -1196,6 +1198,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _disposed = true;
         _saveTimer.Stop();
         _saveTimer.Tick -= OnSaveTimerTick;
+        _trimTimer?.Stop();
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
         _fps.Dispose();

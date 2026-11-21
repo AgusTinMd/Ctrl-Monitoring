@@ -71,6 +71,9 @@ public sealed class OverlayWindowManager : IDisposable
         _window.DragCompleted += OnDragCompleted;
         _window.SizeChanged += OnWindowSizeChanged;
 
+        // Con el overlay a la vista la app mide aunque la ventana esté oculta.
+        _window.IsVisibleChanged += (_, _) => _viewModel.SetOverlayShown(_window.IsVisible);
+
         IntPtr handle = new WindowInteropHelper(_window).EnsureHandle();
         _source = HwndSource.FromHwnd(handle);
         _source?.AddHook(WndProc);
@@ -96,6 +99,13 @@ public sealed class OverlayWindowManager : IDisposable
     {
         if (_disposed)
             return;
+
+        // Con el overlay apagado no hace falta vigilar la ventana en primer plano.
+        if (!_viewModel.OverlayEnabled)
+        {
+            _viewModel.UpdateFpsTarget(0);
+            return;
+        }
 
         bool fullscreen = IsForegroundFullscreen(out IntPtr monitor, out int processId);
 

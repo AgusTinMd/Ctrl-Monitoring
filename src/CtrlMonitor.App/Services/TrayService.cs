@@ -61,6 +61,10 @@ public sealed class TrayService : IDisposable
         };
 
         _icon.TrayMouseDoubleClick += (_, _) => _showWindow();
+
+        // En reposo, pasar el mouse por el icono relee los sensores para que
+        // el tooltip no muestre temperaturas viejas.
+        _icon.TrayMouseMove += (_, _) => _viewModel.PeekSensors();
         _icon.ForceCreate(false);
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
