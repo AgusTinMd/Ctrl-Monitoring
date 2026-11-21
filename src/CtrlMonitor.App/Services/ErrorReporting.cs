@@ -19,7 +19,8 @@ internal static class ErrorReporting
     /// DSN del proyecto en sentry.io. Es público a propósito: solo permite
     /// enviar errores, no leerlos. Vacío = no se envía nada.
     /// </summary>
-    private const string Dsn = "";
+    private const string Dsn =
+        "https://a2f08a2fc64e9ae8c90f7d7ed8845a7a@o4512470528360448.ingest.de.sentry.io/4512470540157008";
 
     /// <summary>Tope de informes por sesión, por si un error se repite en bucle.</summary>
     private const int MaxEventsPerSession = 25;
@@ -77,6 +78,23 @@ internal static class ErrorReporting
             if (_sdk is not null)
                 ApplyScope();
         }
+    }
+
+    /// <summary>
+    /// Envía un informe de prueba (opción <c>--test-error-report</c>) para
+    /// comprobar que llegan. Solo si el usuario activó los informes.
+    /// </summary>
+    public static void SendTest()
+    {
+        if (!IsEnabled)
+        {
+            AppLog.Warn("Prueba de informes: están desactivados en Ajustes; no se envía nada.");
+            return;
+        }
+
+        SentrySdk.CaptureMessage("Prueba de informe de errores", SentryLevel.Info);
+        SentrySdk.Flush(TimeSpan.FromSeconds(5));
+        AppLog.Info("Prueba de informes enviada.");
     }
 
     /// <summary>Espera a que salgan los informes pendientes (al cerrarse por un error).</summary>

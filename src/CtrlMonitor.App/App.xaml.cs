@@ -202,6 +202,9 @@ public partial class App : Application
         _hardware.Open();
         ErrorReporting.SetHardware(_hardware.CpuName, _hardware.GpuName, _hardware.MotherboardName);
 
+        if (HasArgument(args, "--test-error-report"))
+            ErrorReporting.SendTest();
+
         AppLog.Info(
             $"Hardware: {_hardware.MotherboardName} / {_hardware.SuperIoName} / driver {_hardware.DriverVersion}");
 
