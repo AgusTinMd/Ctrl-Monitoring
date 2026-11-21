@@ -435,12 +435,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private double? _cpuTemperature;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CpuMaxText))]
     private double? _cpuMaxTemperature;
 
     [ObservableProperty]
     private double? _cpuPower;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CpuLoadText))]
     private double? _cpuLoad;
 
     [ObservableProperty]
@@ -450,13 +452,24 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private double? _gpuTemperature;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GpuHotspotText))]
     private double? _gpuHotspot;
 
     [ObservableProperty]
     private double? _gpuPower;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GpuLoadText))]
     private double? _gpuLoad;
+
+    // Textos chicos de las tarjetas de Inicio, traducidos.
+    public string CpuMaxText => Loc.F("summary.maxValue", FormatWhole(CpuMaxTemperature, " °C"));
+    public string GpuHotspotText => Loc.F("summary.hotspotValue", FormatWhole(GpuHotspot, " °C"));
+    public string CpuLoadText => Loc.F("summary.loadValue", FormatWhole(CpuLoad, " %"));
+    public string GpuLoadText => Loc.F("summary.loadValue", FormatWhole(GpuLoad, " %"));
+
+    private static string FormatWhole(double? value, string unit) =>
+        value is { } number ? number.ToString("0", System.Globalization.CultureInfo.CurrentCulture) + unit : "—";
 
     [ObservableProperty]
     private int? _gpuFanRpm;
@@ -1303,6 +1316,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         OnPropertyChanged(nameof(DriverShortText));
         OnPropertyChanged(nameof(AdminText));
+        OnPropertyChanged(nameof(CpuMaxText));
+        OnPropertyChanged(nameof(GpuHotspotText));
+        OnPropertyChanged(nameof(CpuLoadText));
+        OnPropertyChanged(nameof(GpuLoadText));
         OnPropertyChanged(nameof(CurrentPageTitle));
         OnPropertyChanged(nameof(CurrentPageSubtitle));
 
