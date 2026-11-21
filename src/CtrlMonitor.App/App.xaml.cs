@@ -41,6 +41,7 @@ public partial class App : Application
 
     private bool _exiting;
     private bool _cleaned;
+    private bool _crashReported;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -229,10 +230,12 @@ public partial class App : Application
             _overlay = null;
         }
 
-        _hardware.StartMonitoring(TimeSpan.FromMilliseconds(_config.RefreshIntervalMs));
-
         bool startHidden = args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase))
                            || _config.StartMinimized;
+
+        // Mide solo mientras la ventana o el overlay están a la vista; si
+        // arranca en la bandeja, queda en reposo hasta que se abra.
+        _viewModel.SetWindowShown(!startHidden);
 
         if (!startHidden)
         {
@@ -379,6 +382,16 @@ public partial class App : Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         AppLog.Error($"Excepción no controlada en la UI :: {e.Exception}", e.Exception);
+        e.Handled = true;
+
+        // Mientras el aviso está abierto, la UI sigue procesando eventos y el
+        // mismo error puede repetirse: se avisa una sola vez y la app se cierra.
+        if (_crashReported)
+            return;
+
+        _crashReported = true;
+
+        // Antes del aviso, por si el usuario cierra la app sin aceptarlo.
         ErrorReporting.Flush();
 
         MessageBox.Show(
@@ -387,7 +400,6 @@ public partial class App : Application
             MessageBoxButton.OK,
             MessageBoxImage.Error);
 
-        e.Handled = true;
         RequestExit();
     }
 

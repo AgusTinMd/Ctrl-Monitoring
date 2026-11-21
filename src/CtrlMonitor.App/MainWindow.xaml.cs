@@ -37,6 +37,9 @@ public partial class MainWindow : Window
         // La ventana entera recibe el arrastre para que la copia flotante siga
         // al cursor también entre tarjetas y sobre los márgenes.
         AllowDrop = true;
+
+        // Reposo: la app mide solo mientras la ventana está en pantalla.
+        IsVisibleChanged += (_, _) => ReportShown();
         PreviewDragOver += OnWindowPreviewDragOver;
         DragOver += OnWindowDragOver;
 
@@ -101,7 +104,12 @@ public partial class MainWindow : Window
 
         if (WindowState == WindowState.Minimized && _viewModel.MinimizeToTray)
             Hide();
+
+        ReportShown();
     }
+
+    private void ReportShown() =>
+        _viewModel.SetWindowShown(IsVisible && WindowState != WindowState.Minimized);
 
     /// <summary>
     /// Arrastrar el borde izquierdo de una columna cambia solo su ancho: hacia la
