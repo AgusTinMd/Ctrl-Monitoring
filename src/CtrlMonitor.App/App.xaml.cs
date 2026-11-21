@@ -182,6 +182,9 @@ public partial class App : Application
         if (_store.LastError is not null)
             AppLog.Warn($"Configuración con problemas: {_store.LastError}");
 
+        // Informes de errores: solo si el usuario los activó en Ajustes.
+        ErrorReporting.Configure(_config.SendErrorReports, _config.InstallId);
+
         // La tarea vieja apunta a FanCtrl.exe; si el usuario tenía el inicio
         // automático activo, se recrea con el nombre y el ejecutable nuevos.
         if (StartupService.RemoveLegacyTask() && _config.RunAtStartup
@@ -197,6 +200,7 @@ public partial class App : Application
 
         _hardware = new HardwareService();
         _hardware.Open();
+        ErrorReporting.SetHardware(_hardware.CpuName, _hardware.GpuName, _hardware.MotherboardName);
 
         AppLog.Info(
             $"Hardware: {_hardware.MotherboardName} / {_hardware.SuperIoName} / driver {_hardware.DriverVersion}");
@@ -352,6 +356,9 @@ public partial class App : Application
 
         _mutex?.Dispose();
         AppLog.Info("Ctrl Monitor cerrado.");
+
+        // Envía lo pendiente y cierra la conexión con Sentry.
+        ErrorReporting.Shutdown();
     }
 
     protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
@@ -369,6 +376,7 @@ public partial class App : Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         AppLog.Error($"Excepción no controlada en la UI :: {e.Exception}", e.Exception);
+        ErrorReporting.Flush();
 
         MessageBox.Show(
             Loc.F("app.crash", e.Exception.Message),
@@ -383,6 +391,7 @@ public partial class App : Application
     private void OnDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
     {
         AppLog.Error("Excepción no controlada", e.ExceptionObject as Exception);
+        ErrorReporting.Flush();
     }
 
     private static bool HasArgument(string[] args, string argument) =>

@@ -301,6 +301,8 @@ public static partial class Translations
         ["settings.driver"] = "Driver",
         ["settings.admin"] = "Administrador",
         ["settings.diagnostics"] = "Datos y diagnóstico",
+        ["settings.sendErrors"] = "Enviar informes de errores",
+        ["settings.sendErrorsHint"] = "Si la app falla, envía el error para poder arreglarlo: versión, Windows, modelo de CPU, GPU y placa, y las últimas líneas del log. No incluye tu nombre de usuario, el de la PC ni tus archivos.",
         ["settings.config"] = "Configuración:",
         ["settings.openConfig"] = "Abrir configuración",
         ["settings.openLogs"] = "Abrir logs",

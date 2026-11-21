@@ -1034,6 +1034,22 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _ => key
     };
 
+    /// <summary>Enviar informes de errores (desactivado hasta que el usuario lo active).</summary>
+    public bool SendErrorReports
+    {
+        get => _config.SendErrorReports;
+        set
+        {
+            if (_config.SendErrorReports == value)
+                return;
+
+            _config.SendErrorReports = value;
+            OnPropertyChanged();
+            ErrorReporting.Configure(value, _config.InstallId);
+            SaveSoon();
+        }
+    }
+
     public bool StartMinimized
     {
         get => _config.StartMinimized;

@@ -2216,6 +2216,12 @@
                                                 Command="{Binding OpenLogFolderCommand}" />
                                     </StackPanel>
 
+                                    <CheckBox Content="{l:Tr settings.sendErrors}" Margin="0,18,0,0"
+                                              IsChecked="{Binding SendErrorReports, Mode=TwoWay}" />
+                                    <TextBlock Text="{l:Tr settings.sendErrorsHint}"
+                                               Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                                               Margin="28,4,0,0" />
+
                                     <Separator Margin="0,18,0,14" />
 
                                     <TextBlock Text="{Binding VersionText}" Style="{StaticResource MutedText}" />
