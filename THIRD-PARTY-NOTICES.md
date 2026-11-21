@@ -42,8 +42,11 @@ HidSharp is a dependency of LibreHardwareMonitorLib and is used without modifica
 | System.IO.FileSystem.AccessControl | 5.0.0 | Copyright (c) Microsoft Corporation |
 | System.Reflection.TypeExtensions | 4.7.0 | Copyright (c) Microsoft Corporation |
 | PresentMon (`PresentMon.exe`, unmodified) | 2.6.0 | Copyright (C) 2017-2024 Intel Corporation |
+| Sentry (sentry-dotnet) | 6.13.0 | Copyright (c) 2018 Sentry |
 
 PresentMon is the official console build from https://github.com/GameTechDev/PresentMon, used without modification to measure the overlay's FPS.
+
+The Sentry SDK (https://github.com/getsentry/sentry-dotnet) sends error reports only if the user turns them on in Settings.
 
 The MIT License text that applies to these components is reproduced below.
 
@@ -54,6 +57,7 @@ Copyright (c) .NET Foundation and Contributors
 Copyright (c) 2020 havendv
 Copyright (c) Microsoft Corporation
 Copyright (C) 2017-2024 Intel Corporation
+Copyright (c) 2018 Sentry
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

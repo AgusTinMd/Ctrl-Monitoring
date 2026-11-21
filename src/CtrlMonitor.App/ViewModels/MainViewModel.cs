@@ -1036,6 +1036,39 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _ => key
     };
 
+    /// <summary>Pregunta única sobre los informes de errores, sobre la ventana.</summary>
+    public bool ShowErrorReportsPrompt => !_config.ErrorReportsAsked && ErrorReporting.IsConfigured;
+
+    [RelayCommand]
+    private void AnswerErrorReports(string? answer)
+    {
+        _config.ErrorReportsAsked = true;
+        SendErrorReports = answer == "yes";
+        OnPropertyChanged(nameof(ShowErrorReportsPrompt));
+        AppLog.Info(SendErrorReports
+            ? "El usuario aceptó enviar informes de errores."
+            : "El usuario no quiso enviar informes de errores.");
+        SaveSoon();
+    }
+
+    /// <summary>Enviar informes de errores (desactivado hasta que el usuario lo active).</summary>
+    public bool SendErrorReports
+    {
+        get => _config.SendErrorReports;
+        set
+        {
+            if (_config.SendErrorReports == value)
+                return;
+
+            _config.SendErrorReports = value;
+            _config.ErrorReportsAsked = true;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowErrorReportsPrompt));
+            ErrorReporting.Configure(value, _config.InstallId);
+            SaveSoon();
+        }
+    }
+
     public bool StartMinimized
     {
         get => _config.StartMinimized;
