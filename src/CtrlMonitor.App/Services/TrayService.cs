@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
 using CtrlMonitor.App.ViewModels;
+using CtrlMonitor.Core.Diagnostics;
 using CtrlMonitor.Core.Localization;
 using H.NotifyIcon;
 
@@ -18,6 +19,8 @@ public sealed class TrayService : IDisposable
     private readonly MenuItem _openItem;
     private readonly MenuItem _exitItem;
     private bool _disposed;
+    private string? _tooltip;
+    private bool _tooltipFailing;
 
     public TrayService(MainViewModel viewModel, Action showWindow, Action exit)
     {
@@ -93,7 +96,35 @@ public sealed class TrayService : IDisposable
             ? $"GPU {gpuValue:0} °C"
             : "GPU —";
 
-        _icon.ToolTipText = $"Ctrl Monitor · {cpu} · {gpu}";
+        string text = $"Ctrl Monitor · {cpu} · {gpu}";
+
+        if (_disposed || text == _tooltip)
+            return;
+
+        // Windows actualiza el icono de la bandeja a través del Explorador. Si
+        // está ocupado o reiniciándose, Shell_NotifyIcon falla y H.NotifyIcon
+        // lanza «UpdateToolTip failed». Un tooltip viejo no justifica cerrar la
+        // app: se ignora y se reintenta con la próxima lectura.
+        try
+        {
+            _icon.ToolTipText = text;
+            _tooltip = text;
+
+            if (_tooltipFailing)
+            {
+                _tooltipFailing = false;
+                AppLog.Info("Bandeja: el tooltip volvió a actualizarse.");
+            }
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException
+                                       or System.ComponentModel.Win32Exception)
+        {
+            if (!_tooltipFailing)
+            {
+                _tooltipFailing = true;
+                AppLog.Warn("Bandeja: no se pudo actualizar el tooltip: " + ex.Message);
+            }
+        }
     }
 
     public void Dispose()

@@ -41,6 +41,7 @@ public partial class App : Application
 
     private bool _exiting;
     private bool _cleaned;
+    private bool _crashReported;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -369,6 +370,14 @@ public partial class App : Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         AppLog.Error($"Excepción no controlada en la UI :: {e.Exception}", e.Exception);
+        e.Handled = true;
+
+        // Mientras el aviso está abierto, la UI sigue procesando eventos y el
+        // mismo error puede repetirse: se avisa una sola vez y la app se cierra.
+        if (_crashReported)
+            return;
+
+        _crashReported = true;
 
         MessageBox.Show(
             Loc.F("app.crash", e.Exception.Message),
@@ -376,7 +385,6 @@ public partial class App : Application
             MessageBoxButton.OK,
             MessageBoxImage.Error);
 
-        e.Handled = true;
         RequestExit();
     }
 
