@@ -105,7 +105,7 @@ Invoke-Step 'Publicar exe unico autocontenido (win-x64)' {
         -p:PublishSingleFile=true `
         -p:IncludeNativeLibrariesForSelfExtract=true `
         -p:EnableCompressionInSingleFile=true `
-        -p:DebugType=none `
+        -p:DebugType=embedded `
         -p:Version=$Version `
         -o $publishDir `
         --nologo

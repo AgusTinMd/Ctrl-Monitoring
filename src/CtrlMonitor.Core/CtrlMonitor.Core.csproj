@@ -5,6 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PlatformTarget>x64</PlatformTarget>
+    <!-- Símbolos dentro del ensamblado: los informes de errores muestran
+         archivo y línea aunque la app se publique como un solo .exe. -->
+    <DebugType>embedded</DebugType>
     <RootNamespace>CtrlMonitor.Core</RootNamespace>
   </PropertyGroup>
 

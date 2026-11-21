@@ -95,6 +95,13 @@ public sealed partial class HardwareService : IDisposable
         _timer = new Timer(_ => Tick(), null, TimeSpan.Zero, interval);
     }
 
+    /// <summary>Una lectura suelta fuera del ciclo (por ejemplo, en reposo).</summary>
+    public void RequestUpdate()
+    {
+        if (!_disposed)
+            ThreadPool.QueueUserWorkItem(_ => Tick());
+    }
+
     public void StopMonitoring()
     {
         _timer?.Dispose();

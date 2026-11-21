@@ -45,10 +45,31 @@ public sealed class AppConfig
     /// <summary>Preferencias del overlay de métricas.</summary>
     public OverlayConfig Overlay { get; set; } = new();
 
+    /// <summary>
+    /// Enviar informes de errores a los desarrolladores. Desactivado hasta que
+    /// el usuario lo active en Ajustes.
+    /// </summary>
+    public bool SendErrorReports { get; set; }
+
+    /// <summary>
+    /// Ya se le preguntó al usuario si quiere enviar informes: la pregunta
+    /// aparece una sola vez, la primera vez que se abre la ventana.
+    /// </summary>
+    public bool ErrorReportsAsked { get; set; }
+
+    /// <summary>
+    /// Identificador al azar de esta instalación: agrupa los errores de una
+    /// misma PC sin saber de quién es.
+    /// </summary>
+    public string InstallId { get; set; } = string.Empty;
+
     public void Normalize()
     {
         RefreshIntervalMs = Math.Clamp(RefreshIntervalMs, 500, 10000);
         Language = AppLanguage.NormalizeSetting(Language);
+
+        if (!Guid.TryParseExact(InstallId, "N", out _))
+            InstallId = Guid.NewGuid().ToString("N");
 
         Overlay ??= new OverlayConfig();
         Overlay.Normalize();

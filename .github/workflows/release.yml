@@ -94,11 +94,11 @@ jobs:
           <a id="english"></a>
           ### English
 
-          Read-only hardware monitor for Windows 10/11 (64-bit): temperatures, fan speeds, power, voltages, RAM, VRAM and network traffic, plus **disk health (S.M.A.R.T.)** and a **process manager**. Available in English, Spanish and Portuguese (Brazil).
+          Read-only hardware monitor for Windows 10/11 (64-bit): temperatures, fan speeds, power, voltages, RAM, VRAM and network traffic, plus **disk health (S.M.A.R.T.)**, a **process manager** and an **in-game overlay with FPS** (it shows **FG** with frame generation). When nobody is looking at it, it pauses and frees memory. Available in English, Spanish and Portuguese (Brazil).
 
           **Download**
           - **CtrlMonitorSetup-$version.exe**: installer (recommended). Installs to Program Files, creates the Start menu shortcut and can be removed from *Add or remove programs*. It lets you choose the language and can install PawnIO for you.
-          - **CtrlMonitor-$version-win-x64-portable.zip**: portable version. Extract it anywhere and run ``CtrlMonitor.exe``.
+          - **CtrlMonitor-$version-win-x64-portable.zip**: portable version. Extract it anywhere and run ``CtrlMonitor.exe``. Keep ``PresentMon.exe`` next to it: it measures the FPS.
 
           .NET is bundled: you don't need to install it.
 
@@ -106,17 +106,20 @@ jobs:
           - Administrator rights (the app asks for them when it opens).
           - [PawnIO](https://pawnio.eu/) to read the motherboard sensors. The installer can download and install it, verifying its SHA-256; without it the app works but shows fewer sensors.
 
+          **Privacy**
+          Ctrl Monitor doesn't send anything unless you allow it. The first time it opens it asks whether to send error reports: the error, the app and Windows versions and the CPU, GPU and motherboard model. They never include your user name, PC name, IP address, location or files. You can change it anytime in **Settings → Data and diagnostics**.
+
           **Windows SmartScreen**
           The executable isn't digitally signed, so Windows may show "Windows protected your PC". To continue: **More info → Run anyway**. You can verify the files with ``SHA256SUMS.txt``.
 
           <a id="espanol"></a>
           ### Español
 
-          Monitor de hardware de solo lectura para Windows 10/11 (64 bits): temperaturas, ventiladores, potencia, voltajes, RAM, VRAM y red, más **salud de los discos (S.M.A.R.T.)** y un **administrador de procesos**. Interfaz en español, inglés y portugués (Brasil).
+          Monitor de hardware de solo lectura para Windows 10/11 (64 bits): temperaturas, ventiladores, potencia, voltajes, RAM, VRAM y red, más **salud de los discos (S.M.A.R.T.)**, un **administrador de procesos** y un **overlay para juegos con FPS** (muestra **FG** con generación de cuadros). Cuando nadie la mira, se pone en reposo y libera memoria. Interfaz en español, inglés y portugués (Brasil).
 
           **Descarga**
           - **CtrlMonitorSetup-$version.exe**: instalador (recomendado). Instala en Program Files, crea el acceso directo en el menú Inicio y se desinstala desde *Agregar o quitar programas*. Permite elegir el idioma y puede instalar PawnIO por vos.
-          - **CtrlMonitor-$version-win-x64-portable.zip**: versión portable. Descomprimir donde quieras y ejecutar ``CtrlMonitor.exe``.
+          - **CtrlMonitor-$version-win-x64-portable.zip**: versión portable. Descomprimir donde quieras y ejecutar ``CtrlMonitor.exe``. Dejá ``PresentMon.exe`` al lado: mide los FPS.
 
           No hace falta instalar .NET: viene incluido.
 
@@ -124,23 +127,29 @@ jobs:
           - Permisos de administrador (la app los pide al abrir).
           - [PawnIO](https://pawnio.eu/) para leer los sensores de la placa madre. El instalador puede descargarlo e instalarlo verificando su SHA-256; sin él la app funciona, pero muestra menos sensores.
 
+          **Privacidad**
+          Ctrl Monitor no envía nada si no lo permitís. La primera vez que se abre pregunta si querés enviar informes de errores: el error, la versión de la app y de Windows y el modelo de CPU, GPU y placa. Nunca incluyen tu nombre de usuario, el de la PC, tu IP, tu ubicación ni tus archivos. Podés cambiarlo cuando quieras en **Ajustes → Datos y diagnóstico**.
+
           **Aviso de Windows SmartScreen**
           El ejecutable no está firmado digitalmente, así que Windows puede mostrar «Windows protegió su PC». Para continuar: **Más información → Ejecutar de todas formas**. Podés verificar los archivos con ``SHA256SUMS.txt``.
 
           <a id="portugues"></a>
           ### Português (Brasil)
 
-          Monitor de hardware somente leitura para Windows 10/11 (64 bits): temperaturas, ventoinhas, potência, tensões, RAM, VRAM e rede, além da **saúde dos discos (S.M.A.R.T.)** e de um **gerenciador de processos**. Interface em inglês, espanhol e português (Brasil).
+          Monitor de hardware somente leitura para Windows 10/11 (64 bits): temperaturas, ventoinhas, potência, tensões, RAM, VRAM e rede, além da **saúde dos discos (S.M.A.R.T.)**, de um **gerenciador de processos** e de um **overlay para jogos com FPS** (mostra **FG** com geração de quadros). Quando ninguém está olhando, ele entra em repouso e libera memória. Interface em inglês, espanhol e português (Brasil).
 
           **Download**
           - **CtrlMonitorSetup-$version.exe**: instalador (recomendado). Instala em Program Files, cria o atalho no menu Iniciar e pode ser removido em *Aplicativos e recursos*. Permite escolher o idioma e pode instalar o PawnIO para você.
-          - **CtrlMonitor-$version-win-x64-portable.zip**: versão portátil. Extraia em qualquer pasta e execute ``CtrlMonitor.exe``.
+          - **CtrlMonitor-$version-win-x64-portable.zip**: versão portátil. Extraia em qualquer pasta e execute ``CtrlMonitor.exe``. Mantenha o ``PresentMon.exe`` ao lado: ele mede os FPS.
 
           Não é necessário instalar o .NET: ele vem incluído.
 
           **Requisitos**
           - Permissões de administrador (o app as solicita ao abrir).
           - [PawnIO](https://pawnio.eu/) para ler os sensores da placa-mãe. O instalador pode baixá-lo e instalá-lo verificando o SHA-256; sem ele o app funciona, mas mostra menos sensores.
+
+          **Privacidade**
+          O Ctrl Monitor não envia nada sem a sua permissão. Na primeira vez que é aberto, ele pergunta se você quer enviar relatórios de erros: o erro, as versões do app e do Windows e o modelo de CPU, GPU e placa-mãe. Eles nunca incluem seu nome de usuário, o nome do PC, seu IP, sua localização nem seus arquivos. Você pode mudar isso quando quiser em **Configurações → Dados e diagnóstico**.
 
           **Aviso do Windows SmartScreen**
           O executável não é assinado digitalmente, então o Windows pode mostrar "O Windows protegeu o seu PC". Para continuar: **Mais informações → Executar assim mesmo**. Você pode verificar os arquivos com ``SHA256SUMS.txt``.

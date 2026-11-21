@@ -211,6 +211,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     // cada refresco del monitor.
     partial void OnSelectedTabIndexChanged(int value)
     {
+        OnPropertyChanged(nameof(CurrentPageTitle));
+        OnPropertyChanged(nameof(CurrentPageSubtitle));
+
         if (value == 0)
             RequestVolumes();
 
@@ -222,12 +225,33 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             RequestDiskDetails();
 
         // El administrador de procesos solo lee mientras está a la vista.
-        Processes.IsActive = value == ProcessesTabIndex;
+        Processes.IsActive = _monitoring && value == ProcessesTabIndex;
 
         // El modo edición solo tiene sentido mientras se ve la sección Overlay.
         if (value != OverlayTabIndex)
             IsOverlayEditing = false;
     }
+
+    /// <summary>Título y descripción de cada pestaña, en el orden de la navegación.</summary>
+    private static readonly (string Title, string Subtitle)[] PageTexts =
+    {
+        ("nav.summary", "summary.subtitle"),
+        ("chart.title", "chart.subtitle"),
+        ("nav.fans", "fans.subtitle"),
+        ("nav.sensors", "sensors.subtitle"),
+        ("disks.title", "disks.subtitle"),
+        ("processes.title", "processes.subtitle"),
+        ("nav.overlay", "overlay.subtitle"),
+        ("nav.settings", "settings.subtitle")
+    };
+
+    /// <summary>Título de la página visible, para la barra superior.</summary>
+    public string CurrentPageTitle =>
+        SelectedTabIndex >= 0 && SelectedTabIndex < PageTexts.Length ? Loc.T(PageTexts[SelectedTabIndex].Title) : string.Empty;
+
+    /// <summary>Descripción de la página visible, para la barra superior.</summary>
+    public string CurrentPageSubtitle =>
+        SelectedTabIndex >= 0 && SelectedTabIndex < PageTexts.Length ? Loc.T(PageTexts[SelectedTabIndex].Subtitle) : string.Empty;
 
     private const int ProcessesTabIndex = 5;
     private const int OverlayTabIndex = 6;
@@ -411,12 +435,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private double? _cpuTemperature;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CpuMaxText))]
     private double? _cpuMaxTemperature;
 
     [ObservableProperty]
     private double? _cpuPower;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CpuLoadText))]
     private double? _cpuLoad;
 
     [ObservableProperty]
@@ -426,13 +452,24 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private double? _gpuTemperature;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GpuHotspotText))]
     private double? _gpuHotspot;
 
     [ObservableProperty]
     private double? _gpuPower;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(GpuLoadText))]
     private double? _gpuLoad;
+
+    // Textos chicos de las tarjetas de Inicio, traducidos.
+    public string CpuMaxText => Loc.F("summary.maxValue", FormatWhole(CpuMaxTemperature, " °C"));
+    public string GpuHotspotText => Loc.F("summary.hotspotValue", FormatWhole(GpuHotspot, " °C"));
+    public string CpuLoadText => Loc.F("summary.loadValue", FormatWhole(CpuLoad, " %"));
+    public string GpuLoadText => Loc.F("summary.loadValue", FormatWhole(GpuLoad, " %"));
+
+    private static string FormatWhole(double? value, string unit) =>
+        value is { } number ? number.ToString("0", System.Globalization.CultureInfo.CurrentCulture) + unit : "—";
 
     [ObservableProperty]
     private int? _gpuFanRpm;
@@ -537,7 +574,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             _config.RefreshIntervalMs = clamped;
             OnPropertyChanged();
             OnPropertyChanged(nameof(RefreshIntervalText));
-            _hardware.StartMonitoring(TimeSpan.FromMilliseconds(clamped));
+            if (_monitoring)
+                _hardware.StartMonitoring(TimeSpan.FromMilliseconds(clamped));
+
             SaveSoon();
         }
     }
@@ -1034,6 +1073,39 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _ => key
     };
 
+    /// <summary>Pregunta única sobre los informes de errores, sobre la ventana.</summary>
+    public bool ShowErrorReportsPrompt => !_config.ErrorReportsAsked && ErrorReporting.IsConfigured;
+
+    [RelayCommand]
+    private void AnswerErrorReports(string? answer)
+    {
+        _config.ErrorReportsAsked = true;
+        SendErrorReports = answer == "yes";
+        OnPropertyChanged(nameof(ShowErrorReportsPrompt));
+        AppLog.Info(SendErrorReports
+            ? "El usuario aceptó enviar informes de errores."
+            : "El usuario no quiso enviar informes de errores.");
+        SaveSoon();
+    }
+
+    /// <summary>Enviar informes de errores (desactivado hasta que el usuario lo active).</summary>
+    public bool SendErrorReports
+    {
+        get => _config.SendErrorReports;
+        set
+        {
+            if (_config.SendErrorReports == value)
+                return;
+
+            _config.SendErrorReports = value;
+            _config.ErrorReportsAsked = true;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ShowErrorReportsPrompt));
+            ErrorReporting.Configure(value, _config.InstallId);
+            SaveSoon();
+        }
+    }
+
     public bool StartMinimized
     {
         get => _config.StartMinimized;
@@ -1196,6 +1268,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _disposed = true;
         _saveTimer.Stop();
         _saveTimer.Tick -= OnSaveTimerTick;
+        _trimTimer?.Stop();
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
         _fps.Dispose();
@@ -1243,6 +1316,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         OnPropertyChanged(nameof(DriverShortText));
         OnPropertyChanged(nameof(AdminText));
+        OnPropertyChanged(nameof(CpuMaxText));
+        OnPropertyChanged(nameof(GpuHotspotText));
+        OnPropertyChanged(nameof(CpuLoadText));
+        OnPropertyChanged(nameof(GpuLoadText));
+        OnPropertyChanged(nameof(CurrentPageTitle));
+        OnPropertyChanged(nameof(CurrentPageSubtitle));
 
         foreach (LanguageOption option in LanguageOptions)
             option.RefreshLanguage();
