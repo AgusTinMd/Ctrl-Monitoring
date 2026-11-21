@@ -223,10 +223,12 @@ public partial class App : Application
             _overlay = null;
         }
 
-        _hardware.StartMonitoring(TimeSpan.FromMilliseconds(_config.RefreshIntervalMs));
-
         bool startHidden = args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase))
                            || _config.StartMinimized;
+
+        // Mide solo mientras la ventana o el overlay están a la vista; si
+        // arranca en la bandeja, queda en reposo hasta que se abra.
+        _viewModel.SetWindowShown(!startHidden);
 
         if (!startHidden)
         {
