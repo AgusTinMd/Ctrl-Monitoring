@@ -208,6 +208,10 @@ internal static class ErrorReporting
         sentryEvent.ServerName = null;
         sentryEvent.Contexts.Device.Name = null;
 
+        // Sin IP, Sentry usa la de la conexión para calcular país y ciudad. Una
+        // IP nula a propósito evita que guarde la ubicación.
+        sentryEvent.User.IpAddress = "0.0.0.0";
+
         if (sentryEvent.Message is { } message)
         {
             if (message.Message is not null)
