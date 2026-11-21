@@ -211,6 +211,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     // cada refresco del monitor.
     partial void OnSelectedTabIndexChanged(int value)
     {
+        OnPropertyChanged(nameof(CurrentPageTitle));
+        OnPropertyChanged(nameof(CurrentPageSubtitle));
+
         if (value == 0)
             RequestVolumes();
 
@@ -228,6 +231,27 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         if (value != OverlayTabIndex)
             IsOverlayEditing = false;
     }
+
+    /// <summary>Título y descripción de cada pestaña, en el orden de la navegación.</summary>
+    private static readonly (string Title, string Subtitle)[] PageTexts =
+    {
+        ("nav.summary", "summary.subtitle"),
+        ("chart.title", "chart.subtitle"),
+        ("nav.fans", "fans.subtitle"),
+        ("nav.sensors", "sensors.subtitle"),
+        ("disks.title", "disks.subtitle"),
+        ("processes.title", "processes.subtitle"),
+        ("nav.overlay", "overlay.subtitle"),
+        ("nav.settings", "settings.subtitle")
+    };
+
+    /// <summary>Título de la página visible, para la barra superior.</summary>
+    public string CurrentPageTitle =>
+        SelectedTabIndex >= 0 && SelectedTabIndex < PageTexts.Length ? Loc.T(PageTexts[SelectedTabIndex].Title) : string.Empty;
+
+    /// <summary>Descripción de la página visible, para la barra superior.</summary>
+    public string CurrentPageSubtitle =>
+        SelectedTabIndex >= 0 && SelectedTabIndex < PageTexts.Length ? Loc.T(PageTexts[SelectedTabIndex].Subtitle) : string.Empty;
 
     private const int ProcessesTabIndex = 5;
     private const int OverlayTabIndex = 6;
@@ -1243,6 +1267,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         OnPropertyChanged(nameof(DriverShortText));
         OnPropertyChanged(nameof(AdminText));
+        OnPropertyChanged(nameof(CurrentPageTitle));
+        OnPropertyChanged(nameof(CurrentPageSubtitle));
 
         foreach (LanguageOption option in LanguageOptions)
             option.RefreshLanguage();

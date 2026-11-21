@@ -1540,21 +1540,30 @@
             </TabItem.Resources>
 
             <!-- Sin ScrollViewer de página: la lista tiene su propio scroll. -->
-            <Grid Margin="24,20,24,24">
+            <Grid Margin="24,16,24,16">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <StackPanel>
+                <!-- Con la navegación oculta, el título pasa a la barra superior. -->
+                <StackPanel Margin="0,0,0,16">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowNavigation}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
                     <TextBlock Text="{l:Tr processes.title}" Style="{StaticResource PageTitle}" />
                     <TextBlock Text="{l:Tr processes.subtitle}" Style="{StaticResource PageSubtitle}" />
                 </StackPanel>
 
-                <!-- Búsqueda y acciones -->
-                <Grid Grid.Row="1" Margin="0,16,0,12">
+                <!-- Búsqueda, resumen y acciones -->
+                <Grid Grid.Row="1" Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" MaxWidth="360" />
                         <ColumnDefinition Width="*" />
@@ -1562,6 +1571,27 @@
                     </Grid.ColumnDefinitions>
                     <TextBox Style="{StaticResource SearchBox}" Tag="{l:Tr processes.search}"
                              Text="{Binding Processes.SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                    <!-- El resumen y el resultado de la última acción van junto a los
+                         botones: así no ocupan una fila debajo de la lista. -->
+                    <StackPanel Grid.Column="1" Margin="16,0,16,0" VerticalAlignment="Center"
+                                HorizontalAlignment="Right">
+                        <TextBlock Text="{Binding Processes.Summary}" Style="{StaticResource MutedText}"
+                                   HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                        <!-- Sin resultado que mostrar no ocupa lugar: el resumen queda centrado. -->
+                        <TextBlock Text="{Binding Processes.Status}"
+                                   HorizontalAlignment="Right" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" FontSize="11"
+                                   Margin="0,2,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource SecondaryText}">
+                                    <Style.Triggers>
+                                        <Trigger Property="Text" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <Button Content="{l:Tr processes.endTree}" Style="{StaticResource SecondaryButton}"
                                 Command="{Binding Processes.EndTreeCommand}" Margin="0,0,10,0"
@@ -1688,13 +1718,6 @@
                         </TreeView>
                     </Grid>
                 </Border>
-
-                <!-- Resumen y resultado de la última acción -->
-                <Grid Grid.Row="3" Margin="2,10,2,0">
-                    <TextBlock Text="{Binding Processes.Summary}" Style="{StaticResource MutedText}" />
-                    <TextBlock Text="{Binding Processes.Status}" Style="{StaticResource SecondaryText}"
-                               HorizontalAlignment="Right" />
-                </Grid>
             </Grid>
         </TabItem>
 
