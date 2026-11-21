@@ -52,6 +52,12 @@ public sealed class AppConfig
     public bool SendErrorReports { get; set; }
 
     /// <summary>
+    /// Ya se le preguntó al usuario si quiere enviar informes: la pregunta
+    /// aparece una sola vez, la primera vez que se abre la ventana.
+    /// </summary>
+    public bool ErrorReportsAsked { get; set; }
+
+    /// <summary>
     /// Identificador al azar de esta instalación: agrupa los errores de una
     /// misma PC sin saber de quién es.
     /// </summary>

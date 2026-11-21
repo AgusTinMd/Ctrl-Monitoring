@@ -11,6 +11,12 @@ public class AppConfigErrorReportsTests
     }
 
     [Fact]
+    public void ErrorReportsQuestion_IsPendingByDefault()
+    {
+        Assert.False(new AppConfig().ErrorReportsAsked);
+    }
+
+    [Fact]
     public void Normalize_CreatesRandomInstallId()
     {
         var first = new AppConfig();

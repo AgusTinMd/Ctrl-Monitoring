@@ -320,6 +320,7 @@
         </DataTemplate>
     </Window.Resources>
 
+    <Grid>
     <TabControl Style="{StaticResource NavTabControl}" SelectedIndex="{Binding SelectedTabIndex, Mode=TwoWay}" TabStripPlacement="Left">
 
         <!-- ============================================================ -->
@@ -2237,4 +2238,28 @@
             </ScrollViewer>
         </TabItem>
     </TabControl>
+
+    <!-- Pregunta única, la primera vez que se abre la app: ¿enviar informes de errores? -->
+    <Grid Visibility="{Binding ShowErrorReportsPrompt, Converter={StaticResource BoolToVis}}">
+        <Border Background="#B3050A14" />
+        <Border Style="{StaticResource Card}" MaxWidth="480" Margin="24"
+                HorizontalAlignment="Center" VerticalAlignment="Center" Padding="24,22">
+            <StackPanel>
+                <TextBlock Text="{l:Tr errorReports.promptTitle}" Style="{StaticResource SectionTitle}"
+                           FontSize="17" TextWrapping="Wrap" />
+                <TextBlock Text="{l:Tr errorReports.promptBody}" Style="{StaticResource SecondaryText}"
+                           TextWrapping="Wrap" Margin="0,12,0,0" />
+                <TextBlock Text="{l:Tr errorReports.promptNote}" Style="{StaticResource MutedText}"
+                           TextWrapping="Wrap" Margin="0,10,0,0" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                    <Button Content="{l:Tr errorReports.no}" Style="{StaticResource SecondaryButton}"
+                            Command="{Binding AnswerErrorReportsCommand}" CommandParameter="no" />
+                    <Button Content="{l:Tr errorReports.yes}" Style="{StaticResource AccentButton}"
+                            Margin="10,0,0,0" IsDefault="True"
+                            Command="{Binding AnswerErrorReportsCommand}" CommandParameter="yes" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </Grid>
+    </Grid>
 </Window>
