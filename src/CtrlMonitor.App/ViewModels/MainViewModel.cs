@@ -1260,6 +1260,17 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void OpenLogFolder() => OpenFolder(AppPaths.LogDirectory, selectFile: false);
 
+    /// <summary>Formulario de GitHub para reportar un error, con versión, Windows y hardware completados.</summary>
+    [RelayCommand]
+    private void ReportBug() =>
+        FeedbackLinks.ReportBug(
+            ShortVersionText.TrimStart('v'),
+            $"CPU: {CpuName}\nGPU: {GpuName}\nPlaca / Motherboard: {MotherboardName}");
+
+    /// <summary>Formulario de GitHub para sugerir una mejora.</summary>
+    [RelayCommand]
+    private void SuggestImprovement() => FeedbackLinks.Suggest(ShortVersionText.TrimStart('v'));
+
     public void Dispose()
     {
         if (_disposed)
