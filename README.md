@@ -1,8 +1,22 @@
 # Ctrl Monitor
 
-**[English](#english) · [Español](#espanol)**
+**Hardware monitor for Windows · Monitor de hardware para Windows**
 
-![Ctrl Monitor home screen](docs/screenshot-home.png)
+<p align="center"><b>Home / Inicio</b> · CPU, GPU, motherboard and disks at a glance · CPU, GPU, placa y discos de un vistazo</p>
+<p align="center"><img src="docs/screenshot-home.png" alt="Ctrl Monitor: Home / Inicio" width="100%"></p>
+
+<p align="center"><b>Charts / Gráficos</b> · Live panels you can pick and reorder · Paneles en vivo que elegís y reordenás</p>
+<p align="center"><img src="docs/screenshot-charts.png" alt="Charts / Gráficos" width="100%"></p>
+
+<p align="center"><b>Overlay</b> · FPS and metrics on top of your games · FPS y métricas encima de tus juegos</p>
+<p align="center"><img src="docs/screenshot-overlay.png" alt="Overlay" width="100%"></p>
+
+<p align="center"><b>Disks / Discos</b> · Health and S.M.A.R.T. of every drive · Salud y S.M.A.R.T. de cada disco</p>
+<p align="center"><img src="docs/screenshot-disks.png" alt="Disks / Discos" width="100%"></p>
+
+<p align="center"><a href="https://github.com/AgusTinMd/Ctrl-Monitoring/releases/latest"><b>⬇ Download / Descargar</b></a></p>
+
+**[English](#english) · [Español](#espanol)**
 
 <a id="english"></a>
 
@@ -36,12 +50,6 @@ The interface is available in **English, Spanish and Portuguese (Brazil)**, live
 - **Start with Windows** through a scheduled task with elevated permissions.
 - **Multilingual**: English, Spanish and Portuguese (Brazil). It follows the Windows display language by default (English if that language isn't supported) and can be switched instantly from **Settings → Language**.
 - **Saved preferences**: refresh rate, startup, tray behavior, sidebar, language, chart layout and overlay.
-
-## Screenshots
-
-| Charts | Disks | Overlay |
-|---|---|---|
-| ![Charts](docs/screenshot-charts.png) | ![Disks](docs/screenshot-disks.png) | ![Overlay](docs/screenshot-overlay.png) |
 
 ## What it doesn't do
 
@@ -221,7 +229,7 @@ tests/CtrlMonitor.Core.Tests/  xUnit tests
 tools/CtrlMonitor.Probe/   Read-only probe for elevated diagnostics
 build/package.ps1          Packaging: self-contained exe, zip, installer and hashes
 build/get-presentmon.ps1   Downloads PresentMon and verifies its SHA-256
-docs/                      README screenshot
+docs/                      README screenshots
 installer/CtrlMonitor.iss  Inno Setup installer
 .github/workflows/         Automatic release when a vX.Y.Z tag is pushed
 LICENSE                    MIT license
@@ -281,8 +289,6 @@ MIT — see [LICENSE](LICENSE). You can use, modify and redistribute the source 
 
 **[English](#english) · [Español](#espanol)**
 
-![Pantalla de inicio de Ctrl Monitor](docs/screenshot-home.png)
-
 Aplicación de escritorio para Windows que **muestra en tiempo real** las temperaturas, la velocidad de los ventiladores, la potencia, los voltajes, la carga, el PWM, el uso de RAM y VRAM y el tráfico de red. También incluye la **salud de los discos (S.M.A.R.T.)**, un **administrador de procesos** y un **overlay para juegos con FPS**. El acceso al hardware es **estrictamente de solo lectura**: no escribe PWM, no aplica curvas y no modifica el BIOS. Las únicas acciones que cambian el sistema son las que pedís desde el administrador de procesos (finalizar un proceso) y, si la activás, la tarea programada de inicio.
 
 La interfaz está en **español, inglés y portugués (Brasil)**, vive en la bandeja del sistema y puede arrancar con Windows. Incluye **paneles de gráfico configurables**, una **vista de ventiladores con RPM y PWM**, iconos de CPU/GPU/placa y el **logo de la marca detectada**. El **control de los ventiladores queda a cargo del BIOS**.
@@ -311,12 +317,6 @@ La interfaz está en **español, inglés y portugués (Brasil)**, vive en la ban
 - **Inicio con Windows** mediante tarea programada con permisos altos.
 - **Multilenguaje**: español, inglés y portugués (Brasil). Por defecto sigue el idioma de Windows (inglés si no está soportado) y se cambia al instante desde **Ajustes → Idioma**.
 - **Persistencia** de las preferencias de refresco, arranque, bandeja, barra lateral, idioma, el layout de los gráficos y el overlay.
-
-## Capturas
-
-| Gráficos | Discos | Overlay |
-|---|---|---|
-| ![Gráficos](docs/screenshot-charts.png) | ![Discos](docs/screenshot-disks.png) | ![Overlay](docs/screenshot-overlay.png) |
 
 ## Qué no hace
 
@@ -496,7 +496,7 @@ tests/CtrlMonitor.Core.Tests/  Tests xUnit
 tools/CtrlMonitor.Probe/   Sonda de solo lectura para diagnóstico elevado
 build/package.ps1          Empaquetado: exe autocontenido, zip, instalador y hashes
 build/get-presentmon.ps1   Descarga PresentMon y verifica su SHA-256
-docs/                      Captura del README
+docs/                      Capturas del README
 installer/CtrlMonitor.iss  Instalador de Inno Setup
 .github/workflows/         Release automática al subir un tag vX.Y.Z
 LICENSE                    Licencia MIT
