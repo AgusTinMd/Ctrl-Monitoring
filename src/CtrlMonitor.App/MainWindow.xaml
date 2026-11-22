@@ -2246,6 +2246,18 @@
                                                Style="{StaticResource MutedText}" TextWrapping="Wrap"
                                                Margin="28,4,0,0" />
 
+                                    <!-- Feedback en GitHub: abre el formulario en el navegador. -->
+                                    <TextBlock Text="{l:Tr settings.feedback}" Style="{StaticResource SecondaryText}"
+                                               Margin="0,18,0,0" />
+                                    <TextBlock Text="{l:Tr settings.feedbackHint}" Style="{StaticResource MutedText}"
+                                               TextWrapping="Wrap" Margin="0,3,0,0" />
+                                    <WrapPanel Margin="0,10,0,0">
+                                        <Button Content="{l:Tr settings.reportBug}" Style="{StaticResource SecondaryButton}"
+                                                Margin="0,0,10,0" Command="{Binding ReportBugCommand}" />
+                                        <Button Content="{l:Tr settings.suggest}" Style="{StaticResource SecondaryButton}"
+                                                Command="{Binding SuggestImprovementCommand}" />
+                                    </WrapPanel>
+
                                     <Separator Margin="0,18,0,14" />
 
                                     <TextBlock Text="{Binding VersionText}" Style="{StaticResource MutedText}" />

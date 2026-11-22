@@ -169,6 +169,10 @@ If you turn them on, when the app hits an error it sends it to [Sentry](https://
 
 It **doesn't** send your user name, your PC name, your IP address, your location or your files: user and PC names are replaced in paths and messages before anything leaves your PC. The same error is sent once per session, with at most 25 reports per session. Without an internet connection, reports wait in `%APPDATA%\CtrlMonitor\error-reports` until the next time the app opens.
 
+## Feedback
+
+Found a bug or have an idea? Open **Settings → Data and diagnostics** in the app and use **Report a bug** or **Suggest an improvement**: the GitHub form opens with the version and your hardware already filled in. You can also go straight to [Issues](https://github.com/AgusTinMd/Ctrl-Monitoring/issues/new/choose), or ask questions and talk through ideas in [Discussions](https://github.com/AgusTinMd/Ctrl-Monitoring/discussions).
+
 ## Start with Windows
 
 The **Start with Windows** option creates a scheduled task named `CtrlMonitor` with `/RL HIGHEST` and a 20-second delay, so UAC doesn't prompt at every startup. If the app finds the task pointing to another copy of the executable, it updates it only when its own folder can be modified exclusively by administrators (Program Files or a folder restricted by the installer); a build from the repository or a portable copy in Downloads won't take over the task. You can remove it from the same option or with:
@@ -433,6 +437,10 @@ Si los activás, cuando la app tiene un error lo envía a [Sentry](https://sentr
 - Un ID de instalación al azar, para saber si varios errores vienen de la misma PC.
 
 **No** envía tu nombre de usuario, el de la PC, tu dirección IP, tu ubicación ni tus archivos: los nombres de usuario y de la PC se reemplazan en rutas y mensajes antes de salir del equipo. Cada error se envía una sola vez por sesión, con un máximo de 25 informes por sesión. Sin conexión, los informes esperan en `%APPDATA%\CtrlMonitor\error-reports` hasta la próxima vez que se abra la app.
+
+## Comentarios y sugerencias
+
+¿Encontraste un error o tenés una idea? En la app, entrá a **Ajustes → Datos y diagnóstico** y usá **Reportar un error** o **Sugerir una mejora**: se abre el formulario de GitHub con la versión y tu hardware ya completados. También podés ir directo a [Issues](https://github.com/AgusTinMd/Ctrl-Monitoring/issues/new/choose), o hacer preguntas y charlar ideas en [Discussions](https://github.com/AgusTinMd/Ctrl-Monitoring/discussions).
 
 ## Inicio con Windows
 

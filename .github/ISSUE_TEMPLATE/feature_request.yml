@@ -1,0 +1,26 @@
+name: "💡 Sugerir una mejora / Suggest an improvement"
+description: "Una idea, una función nueva o algo que se podría hacer mejor. / An idea, a new feature or something that could be better."
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: "¿Qué te gustaría? / What would you like?"
+      description: "Describí la idea. / Describe the idea."
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: "¿Para qué te serviría? / What would it help you with?"
+      description: "El problema o la situación que resolvería. / The problem or situation it would solve."
+  - type: textarea
+    id: extra
+    attributes:
+      label: "Algo más (opcional) / Anything else (optional)"
+      description: "Ejemplos, capturas o apps que lo hagan. / Examples, screenshots or apps that do it."
+  - type: input
+    id: version
+    attributes:
+      label: "Versión de Ctrl Monitor / Ctrl Monitor version"
+      placeholder: "2.12.0"
