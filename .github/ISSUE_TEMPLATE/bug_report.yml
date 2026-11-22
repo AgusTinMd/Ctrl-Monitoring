@@ -1,0 +1,54 @@
+name: "🐞 Reportar un error / Report a bug"
+description: "Algo no funciona como debería. / Something isn't working as it should."
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Gracias por avisar. Si abriste este formulario desde **Ajustes** en Ctrl Monitor, la versión, Windows y el hardware ya vienen completados.
+        Thanks for reporting. If you opened this form from **Settings** in Ctrl Monitor, version, Windows and hardware are already filled in.
+  - type: textarea
+    id: what
+    attributes:
+      label: "¿Qué pasó? / What happened?"
+      description: "Contá qué esperabas y qué pasó en cambio. / Tell us what you expected and what happened instead."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: "Pasos para reproducirlo / Steps to reproduce"
+      placeholder: |
+        1. Abrir… / Open…
+        2. Ir a… / Go to…
+        3. …
+  - type: input
+    id: version
+    attributes:
+      label: "Versión de Ctrl Monitor / Ctrl Monitor version"
+      description: "Ajustes → Datos y diagnóstico / Settings → Data and diagnostics"
+      placeholder: "2.12.0"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: "Windows"
+      placeholder: "Windows 11 23H2"
+  - type: textarea
+    id: hardware
+    attributes:
+      label: "Hardware (CPU, GPU, placa / motherboard)"
+  - type: textarea
+    id: logs
+    attributes:
+      label: "Log (opcional / optional)"
+      description: |
+        Ajustes → Abrir carpeta de logs. Pegá las líneas cercanas al error. Revisalas antes: pueden incluir tu nombre de usuario en rutas.
+        Settings → Open logs folder. Paste the lines around the error. Check them first: they may include your user name in paths.
+      render: text
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: "Capturas (opcional) / Screenshots (optional)"
+      description: "Podés arrastrar imágenes acá. / You can drag images here."
