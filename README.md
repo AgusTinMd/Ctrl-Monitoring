@@ -37,6 +37,12 @@ The interface is available in **English, Spanish and Portuguese (Brazil)**, live
 - **Multilingual**: English, Spanish and Portuguese (Brazil). It follows the Windows display language by default (English if that language isn't supported) and can be switched instantly from **Settings → Language**.
 - **Saved preferences**: refresh rate, startup, tray behavior, sidebar, language, chart layout and overlay.
 
+## Screenshots
+
+| Charts | Disks | Overlay |
+|---|---|---|
+| ![Charts](docs/screenshot-charts.png) | ![Disks](docs/screenshot-disks.png) | ![Overlay](docs/screenshot-overlay.png) |
+
 ## What it doesn't do
 
 - It doesn't control fans or write Super I/O PWM registers.
@@ -305,6 +311,12 @@ La interfaz está en **español, inglés y portugués (Brasil)**, vive en la ban
 - **Inicio con Windows** mediante tarea programada con permisos altos.
 - **Multilenguaje**: español, inglés y portugués (Brasil). Por defecto sigue el idioma de Windows (inglés si no está soportado) y se cambia al instante desde **Ajustes → Idioma**.
 - **Persistencia** de las preferencias de refresco, arranque, bandeja, barra lateral, idioma, el layout de los gráficos y el overlay.
+
+## Capturas
+
+| Gráficos | Discos | Overlay |
+|---|---|---|
+| ![Gráficos](docs/screenshot-charts.png) | ![Discos](docs/screenshot-disks.png) | ![Overlay](docs/screenshot-overlay.png) |
 
 ## Qué no hace
 
