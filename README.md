@@ -2,23 +2,17 @@
 
 **Hardware monitor for Windows · Monitor de hardware para Windows**
 
-<p align="center">
-  <img src="docs/screenshot-home.png" alt="Ctrl Monitor: Home / Inicio" width="900">
-</p>
-<p align="center"><b>Home / Inicio</b>: CPU, GPU, motherboard and disks at a glance · CPU, GPU, placa y discos de un vistazo</p>
+<p align="center"><b>Home / Inicio</b> · CPU, GPU, motherboard and disks at a glance · CPU, GPU, placa y discos de un vistazo</p>
+<p align="center"><img src="docs/screenshot-home.png" alt="Ctrl Monitor: Home / Inicio" width="100%"></p>
 
-<table>
-  <tr>
-    <td align="center" width="33%"><img src="docs/screenshot-charts.png" alt="Charts / Gráficos"></td>
-    <td align="center" width="33%"><img src="docs/screenshot-disks.png" alt="Disks / Discos"></td>
-    <td align="center" width="33%"><img src="docs/screenshot-overlay.png" alt="Overlay"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Charts / Gráficos</b><br>Live panels you can pick and reorder<br>Paneles en vivo que elegís y reordenás</td>
-    <td align="center"><b>Disks / Discos</b><br>Health and S.M.A.R.T. of every drive<br>Salud y S.M.A.R.T. de cada disco</td>
-    <td align="center"><b>Overlay</b><br>FPS and metrics on top of your games<br>FPS y métricas encima de tus juegos</td>
-  </tr>
-</table>
+<p align="center"><b>Charts / Gráficos</b> · Live panels you can pick and reorder · Paneles en vivo que elegís y reordenás</p>
+<p align="center"><img src="docs/screenshot-charts.png" alt="Charts / Gráficos" width="100%"></p>
+
+<p align="center"><b>Overlay</b> · FPS and metrics on top of your games · FPS y métricas encima de tus juegos</p>
+<p align="center"><img src="docs/screenshot-overlay.png" alt="Overlay" width="100%"></p>
+
+<p align="center"><b>Disks / Discos</b> · Health and S.M.A.R.T. of every drive · Salud y S.M.A.R.T. de cada disco</p>
+<p align="center"><img src="docs/screenshot-disks.png" alt="Disks / Discos" width="100%"></p>
 
 <p align="center"><a href="https://github.com/AgusTinMd/Ctrl-Monitoring/releases/latest"><b>⬇ Download / Descargar</b></a></p>
 
