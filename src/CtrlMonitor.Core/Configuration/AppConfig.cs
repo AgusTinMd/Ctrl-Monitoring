@@ -42,6 +42,9 @@ public sealed class AppConfig
     /// </summary>
     public string Language { get; set; } = AppLanguage.Auto;
 
+    /// <summary>Sección de hilos del CPU desplegada en Inicio; viene plegada.</summary>
+    public bool CpuThreadsExpanded { get; set; }
+
     /// <summary>Preferencias del overlay de métricas.</summary>
     public OverlayConfig Overlay { get; set; } = new();
 

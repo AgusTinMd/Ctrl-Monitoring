@@ -27,8 +27,8 @@ internal sealed class OverlayGuideWindow : Window
 
     private sealed class GuideCanvas : FrameworkElement
     {
-        private static readonly Pen EdgePen = MakePen("#CC3B82F6", 2);
-        private static readonly Pen CenterPen = MakePen("#B33B82F6", 1.5, dashed: true);
+        private static readonly Pen EdgePen = MakePen("#CC3AD1C0", 2);
+        private static readonly Pen CenterPen = MakePen("#B33AD1C0", 1.5, dashed: true);
         private static readonly Pen ThirdPen = MakePen("#59FFFFFF", 1, dashed: true);
         private static readonly Brush Tint = MakeBrush("#1A000000");
 

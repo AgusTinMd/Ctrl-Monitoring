@@ -1343,6 +1343,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (StorageDiskViewModel disk in StorageDisks)
             disk.RefreshLanguage();
 
+        RefreshThreadsLanguage();
+
         foreach (DiskDetailViewModel disk in DiskDetails)
             disk.RefreshLanguage();
 
@@ -1575,6 +1577,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdateProcessTotals();
         UpdateNetwork();
         UpdateDisks();
+        UpdateStorageActivity();
 
         if (snapshot.Sensors.Count == 0)
         {
@@ -1599,6 +1602,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         CpuPower = FindValue(cpu, SensorKind.Power, "CPU Package", "Package")
                    ?? MaxValue(cpu, SensorKind.Power);
         CpuClockGhz = AverageCoreClockGhz(cpu);
+        UpdateCpuThreads(cpu);
         CpuLoad = FindValue(cpu, SensorKind.Load, "CPU Total", "Total")
                   ?? FirstValue(cpu, SensorKind.Load);
 
@@ -1643,7 +1647,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NetUpMbs,
             CpuLoad,
             GpuLoad,
-            _disks.Count == 0 ? null : _disks));
+            _disks.Count == 0 ? null : _disks,
+            CpuThreads.Count == 0 ? null : CpuThreads.Select(t => t.Load).ToArray(),
+            CoreLoads.Count == 0 ? null : CoreLoads.ToArray()));
 
         // El gráfico permite ventanas de hasta 10 minutos; conservamos ese
         // margen y descartamos lo más viejo para no crecer sin límite.
@@ -1662,7 +1668,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             string key = configured[i];
             ChartMetric? metric = FindChartMetric(key);
 
-            if (metric is null && key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase))
+            if (metric is null && (key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase)
+                                   || key.StartsWith(ChartMetrics.CoreKeyPrefix, StringComparison.OrdinalIgnoreCase)))
             {
                 _pendingChartKeys.Add((i, key));
                 continue;
@@ -1877,7 +1884,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             .Select(panel => panel.SelectedMetric)
             .Where(metric => metric.Key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.Ordinal));
 
-        AllChartMetrics = ChartMetrics.Base.Concat(diskMetrics).Concat(orphaned).Distinct().ToList();
+        // Un gráfico por núcleo, en orden, entre las métricas fijas y los discos.
+        IEnumerable<ChartMetric> coreMetrics = Enumerable.Range(1, CoreLoads.Count).Select(ChartMetrics.ForCore);
+
+        IEnumerable<ChartMetric> orphanedCores = ChartPanels
+            .Select(panel => panel.SelectedMetric)
+            .Where(metric => metric.Key.StartsWith(ChartMetrics.CoreKeyPrefix, StringComparison.Ordinal));
+
+        AllChartMetrics = ChartMetrics.Base.Concat(coreMetrics).Concat(orphanedCores)
+            .Concat(diskMetrics).Concat(orphaned).Distinct().ToList();
 
         AppLog.Info($"Discos para gráficos: {string.Join(", ", _disks.Keys.OrderBy(DiskNames.Number))}");
 
