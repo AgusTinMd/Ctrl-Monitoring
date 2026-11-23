@@ -972,7 +972,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public void UpdateFpsTarget(int processId)
     {
         bool wanted = OverlayEnabled
-                      && _overlayMetrics.Any(option => option.IsSelected && option.Key == OverlayMetricKeys.Fps);
+                      && _overlayMetrics.Any(option => option.IsSelected && OverlayMetricKeys.IsFps(option.Key));
 
         _fps.SetTarget(wanted ? processId : 0);
     }
@@ -1008,7 +1008,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NetDownMbs = NetDownMbs,
             NetUpMbs = NetUpMbs,
             Fps = fps?.Fps,
-            FrameGeneration = fps?.FrameGeneration == true
+            FrameGeneration = fps?.FrameGeneration == true,
+            FrameTimeMs = fps?.FrameTimeMs,
+            FpsLow1 = fps?.Low1Fps
         };
 
         var selected = _overlayMetrics
@@ -1056,6 +1058,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private static string MetricLabelKey(string key) => key switch
     {
         OverlayMetricKeys.Fps => "overlay.metric.fps",
+        OverlayMetricKeys.FrameTime => "overlay.metric.frameTime",
+        OverlayMetricKeys.FpsLow1 => "overlay.metric.fpsLow1",
         OverlayMetricKeys.CpuLoad => "overlay.metric.cpuLoad",
         OverlayMetricKeys.CpuTemperature => "overlay.metric.cpuTemp",
         OverlayMetricKeys.CpuClock => "overlay.metric.cpuClock",

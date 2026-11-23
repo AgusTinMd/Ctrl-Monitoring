@@ -125,4 +125,50 @@ public class FpsTests
 
         Assert.Equal("FPS --", segment.Text);
     }
+
+    [Fact]
+    public void ReportsAverageFrameTime()
+    {
+        FpsCalculator calculator = Feed(Enumerable.Range(0, 120).Select(i => Row(i * 10.0)));
+
+        FpsReading reading = calculator.Current()!.Value;
+
+        Assert.InRange(reading.FrameTimeMs!.Value, 9.9, 10.1);
+    }
+
+    [Fact]
+    public void Low1_ReflectsTheSlowestFrames()
+    {
+        // 990 cuadros de 10 ms y 10 tirones de 50 ms: el 1 % más lento son los tirones.
+        var intervals = Enumerable.Repeat(10.0, 990).Concat(Enumerable.Repeat(50.0, 10)).ToList();
+
+        Assert.Equal(20, FpsCalculator.Low1(intervals)!.Value, 3);
+    }
+
+    [Fact]
+    public void Low1_NeedsAtLeastTwoFrames()
+    {
+        Assert.Null(FpsCalculator.Low1(new[] { 16.6 }));
+    }
+
+    [Fact]
+    public void Formatter_JoinsFrameTimeAndLowInTheFpsSegment()
+    {
+        var snapshot = new OverlaySnapshot { Fps = 144, FrameTimeMs = 6.94, FpsLow1 = 98.2 };
+
+        OverlaySegment segment = Assert.Single(OverlayTextFormatter.Format(
+            snapshot,
+            new[] { OverlayMetricKeys.Fps, OverlayMetricKeys.FrameTime, OverlayMetricKeys.FpsLow1 },
+            CultureInfo.InvariantCulture));
+
+        Assert.Equal("FPS 144 6.9 ms 1% 98", segment.Text);
+    }
+
+    [Fact]
+    public void FrameTimeAndLow_AreOffByDefault()
+    {
+        Assert.DoesNotContain(OverlayMetricKeys.FrameTime, OverlayMetricKeys.Defaults);
+        Assert.DoesNotContain(OverlayMetricKeys.FpsLow1, OverlayMetricKeys.Defaults);
+        Assert.True(OverlayMetricKeys.IsFps(OverlayMetricKeys.FrameTime));
+    }
 }

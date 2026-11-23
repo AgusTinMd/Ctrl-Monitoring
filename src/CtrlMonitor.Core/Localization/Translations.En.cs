@@ -263,6 +263,8 @@ public static partial class Translations
         ["overlay.color.purple"] = "Purple",
         ["overlay.color.pink"] = "Pink",
         ["overlay.metric.fps"] = "FPS (FG with frame generation)",
+        ["overlay.metric.frameTime"] = "Frame time (ms)",
+        ["overlay.metric.fpsLow1"] = "1% low (stutters)",
         ["overlay.metric.cpuLoad"] = "CPU usage",
         ["overlay.metric.cpuTemp"] = "CPU temperature",
         ["overlay.metric.cpuClock"] = "CPU clock",

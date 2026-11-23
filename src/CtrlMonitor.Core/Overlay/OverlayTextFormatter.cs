@@ -22,11 +22,23 @@ public static class OverlayTextFormatter
 
         // FPS primero, como en las barras de rendimiento habituales. Con frame
         // generation se rotula "FG" para no confundirlo con cuadros reales.
-        if (selected.Contains(OverlayMetricKeys.Fps))
+        if (selected.Any(OverlayMetricKeys.IsFps))
         {
-            string label = snapshot.FrameGeneration ? "FG" : "FPS";
-            string value = snapshot.Fps is { } fps ? fps.ToString("0", text) : "--";
-            result.Add(new OverlaySegment(OverlayMetricKeys.FpsGroup, label + " " + value));
+            var parts = new List<string>(3);
+
+            if (selected.Contains(OverlayMetricKeys.Fps))
+            {
+                string label = snapshot.FrameGeneration ? "FG" : "FPS";
+                parts.Add(label + " " + (snapshot.Fps is { } fps ? fps.ToString("0", text) : "--"));
+            }
+
+            if (selected.Contains(OverlayMetricKeys.FrameTime))
+                parts.Add((snapshot.FrameTimeMs is { } ms ? ms.ToString("0.0", text) : "--") + " ms");
+
+            if (selected.Contains(OverlayMetricKeys.FpsLow1))
+                parts.Add("1% " + (snapshot.FpsLow1 is { } low ? low.ToString("0", text) : "--"));
+
+            result.Add(new OverlaySegment(OverlayMetricKeys.FpsGroup, string.Join(" ", parts)));
         }
 
         if (selected.Any(OverlayMetricKeys.IsCpu))
