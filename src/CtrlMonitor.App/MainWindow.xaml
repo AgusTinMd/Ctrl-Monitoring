@@ -169,7 +169,7 @@
                                 <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
                                 <Setter Property="Effect">
                                     <Setter.Value>
-                                        <DropShadowEffect Color="#3B82F6" BlurRadius="22"
+                                        <DropShadowEffect Color="#3AD1C0" BlurRadius="22"
                                                           ShadowDepth="0" Opacity="0.55" />
                                     </Setter.Value>
                                 </Setter>
@@ -339,7 +339,7 @@
                         <Border Style="{StaticResource StatCard}">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource AccentBrush}"
+                                    <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource ChartCpuBrush}"
                                           Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
                                     <TextBlock Text="{l:Tr summary.cpuTemp}" Style="{StaticResource CaptionText}"
                                                Margin="7,0,0,0" />
@@ -357,7 +357,7 @@
                         <Border Style="{StaticResource StatCard}">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource AccentBrush}"
+                                    <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource ChartGpuBrush}"
                                           Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
                                     <TextBlock Text="{l:Tr summary.gpuTemp}" Style="{StaticResource CaptionText}"
                                                Margin="7,0,0,0" />
@@ -375,7 +375,7 @@
                         <Border Style="{StaticResource StatCard}">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource SuccessBrush}"
+                                    <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource ChartCpuBrush}"
                                           Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
                                     <TextBlock Text="{l:Tr summary.cpuPower}" Style="{StaticResource CaptionText}"
                                                Margin="7,0,0,0" />
@@ -393,7 +393,7 @@
                         <Border Style="{StaticResource StatCard}" Margin="0">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal">
-                                    <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource SuccessBrush}"
+                                    <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource ChartGpuBrush}"
                                           Width="13" Height="13" Stretch="Uniform" VerticalAlignment="Center" />
                                     <TextBlock Text="{l:Tr summary.gpuPower}" Style="{StaticResource CaptionText}"
                                                Margin="7,0,0,0" />
@@ -424,7 +424,7 @@
                                            RenderOptions.BitmapScalingMode="HighQuality"
                                            Visibility="{Binding HasCpuLogo, Converter={StaticResource BoolToVis}}" />
                                     <Border Style="{StaticResource IconBadge}">
-                                        <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource AccentBrush}"
+                                        <Path Data="{StaticResource CpuIconGeometry}" Fill="{StaticResource ChartCpuBrush}"
                                               Width="21" Height="21" Stretch="Uniform" />
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
@@ -432,7 +432,7 @@
                                             <TextBlock Text="{l:Tr hw.cpu}" Style="{StaticResource SectionTitle}" />
                                             <Border Style="{StaticResource Chip}" Margin="10,0,0,0"
                                                     Background="{StaticResource AccentSoftBrush}" Padding="9,3">
-                                                <TextBlock Text="CPU" Foreground="{StaticResource AccentHoverBrush}"
+                                                <TextBlock Text="CPU" Foreground="{StaticResource AccentTextBrush}"
                                                            FontSize="10" FontWeight="SemiBold" />
                                             </Border>
                                         </StackPanel>
@@ -533,16 +533,16 @@
                                            Margin="12,0,0,0" VerticalAlignment="Center"
                                            RenderOptions.BitmapScalingMode="HighQuality"
                                            Visibility="{Binding HasGpuLogo, Converter={StaticResource BoolToVis}}" />
-                                    <Border Style="{StaticResource IconBadge}" Background="{StaticResource SuccessSoftBrush}">
-                                        <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource SuccessBrush}"
+                                    <Border Style="{StaticResource IconBadge}">
+                                        <Path Data="{StaticResource GpuIconGeometry}" Fill="{StaticResource ChartGpuBrush}"
                                               Width="21" Height="21" Stretch="Uniform" />
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="11,0,0,0" VerticalAlignment="Center">
                                         <StackPanel Orientation="Horizontal">
                                             <TextBlock Text="{l:Tr hw.gpu}" Style="{StaticResource SectionTitle}" />
                                             <Border Style="{StaticResource Chip}" Margin="10,0,0,0"
-                                                    Background="{StaticResource SuccessSoftBrush}" Padding="9,3">
-                                                <TextBlock Text="GPU" Foreground="{StaticResource SuccessBrush}"
+                                                    Background="{StaticResource AccentSoftBrush}" Padding="9,3">
+                                                <TextBlock Text="GPU" Foreground="{StaticResource AccentTextBrush}"
                                                            FontSize="10" FontWeight="SemiBold" />
                                             </Border>
                                         </StackPanel>
@@ -609,10 +609,9 @@
                     <Border Style="{StaticResource Card}" Margin="0,16,0,0">
                         <StackPanel>
                             <StackPanel Orientation="Horizontal">
-                                <Border Style="{StaticResource IconBadge}" Width="30" Height="30"
-                                        Background="{StaticResource WarningSoftBrush}">
+                                <Border Style="{StaticResource IconBadge}" Width="30" Height="30">
                                     <Path Data="{StaticResource BoardIconGeometry}"
-                                          Fill="{StaticResource WarningBrush}"
+                                          Fill="{StaticResource ChartBoardBrush}"
                                           Width="18" Height="18" Stretch="Uniform" />
                                 </Border>
                                 <TextBlock Text="{l:Tr summary.boardCaption}" Style="{StaticResource CaptionText}"
@@ -941,8 +940,8 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <StackPanel Orientation="Horizontal">
-                                <Image Source="/Assets/fan.png" Width="18" Height="18"
-                                       VerticalAlignment="Center" />
+                                <Path Data="{StaticResource FanIconGeometry}" Fill="{StaticResource AccentBrush}"
+                                      Width="18" Height="18" Stretch="Uniform" VerticalAlignment="Center" />
                                 <TextBlock Text="{Binding FanSummaryText}" Style="{StaticResource SecondaryText}"
                                            Margin="10,0,0,0" VerticalAlignment="Center" />
                             </StackPanel>
@@ -970,9 +969,9 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
 
-                                            <Border Style="{StaticResource IconBadge}" Width="34" Height="34"
-                                                    Background="{StaticResource TrackBrush}">
-                                                <Image Source="/Assets/fan.png" Width="19" Height="19" />
+                                            <Border Style="{StaticResource IconBadge}" Width="34" Height="34">
+                                                <Path Data="{StaticResource FanIconGeometry}" Fill="{StaticResource AccentBrush}"
+                                                      Width="19" Height="19" Stretch="Uniform" />
                                             </Border>
 
                                             <StackPanel Grid.Column="1" Margin="11,0,12,0" VerticalAlignment="Center">
@@ -1082,15 +1081,19 @@
                                                         <Path.Style>
                                                             <Style TargetType="Path">
                                                                 <Setter Property="Data" Value="{StaticResource CpuIconGeometry}" />
-                                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                                                <Setter Property="Fill" Value="{StaticResource ChartCpuBrush}" />
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding IconKey}" Value="Gpu">
                                                                         <Setter Property="Data" Value="{StaticResource GpuIconGeometry}" />
-                                                                        <Setter Property="Fill" Value="{StaticResource SuccessBrush}" />
+                                                                        <Setter Property="Fill" Value="{StaticResource ChartGpuBrush}" />
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding IconKey}" Value="Board">
                                                                         <Setter Property="Data" Value="{StaticResource BoardIconGeometry}" />
-                                                                        <Setter Property="Fill" Value="{StaticResource WarningBrush}" />
+                                                                        <Setter Property="Fill" Value="{StaticResource ChartBoardBrush}" />
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IconKey}" Value="Disk">
+                                                                        <Setter Property="Data" Value="{StaticResource DiskIconGeometry}" />
+                                                                        <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -2324,7 +2327,7 @@
 
     <!-- Pregunta única, la primera vez que se abre la app: ¿enviar informes de errores? -->
     <Grid Visibility="{Binding ShowErrorReportsPrompt, Converter={StaticResource BoolToVis}}">
-        <Border Background="#B3050A14" />
+        <Border Background="#B3060709" />
         <Border Style="{StaticResource Card}" MaxWidth="480" Margin="24"
                 HorizontalAlignment="Center" VerticalAlignment="Center" Padding="24,22">
             <StackPanel>

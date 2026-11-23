@@ -12,7 +12,7 @@ internal static class OverlayBrushes
     private static readonly Dictionary<string, Brush> Cache = new(StringComparer.OrdinalIgnoreCase);
 
     public static readonly Brush Separator = FromHex("#66FFFFFF");
-    public static readonly Brush GlobalChoice = FromHex("#FF647696");
+    public static readonly Brush GlobalChoice = FromHex("#FF868D98");
 
     public static Brush FromHex(string hex)
     {
