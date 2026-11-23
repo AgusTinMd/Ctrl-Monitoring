@@ -140,6 +140,14 @@ public sealed partial class ChartPanelViewModel : ObservableObject
     [ObservableProperty]
     private string _seriesKey = string.Empty;
 
+    /// <summary>La tarjeta muestra los hilos del CPU: un mini gráfico por hilo en lugar del gráfico común.</summary>
+    [ObservableProperty]
+    private bool _isThreads;
+
+    /// <summary>La grilla muestra núcleos en lugar de hilos.</summary>
+    [ObservableProperty]
+    private bool _isCores;
+
     [ObservableProperty]
     private string _axisUnit = "°";
 
@@ -267,6 +275,8 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         Subtitle = metric.Subtitle;
         Color = metric.Color;
         SeriesKey = metric.Key;
+        IsCores = string.Equals(metric.Key, ChartMetrics.CpuCores.Key, StringComparison.Ordinal);
+        IsThreads = IsCores || string.Equals(metric.Key, ChartMetrics.CpuThreads.Key, StringComparison.Ordinal);
         AxisUnit = metric.AxisUnit;
         AxisMin = metric.AxisMin;
         AxisMax = metric.AxisMax;
@@ -366,6 +376,46 @@ internal static class ChartMetrics
         Tertiary = vm => vm.CpuPower,
         TertiaryFormat = "0.0",
         TertiaryUnit = " W"
+    };
+
+    /// <summary>Carga de cada hilo en el tiempo, como mapa de calor (una fila por hilo).</summary>
+    public static ChartMetric CpuThreads { get; } = new()
+    {
+        Key = "CpuThreads",
+        TitleKey = "metric.cpuThreads.title",
+        SubtitleKey = "metric.cpuThreads.subtitle",
+        Color = UiBrushes.ChartCpu,
+        AxisUnit = "%",
+        AxisMin = 0,
+        AxisMax = 100,
+        AxisStep = 10,
+        Primary = vm => vm.CpuLoad,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        SecondaryLabelKey = "metric.label.busiestThread",
+        Secondary = vm => vm.BusiestThreadLoad,
+        SecondaryFormat = "0",
+        SecondaryUnit = " %"
+    };
+
+    /// <summary>Carga de cada núcleo: un mini gráfico por núcleo.</summary>
+    public static ChartMetric CpuCores { get; } = new()
+    {
+        Key = "CpuCores",
+        TitleKey = "metric.cpuCores.title",
+        SubtitleKey = "metric.cpuCores.subtitle",
+        Color = UiBrushes.ChartCpu,
+        AxisUnit = "%",
+        AxisMin = 0,
+        AxisMax = 100,
+        AxisStep = 10,
+        Primary = vm => vm.CpuLoad,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        SecondaryLabelKey = "metric.label.busiestCore",
+        Secondary = vm => vm.BusiestCoreLoad,
+        SecondaryFormat = "0",
+        SecondaryUnit = " %"
     };
 
     public static ChartMetric GpuLoad { get; } = new()
@@ -493,6 +543,40 @@ internal static class ChartMetrics
     };
 
     private static readonly Dictionary<string, ChartMetric> DiskMetrics = new(StringComparer.Ordinal);
+    private static readonly Dictionary<int, ChartMetric> CoreMetrics = new();
+
+    /// <summary>Prefijo de las claves de núcleo: «Core:3».</summary>
+    public const string CoreKeyPrefix = "Core:";
+
+    /// <summary>Carga de un núcleo del CPU (desde 1), como línea en el tiempo.</summary>
+    public static ChartMetric ForCore(int core)
+    {
+        if (CoreMetrics.TryGetValue(core, out ChartMetric? cached))
+            return cached;
+
+        var metric = new ChartMetric
+        {
+            Key = CoreKeyPrefix + core.ToString(CultureInfo.InvariantCulture),
+            TitleKey = "metric.core.title",
+            TitleSelector = () => Loc.F("metric.core.title", core),
+            SubtitleKey = "metric.core.subtitle",
+            Color = UiBrushes.ChartCpu,
+            AxisUnit = "%",
+            AxisMin = 0,
+            AxisMax = 100,
+            AxisStep = 10,
+            Primary = vm => vm.GetCoreLoad(core),
+            PrimaryFormat = "0",
+            PrimaryUnit = " %",
+            SecondaryLabelKey = "metric.label.cpuTotal",
+            Secondary = vm => vm.CpuLoad,
+            SecondaryFormat = "0",
+            SecondaryUnit = " %"
+        };
+
+        CoreMetrics[core] = metric;
+        return metric;
+    }
 
     /// <summary>Prefijo de las claves de disco: «Disk:2 C:».</summary>
     public const string DiskKeyPrefix = "Disk:";
@@ -550,6 +634,8 @@ internal static class ChartMetrics
         Cpu,
         Gpu,
         CpuLoad,
+        CpuCores,
+        CpuThreads,
         GpuLoad,
         Board,
         Hotspot,

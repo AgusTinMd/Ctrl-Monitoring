@@ -341,10 +341,24 @@ public sealed class LiveChart : FrameworkElement
             return result;
         }
 
+        // Cada núcleo tiene su serie: «Core:3».
+        if (series.StartsWith(ChartMetrics.CoreKeyPrefix, StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(series[ChartMetrics.CoreKeyPrefix.Length..], out int core))
+        {
+            result.Add(new ChartSeries(s => s.Cores is { } cores && core >= 1 && core <= cores.Count ? cores[core - 1] : null,
+                Resource("ChartCpuBrush", Brushes.DodgerBlue)));
+            return result;
+        }
+
         if (series.Length > 0)
         {
             switch (series.ToLowerInvariant())
             {
+                case "cputhreads":
+                case "cpucores":
+                    // En la vista de lista, la miniatura muestra la carga total.
+                    result.Add(new ChartSeries(s => s.CpuLoad, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
+                    break;
                 case "cpu":
                     result.Add(new ChartSeries(s => s.Cpu, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
                     break;

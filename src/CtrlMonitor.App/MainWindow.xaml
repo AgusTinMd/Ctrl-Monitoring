@@ -238,7 +238,62 @@
                                         AxisMin="{Binding AxisMin}"
                                         AxisMax="{Binding AxisMax}"
                                         AxisStep="{Binding AxisStep}"
-                                        AutoScale="True" />
+                                        AutoScale="True">
+                        <controls:LiveChart.Style>
+                            <Style TargetType="controls:LiveChart">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsThreads}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </controls:LiveChart.Style>
+                    </controls:LiveChart>
+                    <ScrollViewer Grid.Column="1" Margin="0,10,0,0" MaxHeight="200" VerticalAlignment="Top"
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl Focusable="False">
+                        <ItemsControl.Style>
+                            <Style TargetType="ItemsControl">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Setter Property="ItemsSource"
+                                        Value="{Binding DataContext.CpuThreads, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsThreads}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsCores}" Value="True">
+                                        <Setter Property="ItemsSource"
+                                                Value="{Binding DataContext.CpuCores, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ItemsControl.Style>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <controls:ResponsiveGrid MinItemWidth="118" MaxColumns="8" Gap="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="7" Padding="8,5"
+                                        ToolTip="{Binding Tooltip}">
+                                    <StackPanel>
+                                        <Grid>
+                                            <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}" FontSize="11" />
+                                            <TextBlock Text="{Binding LoadText}" HorizontalAlignment="Right" FontSize="12.5"
+                                                       FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"
+                                                       Typography.NumeralAlignment="Tabular" />
+                                        </Grid>
+                                        <controls:Sparkline Height="24" Margin="0,4,0,0"
+                                                            FirstValues="{Binding History}"
+                                                            FirstBrush="{StaticResource ChartCpuBrush}"
+                                                            Capacity="60" MinimumScale="100" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    </ScrollViewer>
                     </Grid>
                 </Grid>
             </Border>
@@ -491,6 +546,82 @@
                                                Text="{Binding RamUsageText}"
                                                ToolTip="{Binding RamUsageText}" />
                                 </Grid>
+
+                                <!-- Carga de cada hilo, al estilo btop: una fila por hilo con su número,
+                                     barra y porcentaje. Las columnas se acomodan al ancho, así que
+                                     procesadores con muchos hilos suman filas en lugar de achicarlas. -->
+                                <StackPanel Margin="0,14,0,0"
+                                            Visibility="{Binding HasCpuThreads, Converter={StaticResource BoolToVis}}">
+                                    <ToggleButton IsChecked="{Binding CpuThreadsExpanded, Mode=TwoWay}"
+                                                  Background="Transparent" BorderThickness="0" Padding="0"
+                                                  HorizontalContentAlignment="Stretch" Cursor="Hand"
+                                                  FocusVisualStyle="{x:Null}"
+                                                  ToolTip="{l:Tr summary.threadsToggle}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent">
+                                                    <ContentPresenter />
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                        <Grid>
+                                            <TextBlock Text="{Binding CpuThreadsTitle}" Style="{StaticResource SecondaryText}" />
+                                            <Path Width="9" Height="6" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                  Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.6"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                  Data="M 1,1 L 5,5 L 9,1" RenderTransformOrigin="0.5,0.5">
+                                                <Path.Style>
+                                                    <Style TargetType="Path">
+                                                        <Setter Property="RenderTransform">
+                                                            <Setter.Value>
+                                                                <RotateTransform Angle="180" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding CpuThreadsExpanded}" Value="False">
+                                                                <Setter Property="RenderTransform">
+                                                                    <Setter.Value>
+                                                                        <RotateTransform Angle="0" />
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Path.Style>
+                                            </Path>
+                                        </Grid>
+                                    </ToggleButton>
+                                    <ItemsControl ItemsSource="{Binding CpuThreads}" Margin="0,8,0,0" Focusable="False"
+                                                  Visibility="{Binding CpuThreadsExpanded, Converter={StaticResource BoolToVis}}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <controls:ResponsiveGrid MinItemWidth="112" MaxColumns="4" Gap="8" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid ToolTip="{Binding Tooltip}" Background="Transparent">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="30" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="36" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}"
+                                                               FontSize="11" VerticalAlignment="Center" />
+                                                    <ProgressBar Grid.Column="1" Style="{StaticResource MeterBar}"
+                                                                 Minimum="0" Maximum="100" Height="6"
+                                                                 Value="{Binding Load, Mode=OneWay}"
+                                                                 Foreground="{StaticResource ChartCpuBrush}"
+                                                                 VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding LoadText}" FontSize="11"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               Typography.NumeralAlignment="Tabular"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
@@ -664,6 +795,27 @@
                                                        ToolTip="{Binding Detail}" />
                                             <TextBlock Text="{Binding LifeText}" Style="{StaticResource MutedText}"
                                                        Margin="0,2,0,0" TextWrapping="NoWrap" />
+
+                                            <!-- Lectura y escritura en vivo con un mini gráfico. -->
+                                            <StackPanel Margin="0,10,0,0"
+                                                        Visibility="{Binding HasActivity, Converter={StaticResource BoolToVis}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="7" Height="7" Fill="{StaticResource ChartDiskReadBrush}"
+                                                             VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding ReadText}" Style="{StaticResource SecondaryText}"
+                                                               Margin="6,0,14,0" TextWrapping="NoWrap" />
+                                                    <Ellipse Width="7" Height="7" Fill="{StaticResource ChartDiskWriteBrush}"
+                                                             VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding WriteText}" Style="{StaticResource SecondaryText}"
+                                                               Margin="6,0,0,0" TextWrapping="NoWrap" />
+                                                </StackPanel>
+                                                <controls:Sparkline Height="30" Margin="0,6,0,0"
+                                                                    FirstValues="{Binding ReadValues}"
+                                                                    SecondValues="{Binding WriteValues}"
+                                                                    FirstBrush="{StaticResource ChartDiskReadBrush}"
+                                                                    SecondBrush="{StaticResource ChartDiskWriteBrush}"
+                                                                    Capacity="40" MinimumScale="1" />
+                                            </StackPanel>
 
                                             <ItemsControl ItemsSource="{Binding Volumes}" Focusable="False">
                                                 <ItemsControl.ItemTemplate>
@@ -864,7 +1016,59 @@
                                                 AxisMin="{Binding AxisMin}"
                                                 AxisMax="{Binding AxisMax}"
                                                 AxisStep="{Binding AxisStep}"
-                                                AutoScale="True" />
+                                                AutoScale="True">
+                        <controls:LiveChart.Style>
+                            <Style TargetType="controls:LiveChart">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsThreads}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </controls:LiveChart.Style>
+                            </controls:LiveChart>
+                            <ItemsControl Focusable="False" Grid.Row="1" Margin="0,12,0,0" VerticalAlignment="Top">
+                        <ItemsControl.Style>
+                            <Style TargetType="ItemsControl">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Setter Property="ItemsSource"
+                                        Value="{Binding DataContext.CpuThreads, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsThreads}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsCores}" Value="True">
+                                        <Setter Property="ItemsSource"
+                                                Value="{Binding DataContext.CpuCores, RelativeSource={RelativeSource AncestorType=Window}}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ItemsControl.Style>
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <controls:ResponsiveGrid MinItemWidth="118" MaxColumns="8" Gap="8" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="7" Padding="8,5"
+                                        ToolTip="{Binding Tooltip}">
+                                    <StackPanel>
+                                        <Grid>
+                                            <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}" FontSize="11" />
+                                            <TextBlock Text="{Binding LoadText}" HorizontalAlignment="Right" FontSize="12.5"
+                                                       FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"
+                                                       Typography.NumeralAlignment="Tabular" />
+                                        </Grid>
+                                        <controls:Sparkline Height="24" Margin="0,4,0,0"
+                                                            FirstValues="{Binding History}"
+                                                            FirstBrush="{StaticResource ChartCpuBrush}"
+                                                            Capacity="60" MinimumScale="100" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
                         </Grid>
                     </Border>
                 </Grid>
