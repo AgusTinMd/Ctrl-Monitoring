@@ -62,4 +62,16 @@ public class UpdateCheckTests
     {
         Assert.False(new AppConfig().CheckForUpdates);
     }
+
+    [Fact]
+    public void IsDue_OnlyOnceAWeek()
+    {
+        var now = new DateTime(2026, 11, 23, 12, 0, 0, DateTimeKind.Utc);
+
+        Assert.True(UpdateCheck.IsDue(null, now));
+        Assert.False(UpdateCheck.IsDue(now.AddDays(-1), now));
+        Assert.False(UpdateCheck.IsDue(now.AddDays(-6.9), now));
+        Assert.True(UpdateCheck.IsDue(now.AddDays(-7), now));
+        Assert.True(UpdateCheck.IsDue(now.AddDays(1), now));
+    }
 }

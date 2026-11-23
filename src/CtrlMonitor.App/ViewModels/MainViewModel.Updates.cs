@@ -10,11 +10,13 @@ namespace CtrlMonitor.App.ViewModels;
 /// <summary>Aviso opcional de versión nueva (desactivado por defecto).</summary>
 public partial class MainViewModel
 {
-    /// <summary>Cada cuánto se vuelve a consultar mientras la app sigue abierta.</summary>
-    private static readonly TimeSpan UpdateInterval = TimeSpan.FromHours(12);
+    /// <summary>
+    /// Cada cuánto se revisa si toca consultar: la consulta en sí sale como
+    /// mucho una vez por semana (<see cref="UpdateCheck.Interval"/>).
+    /// </summary>
+    private static readonly TimeSpan UpdateTimerInterval = TimeSpan.FromHours(6);
 
     private DispatcherTimer? _updateTimer;
-    private ReleaseInfo? _latestRelease;
     private bool _checkingUpdates;
 
     /// <summary>Se dispara una vez por versión nueva, para el aviso de la bandeja.</summary>
@@ -33,10 +35,11 @@ public partial class MainViewModel
             OnPropertyChanged();
             SaveSoon();
 
+            // Al activarla se consulta enseguida; después, una vez por semana.
             if (value)
-                _ = CheckForUpdatesAsync();
+                _ = CheckForUpdatesAsync(force: true);
             else
-                ClearUpdate();
+                ShowKnownUpdate();
         }
     }
 
@@ -46,12 +49,19 @@ public partial class MainViewModel
     [ObservableProperty]
     private string _updateText = string.Empty;
 
-    /// <summary>Consulta GitHub si el usuario lo activó. Nunca lanza excepciones.</summary>
-    public async Task CheckForUpdatesAsync()
+    /// <summary>
+    /// Consulta GitHub si el usuario lo activó y pasó una semana desde la
+    /// última consulta (o si <paramref name="force"/>). Nunca lanza excepciones.
+    /// </summary>
+    public async Task CheckForUpdatesAsync(bool force = false)
     {
         EnsureUpdateTimer();
+        ShowKnownUpdate();
 
         if (!_config.CheckForUpdates || _checkingUpdates || _disposed)
+            return;
+
+        if (!force && !UpdateCheck.IsDue(_config.LastUpdateCheckUtc, DateTime.UtcNow))
             return;
 
         _checkingUpdates = true;
@@ -63,15 +73,20 @@ public partial class MainViewModel
             if (_disposed || !_config.CheckForUpdates)
                 return;
 
-            if (latest is null || !UpdateCheck.IsNewer(latest.Version, UpdateService.CurrentVersion))
+            _config.LastUpdateCheckUtc = DateTime.UtcNow;
+
+            if (latest is not null)
             {
-                ClearUpdate();
-                return;
+                _config.LatestUpdateTag = latest.Tag;
+                _config.LatestUpdateUrl = latest.Url;
             }
 
-            _latestRelease = latest;
-            UpdateAvailable = true;
-            RefreshUpdateText();
+            SaveSoon();
+            ShowKnownUpdate();
+
+            if (latest is null || !UpdateCheck.IsNewer(latest.Version, UpdateService.CurrentVersion))
+                return;
+
             AppLog.Info($"Hay una versión nueva: {latest.Tag}.");
 
             // El aviso de la bandeja sale una sola vez por versión.
@@ -91,29 +106,42 @@ public partial class MainViewModel
     [RelayCommand]
     private void OpenUpdate()
     {
-        if (_latestRelease is { } release)
+        if (KnownUpdate() is { } release)
             UpdateService.OpenReleasePage(release.Url);
     }
 
-    private void ClearUpdate()
+    /// <summary>
+    /// Entre consulta y consulta se muestra la última versión conocida, si es
+    /// más nueva que la instalada: así el aviso de Ajustes no desaparece al
+    /// reiniciar la app.
+    /// </summary>
+    private void ShowKnownUpdate()
     {
-        _latestRelease = null;
-        UpdateAvailable = false;
-        UpdateText = string.Empty;
+        ReleaseInfo? release = _config.CheckForUpdates ? KnownUpdate() : null;
+
+        UpdateAvailable = release is not null;
+        UpdateText = release is null ? string.Empty : Loc.F("settings.updateAvailable", UpdateCheck.Display(release.Version));
     }
 
-    private void RefreshUpdateText()
+    private ReleaseInfo? KnownUpdate()
     {
-        if (_latestRelease is { } release)
-            UpdateText = Loc.F("settings.updateAvailable", UpdateCheck.Display(release.Version));
+        Version? version = UpdateCheck.ParseTag(_config.LatestUpdateTag);
+
+        return version is not null
+               && UpdateCheck.IsNewer(version, UpdateService.CurrentVersion)
+               && UpdateCheck.IsRepositoryUrl(_config.LatestUpdateUrl)
+            ? new ReleaseInfo(version, _config.LatestUpdateTag, _config.LatestUpdateUrl)
+            : null;
     }
+
+    private void RefreshUpdateText() => ShowKnownUpdate();
 
     private void EnsureUpdateTimer()
     {
         if (_updateTimer is not null)
             return;
 
-        _updateTimer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher) { Interval = UpdateInterval };
+        _updateTimer = new DispatcherTimer(DispatcherPriority.Background, _dispatcher) { Interval = UpdateTimerInterval };
         _updateTimer.Tick += (_, _) => _ = CheckForUpdatesAsync();
         _updateTimer.Start();
     }

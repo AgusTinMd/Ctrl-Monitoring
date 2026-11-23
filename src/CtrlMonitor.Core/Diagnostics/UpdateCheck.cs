@@ -15,6 +15,17 @@ public static class UpdateCheck
     /// <summary>Última versión publicada (no borradores ni previas).</summary>
     public const string LatestReleaseApi = "https://api.github.com/repos/AgusTinMd/Ctrl-Monitoring/releases/latest";
 
+    /// <summary>La consulta a GitHub sale como mucho una vez por semana.</summary>
+    public static readonly TimeSpan Interval = TimeSpan.FromDays(7);
+
+    /// <summary>True si nunca se consultó o pasó una semana desde la última vez.</summary>
+    public static bool IsDue(DateTime? lastCheckUtc, DateTime nowUtc) =>
+        lastCheckUtc is not { } last || last > nowUtc || nowUtc - last >= Interval;
+
+    /// <summary>Solo se abren páginas del propio repositorio.</summary>
+    public static bool IsRepositoryUrl(string? url) =>
+        url is not null && url.StartsWith("https://github.com/AgusTinMd/Ctrl-Monitoring/", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>«v2.13.0» o «2.13.0» → 2.13.0. Null si no es una versión.</summary>
     public static Version? ParseTag(string? tag)
     {
@@ -45,13 +56,12 @@ public static class UpdateCheck
             Version? version = ParseTag(tag);
 
             // Solo se abre una página del repositorio, nunca otra dirección.
-            if (version is null || url is null
-                || !url.StartsWith("https://github.com/AgusTinMd/Ctrl-Monitoring/", StringComparison.OrdinalIgnoreCase))
+            if (version is null || !IsRepositoryUrl(url))
             {
                 return null;
             }
 
-            return new ReleaseInfo(version, tag!, url);
+            return new ReleaseInfo(version, tag!, url!);
         }
         catch (JsonException)
         {

@@ -324,7 +324,7 @@ public static partial class Translations
         ["settings.sendErrors"] = "Enviar informes de errores",
         ["settings.sendErrorsHint"] = "Si la app falla, envía el error para poder arreglarlo: versión, Windows, modelo de CPU, GPU y placa, y las últimas líneas del log. No incluye tu nombre de usuario, el de la PC ni tus archivos.",
         ["settings.checkUpdates"] = "Avisar cuando haya una versión nueva",
-        ["settings.checkUpdatesHint"] = "Al abrir la app y cada 12 horas consulta la página de versiones en GitHub. No envía ningún dato tuyo.",
+        ["settings.checkUpdatesHint"] = "Consulta la página de versiones en GitHub una vez por semana. No envía ningún dato tuyo.",
         ["settings.updateAvailable"] = "Versión {0} disponible",
         ["settings.downloadUpdate"] = "Descargar",
         ["tray.updateAvailable"] = "Hay una versión nueva: {0}. Abrí Ajustes para descargarla.",
