@@ -30,7 +30,7 @@
             <Grid>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="{Binding BenchApi}" Foreground="#FF3AD1C0" FontSize="12" FontWeight="Bold"
-                               Margin="0,0,8,0" VerticalAlignment="Center" />
+                               Margin="0,0,8,0" VerticalAlignment="Center" Visibility="{Binding BenchShowApi, Converter={StaticResource BoolToVis}}" />
                     <TextBlock Text="BENCHMARK" Style="{StaticResource BenchLabel}" />
                 </StackPanel>
                 <TextBlock Text="{Binding RecordingText}" HorizontalAlignment="Right" Foreground="#FFFF4D6D"
@@ -40,56 +40,60 @@
 
             <!-- FPS -->
             <Grid Margin="0,6,0,0">
-                <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Horizontal" Visibility="{Binding BenchShowFps, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{Binding BenchFpsText}" Foreground="White" FontSize="24" FontWeight="Bold"
                                Typography.NumeralAlignment="Tabular" />
                     <TextBlock Text="{Binding BenchFpsLabel}" Style="{StaticResource BenchLabel}" Margin="5,0,0,3"
                                VerticalAlignment="Bottom" />
                 </StackPanel>
                 <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,0,3">
-                    <TextBlock Text="{Binding BenchLowText}" Style="{StaticResource BenchValue}" HorizontalAlignment="Right" />
-                    <TextBlock Text="{Binding BenchFrameTimeText}" Style="{StaticResource BenchLabel}" HorizontalAlignment="Right" />
+                    <TextBlock Text="{Binding BenchLowText}" Style="{StaticResource BenchValue}" HorizontalAlignment="Right" Visibility="{Binding BenchShowLow, Converter={StaticResource BoolToVis}}" />
+                    <TextBlock Text="{Binding BenchFrameTimeText}" Style="{StaticResource BenchLabel}" HorizontalAlignment="Right" Visibility="{Binding BenchShowFrameTime, Converter={StaticResource BoolToVis}}" />
                 </StackPanel>
             </Grid>
-            <TextBlock Text="{l:Tr benchmark.frametime}" Style="{StaticResource BenchLabel}" Margin="0,6,0,2" />
-            <Border Background="#26FFFFFF" CornerRadius="3" Padding="1">
+            <TextBlock Text="{l:Tr benchmark.frametime}" Style="{StaticResource BenchLabel}" Margin="0,6,0,2" Visibility="{Binding BenchShowFrameTime, Converter={StaticResource BoolToVis}}" />
+            <Border Background="#26FFFFFF" CornerRadius="3" Padding="1" Visibility="{Binding BenchShowFrameTime, Converter={StaticResource BoolToVis}}">
                 <controls:Sparkline Height="38" FirstValues="{Binding BenchFrameTimes}" FirstBrush="#FFFF9F43"
                                     Capacity="240" MinimumScale="20" />
             </Border>
-            <TextBlock Text="FPS" Style="{StaticResource BenchLabel}" Margin="0,6,0,2" />
-            <Border Background="#26FFFFFF" CornerRadius="3" Padding="1">
+            <TextBlock Text="FPS" Style="{StaticResource BenchLabel}" Margin="0,6,0,2" Visibility="{Binding BenchShowFps, Converter={StaticResource BoolToVis}}" />
+            <Border Background="#26FFFFFF" CornerRadius="3" Padding="1" Visibility="{Binding BenchShowFps, Converter={StaticResource BoolToVis}}">
                 <controls:Sparkline Height="28" FirstValues="{Binding BenchFpsHistory}" FirstBrush="#FF3AD1C0"
                                     Capacity="90" MinimumScale="60" />
             </Border>
 
             <!-- GPU -->
-            <Grid Margin="0,9,0,2">
+            <Grid Margin="0,9,0,2" Visibility="{Binding BenchShowGpu, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="GPU" Style="{StaticResource BenchLabel}" />
                 <TextBlock Text="{Binding BenchGpuText}" Style="{StaticResource BenchValue}" HorizontalAlignment="Right" />
             </Grid>
-            <Border Background="#26FFFFFF" CornerRadius="3" Padding="1">
+            <Border Background="#26FFFFFF" CornerRadius="3" Padding="1" Visibility="{Binding BenchShowGpuGraph, Converter={StaticResource BoolToVis}}">
                 <controls:Sparkline Height="22" FirstValues="{Binding BenchGpuHistory}" FirstBrush="#FFF2D58A"
                                     Capacity="90" MinimumScale="100" />
             </Border>
 
             <!-- CPU -->
-            <Grid Margin="0,7,0,2">
+            <Grid Margin="0,7,0,2" Visibility="{Binding BenchShowCpu, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="CPU" Style="{StaticResource BenchLabel}" />
                 <TextBlock Text="{Binding BenchCpuText}" Style="{StaticResource BenchValue}" HorizontalAlignment="Right" />
             </Grid>
-            <Border Background="#26FFFFFF" CornerRadius="3" Padding="1">
+            <Border Background="#26FFFFFF" CornerRadius="3" Padding="1" Visibility="{Binding BenchShowCpuGraph, Converter={StaticResource BoolToVis}}">
                 <controls:Sparkline Height="22" FirstValues="{Binding BenchCpuHistory}" FirstBrush="#FFFFA477"
                                     Capacity="90" MinimumScale="100" />
             </Border>
 
             <!-- Memoria -->
-            <Grid Margin="0,8,0,0">
+            <Grid Margin="0,8,0,0" Visibility="{Binding BenchShowRam, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="RAM" Style="{StaticResource BenchLabel}" />
                 <TextBlock Text="{Binding BenchRamText}" Style="{StaticResource BenchValue}" HorizontalAlignment="Right" />
             </Grid>
-            <Grid Margin="0,3,0,0">
+            <Grid Margin="0,3,0,0" Visibility="{Binding BenchShowVram, Converter={StaticResource BoolToVis}}">
                 <TextBlock Text="VRAM" Style="{StaticResource BenchLabel}" />
                 <TextBlock Text="{Binding BenchVramText}" Style="{StaticResource BenchValue}" HorizontalAlignment="Right" />
+            </Grid>
+            <Grid Margin="0,3,0,0" Visibility="{Binding BenchShowNet, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{l:Tr benchmark.net}" Style="{StaticResource BenchLabel}" />
+                <TextBlock Text="{Binding BenchNetText}" Style="{StaticResource BenchValue}" HorizontalAlignment="Right" />
             </Grid>
 
             <!-- Resultado de la última grabación -->

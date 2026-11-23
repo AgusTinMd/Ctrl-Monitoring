@@ -128,6 +128,20 @@ public partial class MainViewModel
     [ObservableProperty] private IReadOnlyList<double> _benchFpsHistory = Array.Empty<double>();
     [ObservableProperty] private IReadOnlyList<double> _benchCpuHistory = Array.Empty<double>();
     [ObservableProperty] private IReadOnlyList<double> _benchGpuHistory = Array.Empty<double>();
+    [ObservableProperty] private string _benchNetText = string.Empty;
+
+    // Qué muestra el panel: lo definen las mismas métricas que la barra.
+    [ObservableProperty] private bool _benchShowApi;
+    [ObservableProperty] private bool _benchShowFps;
+    [ObservableProperty] private bool _benchShowLow;
+    [ObservableProperty] private bool _benchShowFrameTime;
+    [ObservableProperty] private bool _benchShowGpu;
+    [ObservableProperty] private bool _benchShowGpuGraph;
+    [ObservableProperty] private bool _benchShowCpu;
+    [ObservableProperty] private bool _benchShowCpuGraph;
+    [ObservableProperty] private bool _benchShowRam;
+    [ObservableProperty] private bool _benchShowVram;
+    [ObservableProperty] private bool _benchShowNet;
     [ObservableProperty] private bool _isRecording;
     [ObservableProperty] private string _recordingText = string.Empty;
     [ObservableProperty] private bool _hasBenchResult;
@@ -151,10 +165,44 @@ public partial class MainViewModel
         BenchFpsText = fps is { } f ? f.Fps.ToString("0", c) : "--";
         BenchLowText = fps?.Low1Fps is { } low ? "1% " + low.ToString("0", c) : string.Empty;
         BenchFrameTimeText = fps?.FrameTimeMs is { } ms ? ms.ToString("0.0", c) + " ms" : string.Empty;
-        BenchGpuText = $"{F(GpuLoad, "0")} %   {F(GpuTemperature, "0")} °C   {F(GpuPower, "0")} W";
-        BenchCpuText = $"{F(CpuLoad, "0")} %   {F(CpuTemperature, "0")} °C   {F(CpuClockGhz, "0.0")} GHz";
-        BenchRamText = $"{F(RamUsedGb, "0.0")} / {F(RamTotalGb, "0.0")} GB";
+        var selected = new HashSet<string>(
+            _overlayMetrics.Where(option => option.IsSelected).Select(option => option.Key),
+            StringComparer.OrdinalIgnoreCase);
+        bool Has(string key) => selected.Contains(key);
+
+        // Cada renglón muestra solo los valores elegidos, en el mismo orden que la barra.
+        string Join(params (string Key, string Text)[] parts) =>
+            string.Join("   ", parts.Where(part => Has(part.Key)).Select(part => part.Text));
+
+        BenchGpuText = Join(
+            (OverlayMetricKeys.GpuLoad, $"{F(GpuLoad, "0")} %"),
+            (OverlayMetricKeys.GpuTemperature, $"{F(GpuTemperature, "0")} °C"),
+            (OverlayMetricKeys.GpuHotspot, $"HS {F(GpuHotspot, "0")} °C"),
+            (OverlayMetricKeys.GpuPower, $"{F(GpuPower, "0")} W"),
+            (OverlayMetricKeys.GpuFan, $"{F(GpuFanRpm, "0")} RPM"));
+        BenchCpuText = Join(
+            (OverlayMetricKeys.CpuLoad, $"{F(CpuLoad, "0")} %"),
+            (OverlayMetricKeys.CpuTemperature, $"{F(CpuTemperature, "0")} °C"),
+            (OverlayMetricKeys.CpuClock, $"{F(CpuClockGhz, "0.0")} GHz"),
+            (OverlayMetricKeys.CpuPower, $"{F(CpuPower, "0")} W"),
+            (OverlayMetricKeys.CpuFan, $"{F(CpuFanRpm, "0")} RPM"));
+        BenchRamText = Join(
+            (OverlayMetricKeys.RamUsed, $"{F(RamUsedGb, "0.0")} / {F(RamTotalGb, "0.0")} GB"),
+            (OverlayMetricKeys.RamPercent, $"{F(RamPercent, "0")} %"));
         BenchVramText = $"{F(VramUsedGb, "0.0")} / {F(VramTotalGb, "0.0")} GB";
+        BenchNetText = $"↓ {F(NetDownMbs, "0.0")}  ↑ {F(NetUpMbs, "0.0")} MB/s";
+
+        BenchShowApi = Has(OverlayMetricKeys.GraphicsApi);
+        BenchShowFps = Has(OverlayMetricKeys.Fps);
+        BenchShowLow = Has(OverlayMetricKeys.FpsLow1);
+        BenchShowFrameTime = Has(OverlayMetricKeys.FrameTime);
+        BenchShowGpu = BenchGpuText.Length > 0;
+        BenchShowGpuGraph = Has(OverlayMetricKeys.GpuLoad);
+        BenchShowCpu = BenchCpuText.Length > 0;
+        BenchShowCpuGraph = Has(OverlayMetricKeys.CpuLoad);
+        BenchShowRam = BenchRamText.Length > 0;
+        BenchShowVram = Has(OverlayMetricKeys.GpuVram);
+        BenchShowNet = Has(OverlayMetricKeys.NetThroughput);
 
         Push(_fpsHistory, fps?.Fps ?? 0);
         Push(_cpuLoadHistory, CpuLoad ?? 0);
