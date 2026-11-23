@@ -92,6 +92,16 @@ public sealed class PresentMonSession : IDisposable
         }
     }
 
+    /// <summary>Tiempo de cada cuadro mostrado, en ms (para la grabación del benchmark).</summary>
+    public event Action<double>? FrameDisplayed
+    {
+        add => _calculator.FrameDisplayed += value;
+        remove => _calculator.FrameDisplayed -= value;
+    }
+
+    /// <summary>Tiempos de los últimos cuadros, para el gráfico de frametime.</summary>
+    public IReadOnlyList<double> RecentFrameTimes(int count) => _calculator.RecentFrameTimes(count);
+
     /// <summary>Lectura actual, o null si no hay cuadros recientes.</summary>
     public FpsReading? Current()
     {

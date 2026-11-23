@@ -19,6 +19,8 @@ namespace CtrlMonitor.App.Services;
 public sealed class OverlayWindowManager : IDisposable
 {
     private const int HotKeyId = 0x0C7A;
+    private const int ModeHotKeyId = 0x0C7B;
+    private const int RecordHotKeyId = 0x0C7C;
     private const int WmHotKey = 0x0312;
     private const int GwlExStyle = -20;
     private const int WsExTransparent = 0x00000020;
@@ -82,8 +84,8 @@ public sealed class OverlayWindowManager : IDisposable
         // poder arrastrarla con el mouse.
         ApplyClickThrough();
 
-        if (!RegisterHotKey(handle, HotKeyId, ModControl | ModAlt | ModNoRepeat, 0x4F))
-            AppLog.Warn("No se pudo registrar el atajo Ctrl+Alt+O del overlay.");
+        RegisterHotkeys();
+        _viewModel.HotkeysChanged += OnHotkeysChanged;
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _lastFullscreen = IsForegroundFullscreen(out IntPtr monitor, out _);
@@ -375,8 +377,68 @@ public sealed class OverlayWindowManager : IDisposable
         SetWindowLongPtr(handle, GwlExStyle, new IntPtr(style));
     }
 
+    private void OnHotkeysChanged(object? sender, EventArgs e) => RegisterHotkeys();
+
+    /// <summary>Registra (o vuelve a registrar) los tres atajos configurables.</summary>
+    private void RegisterHotkeys()
+    {
+        if (_window is null)
+            return;
+
+        IntPtr handle = new WindowInteropHelper(_window).Handle;
+
+        if (handle == IntPtr.Zero)
+            return;
+
+        Register(handle, HotKeyId, _viewModel.OverlayHotkeyText);
+        Register(handle, ModeHotKeyId, _viewModel.OverlayModeHotkeyText);
+        Register(handle, RecordHotKeyId, _viewModel.OverlayRecordHotkeyText);
+    }
+
+    private void Register(IntPtr handle, int id, string text)
+    {
+        UnregisterHotKey(handle, id);
+
+        if (!CtrlMonitor.Core.Overlay.Hotkey.TryParse(text, out CtrlMonitor.Core.Overlay.Hotkey hotkey))
+            return;
+
+        uint modifiers = ModNoRepeat;
+
+        if (hotkey.Modifiers.HasFlag(CtrlMonitor.Core.Overlay.HotkeyModifiers.Alt))
+            modifiers |= ModAlt;
+
+        if (hotkey.Modifiers.HasFlag(CtrlMonitor.Core.Overlay.HotkeyModifiers.Control))
+            modifiers |= ModControl;
+
+        if (hotkey.Modifiers.HasFlag(CtrlMonitor.Core.Overlay.HotkeyModifiers.Shift))
+            modifiers |= 0x0004;
+
+        if (hotkey.Modifiers.HasFlag(CtrlMonitor.Core.Overlay.HotkeyModifiers.Win))
+            modifiers |= 0x0008;
+
+        if (!RegisterHotKey(handle, id, modifiers, (uint)hotkey.VirtualKey))
+        {
+            AppLog.Warn($"No se pudo registrar el atajo {text}: otra aplicación lo usa.");
+            _viewModel.ReportHotkeyConflict(text);
+        }
+    }
+
     private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
+        if (msg == WmHotKey && wParam.ToInt32() == ModeHotKeyId)
+        {
+            handled = true;
+            _viewModel.ToggleOverlayMode();
+            return IntPtr.Zero;
+        }
+
+        if (msg == WmHotKey && wParam.ToInt32() == RecordHotKeyId)
+        {
+            handled = true;
+            _viewModel.ToggleBenchmarkRecording();
+            return IntPtr.Zero;
+        }
+
         if (msg == WmHotKey && wParam.ToInt32() == HotKeyId)
         {
             handled = true;
@@ -489,6 +551,10 @@ public sealed class OverlayWindowManager : IDisposable
 
             if (handle != IntPtr.Zero)
                 UnregisterHotKey(handle, HotKeyId);
+                UnregisterHotKey(handle, ModeHotKeyId);
+                UnregisterHotKey(handle, RecordHotKeyId);
+
+            _viewModel.HotkeysChanged -= OnHotkeysChanged;
 
             _source?.RemoveHook(WndProc);
             _source = null;
