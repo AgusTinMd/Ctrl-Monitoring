@@ -78,6 +78,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly List<OverlayGroupColorOption> _overlayGroupColors = new();
     private readonly List<OverlayAnchorOption> _overlayAnchorOptions = new();
     private readonly PresentMonSession _fps = new();
+    private readonly GraphicsApiMonitor _graphicsApi = new();
     private IReadOnlyList<OverlaySegmentViewModel> _overlaySegments = Array.Empty<OverlaySegmentViewModel>();
     private Brush _overlayBackgroundBrush = Brushes.Transparent;
     private bool _isOverlayEditing;
@@ -975,6 +976,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
                       && _overlayMetrics.Any(option => option.IsSelected && OverlayMetricKeys.IsFps(option.Key));
 
         _fps.SetTarget(wanted ? processId : 0);
+
+        // La API gráfica solo se busca si el usuario la eligió en el overlay.
+        bool apiWanted = wanted && _overlayMetrics.Any(option => option.IsSelected && option.Key == OverlayMetricKeys.GraphicsApi);
+        _graphicsApi.SetTarget(apiWanted ? processId : 0);
     }
 
     /// <summary>
@@ -1010,7 +1015,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             Fps = fps?.Fps,
             FrameGeneration = fps?.FrameGeneration == true,
             FrameTimeMs = fps?.FrameTimeMs,
-            FpsLow1 = fps?.Low1Fps
+            FpsLow1 = fps?.Low1Fps,
+            GraphicsApi = fps is null ? null : _graphicsApi.Detect(fps.Value.Runtime)
         };
 
         var selected = _overlayMetrics
@@ -1058,6 +1064,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private static string MetricLabelKey(string key) => key switch
     {
         OverlayMetricKeys.Fps => "overlay.metric.fps",
+        OverlayMetricKeys.GraphicsApi => "overlay.metric.graphicsApi",
         OverlayMetricKeys.FrameTime => "overlay.metric.frameTime",
         OverlayMetricKeys.FpsLow1 => "overlay.metric.fpsLow1",
         OverlayMetricKeys.CpuLoad => "overlay.metric.cpuLoad",
@@ -1287,6 +1294,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
         _fps.Dispose();
+        _graphicsApi.Dispose();
 
         _diskUsage.Dispose();
         Processes.Dispose();

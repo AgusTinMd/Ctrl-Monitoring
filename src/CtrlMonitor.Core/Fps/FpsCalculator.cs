@@ -6,7 +6,7 @@ namespace CtrlMonitor.Core.Fps;
 /// Lectura de FPS: cuadros mostrados por segundo, si hay frame generation,
 /// el tiempo medio entre cuadros (ms) y el «1 % low» de los últimos segundos.
 /// </summary>
-public readonly record struct FpsReading(double Fps, bool FrameGeneration, double? FrameTimeMs = null, double? Low1Fps = null);
+public readonly record struct FpsReading(double Fps, bool FrameGeneration, double? FrameTimeMs = null, double? Low1Fps = null, string? Runtime = null);
 
 /// <summary>
 /// Convierte la salida CSV de PresentMon en FPS. Es lógica pura para poder
@@ -30,6 +30,8 @@ public sealed class FpsCalculator
     private int _time = -1;
     private int _frameType = -1;
     private int _untilDisplayed = -1;
+    private int _runtime = -1;
+    private readonly Dictionary<string, string> _runtimes = new(StringComparer.Ordinal);
     private int _columnCount;
     private double _latest = double.MinValue;
 
@@ -70,6 +72,9 @@ public sealed class FpsCalculator
 
             queue.Enqueue(new Frame(time, displayed, generated));
 
+            if (_runtime >= 0)
+                _runtimes[swapChain] = cells[_runtime];
+
             if (time > _latest)
                 _latest = time;
 
@@ -89,7 +94,7 @@ public sealed class FpsCalculator
             FpsReading? best = null;
             int bestCount = 0;
 
-            foreach (Queue<Frame> queue in _frames.Values)
+            foreach ((string chain, Queue<Frame> queue) in _frames)
             {
                 int displayed = 0;
                 bool generated = false;
@@ -128,7 +133,8 @@ public sealed class FpsCalculator
                         displayed * 1000 / WindowMs,
                         generated,
                         recentIntervals.Count > 0 ? recentIntervals.Average() : null,
-                        Low1(intervals));
+                        Low1(intervals),
+                        _runtimes.TryGetValue(chain, out string? runtime) ? runtime : null);
                 }
             }
 
@@ -156,6 +162,7 @@ public sealed class FpsCalculator
         lock (_gate)
         {
             _frames.Clear();
+            _runtimes.Clear();
             _latest = double.MinValue;
         }
     }
@@ -197,7 +204,9 @@ public sealed class FpsCalculator
             _time = Find("TimeInMs", "CPUStartTimeInMs", "CPUStartTime");
             _frameType = Find("FrameType");
             _untilDisplayed = Find("MsUntilDisplayed", "DisplayedTime");
-            _columnCount = new[] { _swapChain, _time, _frameType, _untilDisplayed }.Max() + 1;
+            _runtime = Find("PresentRuntime", "Runtime");
+            _columnCount = new[] { _swapChain, _time, _frameType, _untilDisplayed, _runtime }.Max() + 1;
+            _runtimes.Clear();
             _frames.Clear();
             _latest = double.MinValue;
         }

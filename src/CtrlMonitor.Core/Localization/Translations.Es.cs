@@ -263,6 +263,7 @@ public static partial class Translations
         ["overlay.color.purple"] = "Violeta",
         ["overlay.color.pink"] = "Rosa",
         ["overlay.metric.fps"] = "FPS (FG con frame generation)",
+        ["overlay.metric.graphicsApi"] = "API gráfica (DX12, Vulkan…)",
         ["overlay.metric.frameTime"] = "Tiempo por cuadro (ms)",
         ["overlay.metric.fpsLow1"] = "1 % low (tirones)",
         ["overlay.metric.cpuLoad"] = "Uso de CPU",

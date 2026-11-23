@@ -24,7 +24,11 @@ public static class OverlayTextFormatter
         // generation se rotula "FG" para no confundirlo con cuadros reales.
         if (selected.Any(OverlayMetricKeys.IsFps))
         {
-            var parts = new List<string>(3);
+            var parts = new List<string>(4);
+
+            // La API va primero: «DX12 FPS 144». Sin certeza no se muestra.
+            if (selected.Contains(OverlayMetricKeys.GraphicsApi) && !string.IsNullOrEmpty(snapshot.GraphicsApi))
+                parts.Add(snapshot.GraphicsApi);
 
             if (selected.Contains(OverlayMetricKeys.Fps))
             {
