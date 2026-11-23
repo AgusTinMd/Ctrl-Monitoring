@@ -491,6 +491,33 @@
                                                Text="{Binding RamUsageText}"
                                                ToolTip="{Binding RamUsageText}" />
                                 </Grid>
+
+                                <!-- Carga de cada hilo, al estilo btop: una barra por hilo. -->
+                                <StackPanel Margin="0,14,0,0"
+                                            Visibility="{Binding HasCpuThreads, Converter={StaticResource BoolToVis}}">
+                                    <TextBlock Text="{Binding CpuThreadsTitle}" Style="{StaticResource SecondaryText}" />
+                                    <ItemsControl ItemsSource="{Binding CpuThreads}" Margin="0,7,0,0" Focusable="False">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <UniformGrid Rows="1" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Height="34" Margin="1.5,0" ToolTip="{Binding Tooltip}"
+                                                      Background="Transparent">
+                                                    <Border Background="{StaticResource TrackBrush}" CornerRadius="2" />
+                                                    <Border Background="{StaticResource ChartCpuBrush}" CornerRadius="2"
+                                                            RenderTransformOrigin="0.5,1">
+                                                        <Border.RenderTransform>
+                                                            <ScaleTransform ScaleY="{Binding Fraction}" />
+                                                        </Border.RenderTransform>
+                                                    </Border>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </StackPanel>
                         </Border>
 
@@ -665,6 +692,27 @@
                                                        ToolTip="{Binding Detail}" />
                                             <TextBlock Text="{Binding LifeText}" Style="{StaticResource MutedText}"
                                                        Margin="0,2,0,0" TextWrapping="NoWrap" />
+
+                                            <!-- Lectura y escritura en vivo con un mini gráfico. -->
+                                            <StackPanel Margin="0,10,0,0"
+                                                        Visibility="{Binding HasActivity, Converter={StaticResource BoolToVis}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Ellipse Width="7" Height="7" Fill="{StaticResource ChartDiskReadBrush}"
+                                                             VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding ReadText}" Style="{StaticResource SecondaryText}"
+                                                               Margin="6,0,14,0" TextWrapping="NoWrap" />
+                                                    <Ellipse Width="7" Height="7" Fill="{StaticResource ChartDiskWriteBrush}"
+                                                             VerticalAlignment="Center" />
+                                                    <TextBlock Text="{Binding WriteText}" Style="{StaticResource SecondaryText}"
+                                                               Margin="6,0,0,0" TextWrapping="NoWrap" />
+                                                </StackPanel>
+                                                <controls:Sparkline Height="30" Margin="0,6,0,0"
+                                                                    FirstValues="{Binding ReadValues}"
+                                                                    SecondValues="{Binding WriteValues}"
+                                                                    FirstBrush="{StaticResource ChartDiskReadBrush}"
+                                                                    SecondBrush="{StaticResource ChartDiskWriteBrush}"
+                                                                    Capacity="40" MinimumScale="1" />
+                                            </StackPanel>
 
                                             <ItemsControl ItemsSource="{Binding Volumes}" Focusable="False">
                                                 <ItemsControl.ItemTemplate>

@@ -67,6 +67,64 @@ public sealed partial class StorageDiskViewModel : ObservableObject
     private double? _temperature;
     private double? _life;
 
+    /// <summary>Muestras de lectura y escritura (MB/s) para el mini gráfico.</summary>
+    private const int ActivitySamples = 40;
+
+    private readonly List<double> _readHistory = new();
+    private readonly List<double> _writeHistory = new();
+    private double _readMbs;
+    private double _writeMbs;
+
+    [ObservableProperty]
+    private IReadOnlyList<double> _readValues = Array.Empty<double>();
+
+    [ObservableProperty]
+    private IReadOnlyList<double> _writeValues = Array.Empty<double>();
+
+    [ObservableProperty]
+    private bool _hasActivity;
+
+    [ObservableProperty]
+    private string _readText = string.Empty;
+
+    [ObservableProperty]
+    private string _writeText = string.Empty;
+
+    /// <summary>Lectura y escritura actuales, en MB/s.</summary>
+    public void UpdateActivity(double readMbs, double writeMbs)
+    {
+        _readMbs = Math.Max(0, readMbs);
+        _writeMbs = Math.Max(0, writeMbs);
+
+        Push(_readHistory, _readMbs);
+        Push(_writeHistory, _writeMbs);
+
+        // Copias nuevas: el gráfico se redibuja al cambiar la referencia.
+        ReadValues = _readHistory.ToArray();
+        WriteValues = _writeHistory.ToArray();
+        HasActivity = true;
+        RefreshActivityText();
+    }
+
+    private static void Push(List<double> history, double value)
+    {
+        history.Add(value);
+
+        if (history.Count > ActivitySamples)
+            history.RemoveAt(0);
+    }
+
+    private void RefreshActivityText()
+    {
+        ReadText = Loc.F("storage.read", FormatSpeed(_readMbs));
+        WriteText = Loc.F("storage.write", FormatSpeed(_writeMbs));
+    }
+
+    private static string FormatSpeed(double mbs) =>
+        mbs >= 100 ? mbs.ToString("0", CultureInfo.CurrentCulture) + " MB/s"
+        : mbs >= 1 ? mbs.ToString("0.0", CultureInfo.CurrentCulture) + " MB/s"
+        : (mbs * 1024).ToString("0", CultureInfo.CurrentCulture) + " KB/s";
+
     /// <summary>
     /// Toma la temperatura y el desgaste de los sensores del disco. NVMe
     /// informa «Percentage Used» (desgaste usado); algunos SATA, «Remaining Life».
@@ -87,6 +145,9 @@ public sealed partial class StorageDiskViewModel : ObservableObject
 
     public void RefreshLanguage()
     {
+        if (HasActivity)
+            RefreshActivityText();
+
         Title = _info is null ? Loc.T("storage.otherDrives") : Loc.F("storage.disk", _info.Number);
         Detail = _info is null ? string.Empty : BuildDetail(_info);
 

@@ -1343,6 +1343,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         foreach (StorageDiskViewModel disk in StorageDisks)
             disk.RefreshLanguage();
 
+        RefreshThreadsLanguage();
+
         foreach (DiskDetailViewModel disk in DiskDetails)
             disk.RefreshLanguage();
 
@@ -1575,6 +1577,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdateProcessTotals();
         UpdateNetwork();
         UpdateDisks();
+        UpdateStorageActivity();
 
         if (snapshot.Sensors.Count == 0)
         {
@@ -1599,6 +1602,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         CpuPower = FindValue(cpu, SensorKind.Power, "CPU Package", "Package")
                    ?? MaxValue(cpu, SensorKind.Power);
         CpuClockGhz = AverageCoreClockGhz(cpu);
+        UpdateCpuThreads(cpu);
         CpuLoad = FindValue(cpu, SensorKind.Load, "CPU Total", "Total")
                   ?? FirstValue(cpu, SensorKind.Load);
 
