@@ -497,8 +497,47 @@
                                      procesadores con muchos hilos suman filas en lugar de achicarlas. -->
                                 <StackPanel Margin="0,14,0,0"
                                             Visibility="{Binding HasCpuThreads, Converter={StaticResource BoolToVis}}">
-                                    <TextBlock Text="{Binding CpuThreadsTitle}" Style="{StaticResource SecondaryText}" />
-                                    <ItemsControl ItemsSource="{Binding CpuThreads}" Margin="0,8,0,0" Focusable="False">
+                                    <ToggleButton IsChecked="{Binding CpuThreadsExpanded, Mode=TwoWay}"
+                                                  Background="Transparent" BorderThickness="0" Padding="0"
+                                                  HorizontalContentAlignment="Stretch" Cursor="Hand"
+                                                  FocusVisualStyle="{x:Null}"
+                                                  ToolTip="{l:Tr summary.threadsToggle}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="Transparent">
+                                                    <ContentPresenter />
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+                                        <Grid>
+                                            <TextBlock Text="{Binding CpuThreadsTitle}" Style="{StaticResource SecondaryText}" />
+                                            <Path Width="9" Height="6" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                  Stroke="{StaticResource TextMutedBrush}" StrokeThickness="1.6"
+                                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                                  Data="M 1,1 L 5,5 L 9,1" RenderTransformOrigin="0.5,0.5">
+                                                <Path.Style>
+                                                    <Style TargetType="Path">
+                                                        <Setter Property="RenderTransform">
+                                                            <Setter.Value>
+                                                                <RotateTransform Angle="180" />
+                                                            </Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding CpuThreadsExpanded}" Value="False">
+                                                                <Setter Property="RenderTransform">
+                                                                    <Setter.Value>
+                                                                        <RotateTransform Angle="0" />
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Path.Style>
+                                            </Path>
+                                        </Grid>
+                                    </ToggleButton>
+                                    <ItemsControl ItemsSource="{Binding CpuThreads}" Margin="0,8,0,0" Focusable="False"
+                                                  Visibility="{Binding CpuThreadsExpanded, Converter={StaticResource BoolToVis}}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <controls:ResponsiveGrid MinItemWidth="112" MaxColumns="4" Gap="8" />

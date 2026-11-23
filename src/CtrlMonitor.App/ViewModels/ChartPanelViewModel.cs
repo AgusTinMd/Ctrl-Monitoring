@@ -368,6 +368,26 @@ internal static class ChartMetrics
         TertiaryUnit = " W"
     };
 
+    /// <summary>Carga de cada hilo en el tiempo, como mapa de calor (una fila por hilo).</summary>
+    public static ChartMetric CpuThreads { get; } = new()
+    {
+        Key = "CpuThreads",
+        TitleKey = "metric.cpuThreads.title",
+        SubtitleKey = "metric.cpuThreads.subtitle",
+        Color = UiBrushes.ChartCpu,
+        AxisUnit = "%",
+        AxisMin = 0,
+        AxisMax = 100,
+        AxisStep = 10,
+        Primary = vm => vm.CpuLoad,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        SecondaryLabelKey = "metric.label.busiestThread",
+        Secondary = vm => vm.BusiestThreadLoad,
+        SecondaryFormat = "0",
+        SecondaryUnit = " %"
+    };
+
     public static ChartMetric GpuLoad { get; } = new()
     {
         Key = "GpuLoad",
@@ -550,6 +570,7 @@ internal static class ChartMetrics
         Cpu,
         Gpu,
         CpuLoad,
+        CpuThreads,
         GpuLoad,
         Board,
         Hotspot,

@@ -15,4 +15,5 @@ public sealed record ChartSample(
     double? NetUpMbs,
     double? CpuLoad,
     double? GpuLoad,
-    IReadOnlyDictionary<string, DiskActivity>? Disks);
+    IReadOnlyDictionary<string, DiskActivity>? Disks,
+    IReadOnlyList<double>? Threads = null);

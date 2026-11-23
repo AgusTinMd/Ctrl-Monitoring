@@ -1647,7 +1647,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NetUpMbs,
             CpuLoad,
             GpuLoad,
-            _disks.Count == 0 ? null : _disks));
+            _disks.Count == 0 ? null : _disks,
+            CpuThreads.Count == 0 ? null : CpuThreads.Select(t => t.Load).ToArray()));
 
         // El gráfico permite ventanas de hasta 10 minutos; conservamos ese
         // margen y descartamos lo más viejo para no crecer sin límite.

@@ -54,6 +54,24 @@ public partial class MainViewModel
 
     public bool HasCpuThreads => CpuThreads.Count > 0;
 
+    /// <summary>Hilo más cargado, para el gráfico de hilos.</summary>
+    public double? BusiestThreadLoad => CpuThreads.Count == 0 ? null : CpuThreads.Max(t => t.Load);
+
+    /// <summary>La sección de hilos de Inicio está desplegada; se recuerda entre sesiones.</summary>
+    public bool CpuThreadsExpanded
+    {
+        get => _config.CpuThreadsExpanded;
+        set
+        {
+            if (_config.CpuThreadsExpanded == value)
+                return;
+
+            _config.CpuThreadsExpanded = value;
+            OnPropertyChanged();
+            SaveSoon();
+        }
+    }
+
     public string CpuThreadsTitle => Loc.F("summary.threads", CpuThreads.Count);
 
     private void UpdateCpuThreads(IReadOnlyList<SensorReading> cpu)
