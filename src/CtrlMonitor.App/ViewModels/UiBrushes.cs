@@ -5,28 +5,28 @@ namespace CtrlMonitor.App.ViewModels;
 /// <summary>Colores compartidos por los view models, congelados para usarlos desde cualquier hilo.</summary>
 internal static class UiBrushes
 {
-    public static readonly Brush Accent = Frozen("#3B82F6");
-    public static readonly Brush AccentSoft = Frozen("#16294A");
-    public static readonly Brush Success = Frozen("#22C55E");
-    public static readonly Brush SuccessSoft = Frozen("#102A1B");
-    public static readonly Brush Warning = Frozen("#F59E0B");
-    public static readonly Brush WarningSoft = Frozen("#2E2410");
-    public static readonly Brush Danger = Frozen("#EF4444");
-    public static readonly Brush DangerSoft = Frozen("#2E1216");
-    public static readonly Brush Muted = Frozen("#647696");
-    public static readonly Brush NeutralSoft = Frozen("#1E2C45");
-    public static readonly Brush TextPrimary = Frozen("#E8EEF9");
-    public static readonly Brush TextSecondary = Frozen("#93A5C1");
-    public static readonly Brush ChartCpu = Frozen("#5B9DFF");
-    public static readonly Brush ChartGpu = Frozen("#3DDC97");
-    public static readonly Brush ChartBoard = Frozen("#F5B84C");
-    public static readonly Brush ChartHotspot = Frozen("#FF6B6B");
-    public static readonly Brush ChartRam = Frozen("#A78BFA");
-    public static readonly Brush ChartVram = Frozen("#F472B6");
-    public static readonly Brush ChartNetDown = Frozen("#22D3EE");
-    public static readonly Brush ChartNetUp = Frozen("#FB923C");
-    public static readonly Brush ChartDiskRead = Frozen("#4ADE80");
-    public static readonly Brush ChartDiskWrite = Frozen("#FACC15");
+    public static readonly Brush Accent = Frozen("#3AD1C0");
+    public static readonly Brush AccentSoft = Frozen("#123330");
+    public static readonly Brush Success = Frozen("#8BD46A");
+    public static readonly Brush SuccessSoft = Frozen("#1B2A17");
+    public static readonly Brush Warning = Frozen("#F4C152");
+    public static readonly Brush WarningSoft = Frozen("#302712");
+    public static readonly Brush Danger = Frozen("#FF4D6D");
+    public static readonly Brush DangerSoft = Frozen("#3A1520");
+    public static readonly Brush Muted = Frozen("#868D98");
+    public static readonly Brush NeutralSoft = Frozen("#2A2F37");
+    public static readonly Brush TextPrimary = Frozen("#ECEEF1");
+    public static readonly Brush TextSecondary = Frozen("#A3A9B3");
+    public static readonly Brush ChartCpu = Frozen("#FF8A3D");
+    public static readonly Brush ChartGpu = Frozen("#F4C152");
+    public static readonly Brush ChartBoard = Frozen("#D9A0FF");
+    public static readonly Brush ChartHotspot = Frozen("#FF4D6D");
+    public static readonly Brush ChartRam = Frozen("#5AB8F5");
+    public static readonly Brush ChartVram = Frozen("#9B8CFF");
+    public static readonly Brush ChartNetDown = Frozen("#4FD8E8");
+    public static readonly Brush ChartNetUp = Frozen("#8FB3FF");
+    public static readonly Brush ChartDiskRead = Frozen("#67D6B0");
+    public static readonly Brush ChartDiskWrite = Frozen("#C9D66A");
 
     private static Brush Frozen(string hex)
     {
