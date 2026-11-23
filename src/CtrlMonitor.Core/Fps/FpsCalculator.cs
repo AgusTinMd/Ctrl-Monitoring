@@ -2,8 +2,11 @@ using System.Globalization;
 
 namespace CtrlMonitor.Core.Fps;
 
-/// <summary>Lectura de FPS: cuadros mostrados por segundo y si hay frame generation.</summary>
-public readonly record struct FpsReading(double Fps, bool FrameGeneration);
+/// <summary>
+/// Lectura de FPS: cuadros mostrados por segundo, si hay frame generation,
+/// el tiempo medio entre cuadros (ms) y el «1 % low» de los últimos segundos.
+/// </summary>
+public readonly record struct FpsReading(double Fps, bool FrameGeneration, double? FrameTimeMs = null, double? Low1Fps = null);
 
 /// <summary>
 /// Convierte la salida CSV de PresentMon en FPS. Es lógica pura para poder
@@ -13,6 +16,12 @@ public sealed class FpsCalculator
 {
     /// <summary>Ventana sobre la que se cuentan los cuadros.</summary>
     public const double WindowMs = 1000;
+
+    /// <summary>
+    /// Ventana para el «1 % low»: hace falta más historia que un segundo
+    /// para que el 1 % de los cuadros más lentos sea representativo.
+    /// </summary>
+    public const double LowWindowMs = 10_000;
 
     private readonly Dictionary<string, Queue<Frame>> _frames = new(StringComparer.Ordinal);
     private readonly object _gate = new();
@@ -84,24 +93,62 @@ public sealed class FpsCalculator
             {
                 int displayed = 0;
                 bool generated = false;
+                double from = _latest - WindowMs;
+                var intervals = new List<double>();
+                var recentIntervals = new List<double>();
+                double? previous = null;
 
                 foreach (Frame frame in queue)
                 {
-                    if (frame.Displayed)
-                        displayed++;
+                    if (!frame.Displayed)
+                        continue;
 
-                    generated |= frame.Generated && frame.Displayed;
+                    if (previous is { } last && frame.Time > last)
+                    {
+                        double gap = frame.Time - last;
+                        intervals.Add(gap);
+
+                        if (frame.Time > from)
+                            recentIntervals.Add(gap);
+                    }
+
+                    previous = frame.Time;
+
+                    if (frame.Time > from)
+                    {
+                        displayed++;
+                        generated |= frame.Generated;
+                    }
                 }
 
                 if (displayed > bestCount)
                 {
                     bestCount = displayed;
-                    best = new FpsReading(displayed * 1000 / WindowMs, generated);
+                    best = new FpsReading(
+                        displayed * 1000 / WindowMs,
+                        generated,
+                        recentIntervals.Count > 0 ? recentIntervals.Average() : null,
+                        Low1(intervals));
                 }
             }
 
             return best;
         }
+    }
+
+    /// <summary>
+    /// «1 % low»: los FPS equivalentes al promedio del 1 % de los cuadros más
+    /// lentos. Muestra los tirones que el promedio de FPS esconde.
+    /// </summary>
+    public static double? Low1(IReadOnlyList<double> intervalsMs)
+    {
+        if (intervalsMs.Count < 2)
+            return null;
+
+        int count = Math.Max(1, (int)Math.Ceiling(intervalsMs.Count * 0.01));
+        double slowest = intervalsMs.OrderByDescending(v => v).Take(count).Average();
+
+        return slowest > 0 ? 1000 / slowest : null;
     }
 
     public void Reset()
@@ -158,7 +205,7 @@ public sealed class FpsCalculator
 
     private void Trim()
     {
-        double from = _latest - WindowMs;
+        double from = _latest - LowWindowMs;
 
         foreach (Queue<Frame> queue in _frames.Values)
         {

@@ -972,7 +972,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     public void UpdateFpsTarget(int processId)
     {
         bool wanted = OverlayEnabled
-                      && _overlayMetrics.Any(option => option.IsSelected && option.Key == OverlayMetricKeys.Fps);
+                      && _overlayMetrics.Any(option => option.IsSelected && OverlayMetricKeys.IsFps(option.Key));
 
         _fps.SetTarget(wanted ? processId : 0);
     }
@@ -1008,7 +1008,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NetDownMbs = NetDownMbs,
             NetUpMbs = NetUpMbs,
             Fps = fps?.Fps,
-            FrameGeneration = fps?.FrameGeneration == true
+            FrameGeneration = fps?.FrameGeneration == true,
+            FrameTimeMs = fps?.FrameTimeMs,
+            FpsLow1 = fps?.Low1Fps
         };
 
         var selected = _overlayMetrics
@@ -1056,6 +1058,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private static string MetricLabelKey(string key) => key switch
     {
         OverlayMetricKeys.Fps => "overlay.metric.fps",
+        OverlayMetricKeys.FrameTime => "overlay.metric.frameTime",
+        OverlayMetricKeys.FpsLow1 => "overlay.metric.fpsLow1",
         OverlayMetricKeys.CpuLoad => "overlay.metric.cpuLoad",
         OverlayMetricKeys.CpuTemperature => "overlay.metric.cpuTemp",
         OverlayMetricKeys.CpuClock => "overlay.metric.cpuClock",
@@ -1102,6 +1106,51 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             OnPropertyChanged();
             OnPropertyChanged(nameof(ShowErrorReportsPrompt));
             ErrorReporting.Configure(value, _config.InstallId);
+            SaveSoon();
+        }
+    }
+
+    /// <summary>Temperatura en el ícono de la bandeja (opcional).</summary>
+    public bool TrayShowTemperature
+    {
+        get => _config.TrayShowTemperature;
+        set
+        {
+            if (_config.TrayShowTemperature == value)
+                return;
+
+            _config.TrayShowTemperature = value;
+            OnPropertyChanged();
+            SaveSoon();
+        }
+    }
+
+    public bool TrayTemperatureIsCpu
+    {
+        get => _config.TrayTemperatureSource != "gpu";
+        set
+        {
+            if (!value || TrayTemperatureIsCpu)
+                return;
+
+            _config.TrayTemperatureSource = "cpu";
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TrayTemperatureIsGpu));
+            SaveSoon();
+        }
+    }
+
+    public bool TrayTemperatureIsGpu
+    {
+        get => _config.TrayTemperatureSource == "gpu";
+        set
+        {
+            if (!value || TrayTemperatureIsGpu)
+                return;
+
+            _config.TrayTemperatureSource = "gpu";
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TrayTemperatureIsCpu));
             SaveSoon();
         }
     }
@@ -1279,6 +1328,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _disposed = true;
         _saveTimer.Stop();
         _saveTimer.Tick -= OnSaveTimerTick;
+        StopUpdateTimer();
         _trimTimer?.Stop();
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
@@ -1327,6 +1377,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         OnPropertyChanged(nameof(DriverShortText));
         OnPropertyChanged(nameof(AdminText));
+        RefreshUpdateText();
         OnPropertyChanged(nameof(CpuMaxText));
         OnPropertyChanged(nameof(GpuHotspotText));
         OnPropertyChanged(nameof(CpuLoadText));

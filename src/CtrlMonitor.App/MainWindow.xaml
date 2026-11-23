@@ -2344,6 +2344,22 @@
                                     <CheckBox Content="{l:Tr settings.widgetTopmost}" Margin="28,8,0,0"
                                               IsEnabled="{Binding ShowWidget}"
                                               IsChecked="{Binding WidgetTopmost, Mode=TwoWay}" />
+                                    <!-- Temperatura en el ícono de la bandeja: opcional. -->
+                                    <CheckBox Content="{l:Tr settings.trayTemperature}" Margin="0,16,0,0"
+                                              IsChecked="{Binding TrayShowTemperature, Mode=TwoWay}" />
+                                    <TextBlock Text="{l:Tr settings.trayTemperatureHint}" TextWrapping="Wrap"
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0" />
+                                    <Border Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Left"
+                                            BorderBrush="{StaticResource BorderBrush}" Margin="28,8,0,0"
+                                            BorderThickness="1" CornerRadius="9" Padding="2"
+                                            IsEnabled="{Binding TrayShowTemperature}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Content="CPU" Style="{StaticResource SegmentButton}" GroupName="TrayTemp"
+                                                         IsChecked="{Binding TrayTemperatureIsCpu, Mode=TwoWay}" />
+                                            <RadioButton Content="GPU" Style="{StaticResource SegmentButton}" GroupName="TrayTemp"
+                                                         IsChecked="{Binding TrayTemperatureIsGpu, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Border>
 
                                     <Separator Margin="0,18,0,14" />
 
@@ -2461,6 +2477,23 @@
                                     <TextBlock Text="{l:Tr settings.sendErrorsHint}"
                                                Style="{StaticResource MutedText}" TextWrapping="Wrap"
                                                Margin="28,4,0,0" />
+
+                                    <!-- Aviso de versión nueva: activado por defecto, se puede apagar. -->
+                                    <CheckBox Content="{l:Tr settings.checkUpdates}" Margin="0,18,0,0"
+                                              IsChecked="{Binding CheckForUpdates, Mode=TwoWay}" />
+                                    <TextBlock Text="{l:Tr settings.checkUpdatesHint}"
+                                               Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                                               Margin="28,4,0,0" />
+                                    <Border Style="{StaticResource Chip}" Background="{StaticResource AccentSoftBrush}"
+                                            Margin="28,10,0,0" Padding="12,8" HorizontalAlignment="Left"
+                                            Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding UpdateText}" Foreground="{StaticResource AccentTextBrush}"
+                                                       FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            <Button Content="{l:Tr settings.downloadUpdate}" Style="{StaticResource AccentButton}"
+                                                    Margin="12,0,0,0" Command="{Binding OpenUpdateCommand}" />
+                                        </StackPanel>
+                                    </Border>
 
                                     <!-- Feedback en GitHub: abre el formulario en el navegador. -->
                                     <TextBlock Text="{l:Tr settings.feedback}" Style="{StaticResource SecondaryText}"

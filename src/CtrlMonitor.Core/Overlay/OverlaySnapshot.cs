@@ -12,6 +12,12 @@ public sealed class OverlaySnapshot
     /// <summary>True si parte de los cuadros los genera el driver o el SDK (frame generation).</summary>
     public bool FrameGeneration { get; init; }
 
+    /// <summary>Tiempo medio entre cuadros, en ms.</summary>
+    public double? FrameTimeMs { get; init; }
+
+    /// <summary>«1 % low» de los últimos segundos, en FPS.</summary>
+    public double? FpsLow1 { get; init; }
+
     public double? CpuLoad { get; init; }
     public double? CpuTemperature { get; init; }
     public double? CpuClockGhz { get; init; }
