@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
 using CtrlMonitor.App.ViewModels;
@@ -20,6 +21,9 @@ public sealed class TrayService : IDisposable
     private readonly MenuItem _exitItem;
     private bool _disposed;
     private string? _tooltip;
+    private readonly ImageSource _defaultIcon;
+    private string? _iconKey;
+    private bool _iconFailing;
     private bool _tooltipFailing;
 
     public TrayService(MainViewModel viewModel, Action showWindow, Action exit)
@@ -54,6 +58,8 @@ public sealed class TrayService : IDisposable
         image.EndInit();
         image.Freeze();
 
+        _defaultIcon = image;
+
         _icon = new TaskbarIcon
         {
             IconSource = image,
@@ -73,6 +79,7 @@ public sealed class TrayService : IDisposable
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         Loc.Instance.LanguageChanged += OnLanguageChanged;
         UpdateTooltip();
+        UpdateIcon();
     }
 
     private void OnLanguageChanged(object? sender, EventArgs e)
@@ -87,6 +94,13 @@ public sealed class TrayService : IDisposable
             or nameof(MainViewModel.GpuTemperature))
         {
             UpdateTooltip();
+            UpdateIcon();
+        }
+        else if (e.PropertyName is nameof(MainViewModel.TrayShowTemperature)
+                 or nameof(MainViewModel.TrayTemperatureIsCpu)
+                 or nameof(MainViewModel.TrayTemperatureIsGpu))
+        {
+            UpdateIcon();
         }
     }
 
@@ -127,6 +141,40 @@ public sealed class TrayService : IDisposable
             {
                 _tooltipFailing = true;
                 AppLog.Warn("Bandeja: no se pudo actualizar el tooltip: " + ex.Message);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Con la opción activa, el ícono muestra la temperatura del CPU o la GPU
+    /// en el color de la escala térmica. Solo se redibuja si cambia el número
+    /// o el color, y un error del Explorador no cierra la app.
+    /// </summary>
+    private void UpdateIcon()
+    {
+        if (_disposed)
+            return;
+
+        double? temperature = _viewModel.TrayTemperatureIsGpu ? _viewModel.GpuTemperature : _viewModel.CpuTemperature;
+        bool show = _viewModel.TrayShowTemperature && temperature is not null;
+        string key = show ? TrayTemperatureIcon.Key(temperature!.Value) : "default";
+
+        if (key == _iconKey)
+            return;
+
+        try
+        {
+            _icon.IconSource = show ? TrayTemperatureIcon.Render(temperature!.Value) : _defaultIcon;
+            _iconKey = key;
+            _iconFailing = false;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException
+                                       or System.ComponentModel.Win32Exception or NotSupportedException)
+        {
+            if (!_iconFailing)
+            {
+                _iconFailing = true;
+                AppLog.Warn("Bandeja: no se pudo actualizar el ícono: " + ex.Message);
             }
         }
     }

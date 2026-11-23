@@ -313,6 +313,8 @@ public static partial class Translations
         ["settings.runAtStartupHint"] = "Creates a scheduled task with elevated permissions so UAC doesn't prompt at every startup.",
         ["settings.startMinimized"] = "Start minimized to the tray",
         ["settings.minimizeToTray"] = "Minimize to the tray when closing the window",
+        ["settings.trayTemperature"] = "Show the temperature on the tray icon",
+        ["settings.trayTemperatureHint"] = "The number changes color with the temperature: blue, green, amber, orange and red.",
         ["settings.exitHint"] = "To quit completely, use “Exit” in the tray icon menu.",
         ["settings.saveNow"] = "Save now",
         ["settings.hardware"] = "Detected hardware",

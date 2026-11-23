@@ -1106,6 +1106,51 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Temperatura en el ícono de la bandeja (opcional).</summary>
+    public bool TrayShowTemperature
+    {
+        get => _config.TrayShowTemperature;
+        set
+        {
+            if (_config.TrayShowTemperature == value)
+                return;
+
+            _config.TrayShowTemperature = value;
+            OnPropertyChanged();
+            SaveSoon();
+        }
+    }
+
+    public bool TrayTemperatureIsCpu
+    {
+        get => _config.TrayTemperatureSource != "gpu";
+        set
+        {
+            if (!value || TrayTemperatureIsCpu)
+                return;
+
+            _config.TrayTemperatureSource = "cpu";
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TrayTemperatureIsGpu));
+            SaveSoon();
+        }
+    }
+
+    public bool TrayTemperatureIsGpu
+    {
+        get => _config.TrayTemperatureSource == "gpu";
+        set
+        {
+            if (!value || TrayTemperatureIsGpu)
+                return;
+
+            _config.TrayTemperatureSource = "gpu";
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TrayTemperatureIsCpu));
+            SaveSoon();
+        }
+    }
+
     public bool StartMinimized
     {
         get => _config.StartMinimized;

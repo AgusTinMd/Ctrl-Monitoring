@@ -313,6 +313,8 @@ public static partial class Translations
         ["settings.runAtStartupHint"] = "Crea una tarea programada con permisos altos para evitar el cartel de UAC.",
         ["settings.startMinimized"] = "Iniciar minimizado en la bandeja",
         ["settings.minimizeToTray"] = "Minimizar a la bandeja al cerrar la ventana",
+        ["settings.trayTemperature"] = "Mostrar la temperatura en el ícono de la bandeja",
+        ["settings.trayTemperatureHint"] = "El número cambia de color según la temperatura: celeste, verde, ámbar, naranja y rojo.",
         ["settings.exitHint"] = "Para salir del todo usá «Salir» en el menú del icono de bandeja.",
         ["settings.saveNow"] = "Guardar ahora",
         ["settings.hardware"] = "Hardware detectado",

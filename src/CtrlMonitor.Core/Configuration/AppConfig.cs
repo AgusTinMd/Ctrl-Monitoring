@@ -17,6 +17,12 @@ public sealed class AppConfig
 
     public bool MinimizeToTray { get; set; } = true;
 
+    /// <summary>Mostrar la temperatura en el ícono de la bandeja. Desactivado por defecto.</summary>
+    public bool TrayShowTemperature { get; set; }
+
+    /// <summary>Temperatura del ícono: «cpu» o «gpu».</summary>
+    public string TrayTemperatureSource { get; set; } = "cpu";
+
     public bool RunAtStartup { get; set; }
 
     /// <summary>Muestra u oculta la barra lateral de navegación.</summary>
@@ -70,6 +76,8 @@ public sealed class AppConfig
     {
         RefreshIntervalMs = Math.Clamp(RefreshIntervalMs, 500, 10000);
         Language = AppLanguage.NormalizeSetting(Language);
+
+        TrayTemperatureSource = string.Equals(TrayTemperatureSource, "gpu", StringComparison.OrdinalIgnoreCase) ? "gpu" : "cpu";
 
         if (!Guid.TryParseExact(InstallId, "N", out _))
             InstallId = Guid.NewGuid().ToString("N");
