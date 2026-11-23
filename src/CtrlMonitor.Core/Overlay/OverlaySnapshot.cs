@@ -18,6 +18,9 @@ public sealed class OverlaySnapshot
     /// <summary>«1 % low» de los últimos segundos, en FPS.</summary>
     public double? FpsLow1 { get; init; }
 
+    /// <summary>API gráfica del juego («DX12», «VK»…), o null si no hay certeza.</summary>
+    public string? GraphicsApi { get; init; }
+
     public double? CpuLoad { get; init; }
     public double? CpuTemperature { get; init; }
     public double? CpuClockGhz { get; init; }

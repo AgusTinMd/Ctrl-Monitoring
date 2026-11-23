@@ -21,6 +21,9 @@ public static class OverlayMetricKeys
     /// <summary>«1 % low»: FPS del 1 % de cuadros más lentos de los últimos 10 s.</summary>
     public const string FpsLow1 = "fps.low1";
 
+    /// <summary>API gráfica del juego (DX9, DX11, DX12, Vulkan, OpenGL).</summary>
+    public const string GraphicsApi = "fps.api";
+
     public const string CpuLoad = "cpu.load";
     public const string CpuTemperature = "cpu.temp";
     public const string CpuClock = "cpu.clock";
@@ -42,7 +45,7 @@ public static class OverlayMetricKeys
     /// <summary>Todas las métricas disponibles, en el orden del selector.</summary>
     public static readonly IReadOnlyList<string> All = new[]
     {
-        Fps, FrameTime, FpsLow1,
+        Fps, GraphicsApi, FrameTime, FpsLow1,
         CpuLoad, CpuTemperature, CpuClock, CpuPower, CpuFan,
         GpuLoad, GpuTemperature, GpuHotspot, GpuVram, GpuPower, GpuFan,
         RamUsed, RamPercent,
