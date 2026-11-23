@@ -355,6 +355,7 @@ public sealed class LiveChart : FrameworkElement
             switch (series.ToLowerInvariant())
             {
                 case "cputhreads":
+                case "cpucores":
                     // En la vista de lista, la miniatura muestra la carga total.
                     result.Add(new ChartSeries(s => s.CpuLoad, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
                     break;

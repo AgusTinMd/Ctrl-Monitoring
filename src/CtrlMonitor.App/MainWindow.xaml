@@ -249,14 +249,19 @@
                             </Style>
                         </controls:LiveChart.Style>
                     </controls:LiveChart>
-                    <ItemsControl Focusable="False" Grid.Column="1" Margin="0,10,0,0" VerticalAlignment="Top"
-                                  ItemsSource="{Binding DataContext.CpuThreads, RelativeSource={RelativeSource AncestorType=Window}}">
+                    <ItemsControl Focusable="False" Grid.Column="1" Margin="0,10,0,0" VerticalAlignment="Top">
                         <ItemsControl.Style>
                             <Style TargetType="ItemsControl">
                                 <Setter Property="Visibility" Value="Collapsed" />
+                                <Setter Property="ItemsSource"
+                                        Value="{Binding DataContext.CpuThreads, RelativeSource={RelativeSource AncestorType=Window}}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsThreads}" Value="True">
                                         <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsCores}" Value="True">
+                                        <Setter Property="ItemsSource"
+                                                Value="{Binding DataContext.CpuCores, RelativeSource={RelativeSource AncestorType=Window}}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
@@ -1019,14 +1024,19 @@
                             </Style>
                         </controls:LiveChart.Style>
                             </controls:LiveChart>
-                            <ItemsControl Focusable="False" Grid.Row="1" Margin="0,12,0,0" VerticalAlignment="Top"
-                                  ItemsSource="{Binding DataContext.CpuThreads, RelativeSource={RelativeSource AncestorType=Window}}">
+                            <ItemsControl Focusable="False" Grid.Row="1" Margin="0,12,0,0" VerticalAlignment="Top">
                         <ItemsControl.Style>
                             <Style TargetType="ItemsControl">
                                 <Setter Property="Visibility" Value="Collapsed" />
+                                <Setter Property="ItemsSource"
+                                        Value="{Binding DataContext.CpuThreads, RelativeSource={RelativeSource AncestorType=Window}}" />
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsThreads}" Value="True">
                                         <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsCores}" Value="True">
+                                        <Setter Property="ItemsSource"
+                                                Value="{Binding DataContext.CpuCores, RelativeSource={RelativeSource AncestorType=Window}}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

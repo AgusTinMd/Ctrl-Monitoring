@@ -30,14 +30,16 @@ public sealed partial class ThreadLoadViewModel : ObservableObject
     private double _load;
 
     /// <summary>Etiqueta corta: «H1», «T1»…</summary>
-    public string Label => Loc.F("summary.threadShort", Index);
+    public string Label => Thread == 0 ? Loc.F("summary.coreShort", Core) : Loc.F("summary.threadShort", Index);
 
     public string LoadText => Load.ToString("0") + "%";
 
     /// <summary>De 0 a 1, para escalar la barra.</summary>
     public double Fraction => Math.Clamp(Load / 100, 0, 1);
 
-    public string Tooltip => Loc.F("summary.threadTooltip", Core, Thread, Load.ToString("0"));
+    public string Tooltip => Thread == 0
+        ? Loc.F("summary.coreTooltip", Core, Load.ToString("0"))
+        : Loc.F("summary.threadTooltip", Core, Thread, Load.ToString("0"));
 
     /// <summary>Muestras para el mini gráfico del hilo (las últimas <see cref="HistorySize"/>).</summary>
     public const int HistorySize = 60;
@@ -127,8 +129,25 @@ public partial class MainViewModel
         CoreLoads = cores;
 
         if (coreCountChanged)
+        {
+            CpuCores.Clear();
+
+            for (int i = 0; i < cores.Count; i++)
+                CpuCores.Add(new ThreadLoadViewModel(i + 1, i + 1, 0));
+        }
+
+        for (int i = 0; i < cores.Count; i++)
+            CpuCores[i].Push(cores[i]);
+
+        if (coreCountChanged)
             RebuildChartMetrics();
     }
+
+    /// <summary>Carga de cada núcleo con su historial, para el gráfico «Núcleos CPU».</summary>
+    public ObservableCollection<ThreadLoadViewModel> CpuCores { get; } = new();
+
+    /// <summary>Núcleo más cargado, para el gráfico de núcleos.</summary>
+    public double? BusiestCoreLoad => CoreLoads.Count == 0 ? null : CoreLoads.Max();
 
     /// <summary>Carga actual de cada núcleo, desde el núcleo 1.</summary>
     public IReadOnlyList<double> CoreLoads { get; private set; } = Array.Empty<double>();
@@ -159,7 +178,7 @@ public partial class MainViewModel
     {
         OnPropertyChanged(nameof(CpuThreadsTitle));
 
-        foreach (ThreadLoadViewModel thread in CpuThreads)
+        foreach (ThreadLoadViewModel thread in CpuThreads.Concat(CpuCores))
             thread.RefreshLanguage();
     }
 }

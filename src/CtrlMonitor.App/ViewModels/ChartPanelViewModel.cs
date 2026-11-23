@@ -144,6 +144,10 @@ public sealed partial class ChartPanelViewModel : ObservableObject
     [ObservableProperty]
     private bool _isThreads;
 
+    /// <summary>La grilla muestra núcleos en lugar de hilos.</summary>
+    [ObservableProperty]
+    private bool _isCores;
+
     [ObservableProperty]
     private string _axisUnit = "°";
 
@@ -271,7 +275,8 @@ public sealed partial class ChartPanelViewModel : ObservableObject
         Subtitle = metric.Subtitle;
         Color = metric.Color;
         SeriesKey = metric.Key;
-        IsThreads = string.Equals(metric.Key, ChartMetrics.CpuThreads.Key, StringComparison.Ordinal);
+        IsCores = string.Equals(metric.Key, ChartMetrics.CpuCores.Key, StringComparison.Ordinal);
+        IsThreads = IsCores || string.Equals(metric.Key, ChartMetrics.CpuThreads.Key, StringComparison.Ordinal);
         AxisUnit = metric.AxisUnit;
         AxisMin = metric.AxisMin;
         AxisMax = metric.AxisMax;
@@ -389,6 +394,26 @@ internal static class ChartMetrics
         PrimaryUnit = " %",
         SecondaryLabelKey = "metric.label.busiestThread",
         Secondary = vm => vm.BusiestThreadLoad,
+        SecondaryFormat = "0",
+        SecondaryUnit = " %"
+    };
+
+    /// <summary>Carga de cada núcleo: un mini gráfico por núcleo.</summary>
+    public static ChartMetric CpuCores { get; } = new()
+    {
+        Key = "CpuCores",
+        TitleKey = "metric.cpuCores.title",
+        SubtitleKey = "metric.cpuCores.subtitle",
+        Color = UiBrushes.ChartCpu,
+        AxisUnit = "%",
+        AxisMin = 0,
+        AxisMax = 100,
+        AxisStep = 10,
+        Primary = vm => vm.CpuLoad,
+        PrimaryFormat = "0",
+        PrimaryUnit = " %",
+        SecondaryLabelKey = "metric.label.busiestCore",
+        Secondary = vm => vm.BusiestCoreLoad,
         SecondaryFormat = "0",
         SecondaryUnit = " %"
     };
@@ -609,6 +634,7 @@ internal static class ChartMetrics
         Cpu,
         Gpu,
         CpuLoad,
+        CpuCores,
         CpuThreads,
         GpuLoad,
         Board,
