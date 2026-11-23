@@ -44,7 +44,7 @@ The interface is available in **English, Spanish and Portuguese (Brazil)**, live
 - **Optional error reports**: the first time it opens, the app asks whether to send error reports. See [Privacy](#privacy).
 - **Resizable, responsive window**: cards and charts switch between one and two columns depending on the width, designed with vertical 1080p monitors in mind.
 - **Collapsible sidebar** with its own button or `Ctrl+B`; when hidden, the top bar shows the current page title and a button to bring it back.
-- **Vector icons** for CPU, GPU and motherboard.
+- **Thermal design**: graphite backgrounds with a coolant-teal accent; temperatures use warm tones and load and usage cool tones, while orange, amber and red are kept for warnings. Outline icons for CPU, GPU, motherboard and disks, and the **gauge C** logo.
 - **Brand detection:** shows the logo of the motherboard, CPU, GPU and disk brand when it's recognized. There are **56 brand logos** (see [Brand logos](#brand-logos)); known brands without a logo — Bangho, CHUWI, ENOVA, Gateway, HUANANZHI, MACHINIST, MEDION and VAIO — appear as a text badge.
 - **System tray** icon with a CPU/GPU tooltip and a menu to open or exit.
 - **Start with Windows** through a scheduled task with elevated permissions.
@@ -106,7 +106,7 @@ The app **always** runs as administrator. `CtrlMonitor.exe` requires it through 
 dotnet test tests\CtrlMonitor.Core.Tests\CtrlMonitor.Core.Tests.csproj -c Release
 ```
 
-The tests cover settings persistence and normalization (including legacy files with control fields that are no longer used), overlay settings, positions and text, FPS calculation from PresentMon output, chart layout, migration from FanCtrl, axis scaling, network speed conversion, translations (every language has the same keys and placeholders), automatic language selection, startup task parsing and the check that the executable lives in a folder only administrators can modify.
+The tests cover settings persistence and normalization (including legacy files with control fields that are no longer used), overlay settings, positions and text, FPS calculation from PresentMon output, per-thread and per-core CPU load reading, chart layout, migration from FanCtrl, axis scaling, network speed conversion, translations (every language has the same keys and placeholders), automatic language selection, startup task parsing and the check that the executable lives in a folder only administrators can modify.
 
 ### Package and publish a release
 
@@ -134,8 +134,8 @@ The workflow can also be started by hand from **Actions → Release → Run work
 ## Usage
 
 1. Open Ctrl Monitor and accept the UAC prompt.
-2. In **Home**, check the CPU, GPU and power cards and the overall status.
-3. In **Charts**, follow temperatures, memory and network over time. Each card has its own metric selector and automatic scale; pick 1, 5 or 10 minutes and use **Clear** to start over. Fan RPM and power draw are shown next to the temperature for CPU, GPU and hot spot; RAM and VRAM cards show GB used out of the total and a percentage; the network card shows download and upload. Use **Add** for another metric, **✕** to remove a card and drag cards to reorder them.
+2. In **Home**, check the CPU, GPU and power cards and the overall status. Click **Threads** in the processor card to expand the load of each thread (it starts collapsed and the app remembers your choice). Each disk shows its read and write speed with a mini chart.
+3. In **Charts**, follow temperatures, memory and network over time. Each card has its own metric selector and automatic scale; pick 1, 5 or 10 minutes and use **Clear** to start over. Fan RPM and power draw are shown next to the temperature for CPU, GPU and hot spot; RAM and VRAM cards show GB used out of the total and a percentage; the network card shows download and upload. Use **Add** for another metric, **✕** to remove a card and drag cards to reorder them. **CPU cores** and **CPU threads** show a mini chart per core or thread with its load over the last minute; **Core 1**, **Core 2**… show a single core as a full chart.
 4. In **Fans**, each detected channel shows its RPM and the PWM applied by the BIOS. Channels at zero are dimmed; check **Active only** to hide them.
 5. In **Sensors**, you get the full dump grouped by component. Rows with a bar are percentages (load and PWM). Click a group header to collapse or expand it.
 6. In **Disks**, check the health and S.M.A.R.T. data of each drive.
@@ -168,6 +168,7 @@ Settings keys:
 | `SendErrorReports` | `false` | Sends error reports (see [Privacy](#privacy)). |
 | `ErrorReportsAsked` | `false` | The app already asked about error reports, so it doesn't ask again. |
 | `InstallId` | random | Random identifier of this installation, used only to group error reports. |
+| `CpuThreadsExpanded` | `false` | The **Threads** section of the processor card on Home is expanded. |
 
 If the file gets corrupted, the app backs it up as `config.json.bak-*` and goes back to the defaults.
 
@@ -208,7 +209,7 @@ Old logs stay in `%APPDATA%\FanCtrl\logs`. You can delete that folder by hand on
 
 ```
 src/CtrlMonitor.Core/      UI-independent logic
-  Hardware/                LibreHardwareMonitor, readings and snapshots
+  Hardware/                LibreHardwareMonitor, readings, snapshots and per-thread CPU load
   Inventory/               WMI RAM and disk info, memory usage and network traffic
   Overlay/                 Overlay metrics, colors, positions and text
   Fps/                     FPS with PresentMon
@@ -219,6 +220,7 @@ src/CtrlMonitor.App/       WPF
   Themes/Theme.xaml        Palette, styles, vector icons and navigation
   Controls/LiveChart.cs    Live chart, per series or combined
   Controls/ResponsiveGrid.cs  Responsive card panel
+  Controls/Sparkline.cs    Mini chart for disks, cores and threads
   Localization/            {l:Tr key} markup extension for translated XAML texts
   Models/ChartSample.cs    Chart sample with temperatures, memory and network
   Converters/              Time window, columns and UI converters
@@ -311,7 +313,7 @@ La interfaz está en **español, inglés y portugués (Brasil)**, vive en la ban
 - **Informes de errores opcionales**: la primera vez que se abre, la app pregunta si querés enviarlos. Ver [Privacidad](#privacidad).
 - **Ventana redimensionable y adaptable**: las tarjetas y los gráficos pasan a una o dos columnas según el ancho, pensado para monitores verticales de 1080p.
 - **Barra lateral colapsable** con el botón integrado en su cabecera o `Ctrl+B`; al ocultarla, la barra superior muestra el título de la página y un botón para reabrirla.
-- **Iconos vectoriales** de CPU, GPU y placa madre.
+- **Diseño térmico**: fondos grafito con un acento turquesa «refrigerante»; las temperaturas usan tonos cálidos y la carga y el uso tonos fríos, y el naranja, el ámbar y el rojo quedan para las alertas. Íconos de contorno para CPU, GPU, placa y discos, y el logo **Medidor C**.
 - **Detección de marca:** muestra el logo de la placa, del CPU, de la GPU y del disco cuando reconoce la marca. Hay **56 logos de marcas** (ver [Logos de marcas](#logos-de-marcas)); las marcas conocidas sin logo —Bangho, CHUWI, ENOVA, Gateway, HUANANZHI, MACHINIST, MEDION y VAIO— aparecen como una insignia de texto.
 - **Bandeja del sistema** con tooltip de CPU/GPU y menú para abrir o salir.
 - **Inicio con Windows** mediante tarea programada con permisos altos.
@@ -373,7 +375,7 @@ La app **siempre** se ejecuta como administrador. `CtrlMonitor.exe` lo exige des
 dotnet test tests\CtrlMonitor.Core.Tests\CtrlMonitor.Core.Tests.csproj -c Release
 ```
 
-Los tests cubren la persistencia y normalización de la configuración (incluida la lectura de archivos legacy con campos de control que ya no se usan), los ajustes, las posiciones y el texto del overlay, el cálculo de FPS a partir de la salida de PresentMon, el layout de gráficos, la migración desde FanCtrl, la escala de los ejes, la conversión de velocidades de red, las traducciones (todos los idiomas con las mismas claves y marcadores), la elección automática del idioma, la lectura de la tarea de inicio y la comprobación de que el ejecutable esté en una carpeta que solo los administradores pueden modificar.
+Los tests cubren la persistencia y normalización de la configuración (incluida la lectura de archivos legacy con campos de control que ya no se usan), los ajustes, las posiciones y el texto del overlay, el cálculo de FPS a partir de la salida de PresentMon, la lectura de la carga por hilo y por núcleo, el layout de gráficos, la migración desde FanCtrl, la escala de los ejes, la conversión de velocidades de red, las traducciones (todos los idiomas con las mismas claves y marcadores), la elección automática del idioma, la lectura de la tarea de inicio y la comprobación de que el ejecutable esté en una carpeta que solo los administradores pueden modificar.
 
 ### Empaquetar y publicar una versión
 
@@ -401,8 +403,8 @@ El workflow también se puede lanzar a mano desde **Actions → Release → Run 
 ## Uso
 
 1. Abrí Ctrl Monitor y aceptá el cartel de UAC.
-2. En **Inicio** revisá las tarjetas de CPU, GPU, potencia y el estado general.
-3. En **Gráfico** seguí la evolución de las temperaturas, la memoria y la red. Cada tarjeta tiene su propio selector de métrica y escala automática; elegí 1, 5 o 10 minutos y usá **Limpiar** para reiniciar el trazado. Las RPM del ventilador y el consumo en vatios se muestran junto a la temperatura en CPU, GPU y hotspot; las tarjetas de RAM y VRAM muestran los GB en uso sobre el total y el porcentaje; la de red muestra bajada y subida. Usá **Agregar** para sumar otra métrica, la **✕** de una tarjeta para quitarla y arrastrá las tarjetas para reordenarlas.
+2. En **Inicio** revisá las tarjetas de CPU, GPU, potencia y el estado general. Tocá **Hilos** en la tarjeta del procesador para desplegar la carga de cada hilo (viene plegada y la app recuerda cómo la dejaste). Cada disco muestra su lectura y escritura con un mini gráfico.
+3. En **Gráfico** seguí la evolución de las temperaturas, la memoria y la red. Cada tarjeta tiene su propio selector de métrica y escala automática; elegí 1, 5 o 10 minutos y usá **Limpiar** para reiniciar el trazado. Las RPM del ventilador y el consumo en vatios se muestran junto a la temperatura en CPU, GPU y hotspot; las tarjetas de RAM y VRAM muestran los GB en uso sobre el total y el porcentaje; la de red muestra bajada y subida. Usá **Agregar** para sumar otra métrica, la **✕** de una tarjeta para quitarla y arrastrá las tarjetas para reordenarlas. **Núcleos CPU** e **Hilos CPU** muestran un mini gráfico por núcleo o por hilo con su carga del último minuto; **Núcleo 1**, **Núcleo 2**… muestran un solo núcleo como gráfico completo.
 4. En **Ventiladores** está cada canal detectado con sus RPM y el PWM aplicado por el BIOS. Los canales en cero se muestran atenuados; activá **Solo activos** para ocultarlos.
 5. En **Sensores** está el volcado completo agrupado por componente. Las filas con barra son porcentajes (carga y PWM). Tocá la cabecera de un grupo para plegarlo o desplegarlo.
 6. En **Discos** revisá la salud y los datos S.M.A.R.T. de cada unidad.
@@ -435,6 +437,7 @@ Claves de configuración:
 | `SendErrorReports` | `false` | Envía informes de errores (ver [Privacidad](#privacidad)). |
 | `ErrorReportsAsked` | `false` | La app ya preguntó por los informes de errores y no vuelve a preguntar. |
 | `InstallId` | al azar | Identificador al azar de esta instalación; solo sirve para agrupar los informes de errores. |
+| `CpuThreadsExpanded` | `false` | La sección **Hilos** de la tarjeta del procesador en Inicio está desplegada. |
 
 Si el archivo se corrompe, la app lo respalda como `config.json.bak-*` y vuelve a los valores por defecto.
 
@@ -475,7 +478,7 @@ Los logs viejos quedan en `%APPDATA%\FanCtrl\logs`. Cuando ya no los necesites, 
 
 ```
 src/CtrlMonitor.Core/      Lógica sin UI
-  Hardware/                LibreHardwareMonitor, lecturas y snapshots
+  Hardware/                LibreHardwareMonitor, lecturas, snapshots y carga por hilo del CPU
   Inventory/               Lectura WMI de RAM y discos, uso de memoria y tráfico de red
   Overlay/                 Métricas, colores, posiciones y texto del overlay
   Fps/                     FPS con PresentMon
@@ -486,6 +489,7 @@ src/CtrlMonitor.App/       WPF
   Themes/Theme.xaml        Paleta, estilos, iconos vectoriales y navegación
   Controls/LiveChart.cs    Gráfico en vivo por serie o combinado
   Controls/ResponsiveGrid.cs  Panel adaptable de tarjetas
+  Controls/Sparkline.cs    Mini gráfico de discos, núcleos e hilos
   Localization/            Extensión {l:Tr clave} para los textos traducidos en XAML
   Models/ChartSample.cs    Muestra de temperaturas, memoria y red del gráfico
   Converters/              Ventana temporal, columnas y conversores de UI
