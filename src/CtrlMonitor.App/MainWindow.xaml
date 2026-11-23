@@ -249,7 +249,9 @@
                             </Style>
                         </controls:LiveChart.Style>
                     </controls:LiveChart>
-                    <ItemsControl Focusable="False" Grid.Column="1" Margin="0,10,0,0" VerticalAlignment="Top">
+                    <ScrollViewer Grid.Column="1" Margin="0,10,0,0" MaxHeight="200" VerticalAlignment="Top"
+                                  VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl Focusable="False">
                         <ItemsControl.Style>
                             <Style TargetType="ItemsControl">
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -268,12 +270,12 @@
                         </ItemsControl.Style>
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <controls:ResponsiveGrid MinItemWidth="150" MaxColumns="6" Gap="10" />
+                                <controls:ResponsiveGrid MinItemWidth="118" MaxColumns="8" Gap="8" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="10,8"
+                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="7" Padding="8,5"
                                         ToolTip="{Binding Tooltip}">
                                     <StackPanel>
                                         <Grid>
@@ -282,7 +284,7 @@
                                                        FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"
                                                        Typography.NumeralAlignment="Tabular" />
                                         </Grid>
-                                        <controls:Sparkline Height="34" Margin="0,6,0,0"
+                                        <controls:Sparkline Height="24" Margin="0,4,0,0"
                                                             FirstValues="{Binding History}"
                                                             FirstBrush="{StaticResource ChartCpuBrush}"
                                                             Capacity="60" MinimumScale="100" />
@@ -291,6 +293,7 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    </ScrollViewer>
                     </Grid>
                 </Grid>
             </Border>
@@ -1043,12 +1046,12 @@
                         </ItemsControl.Style>
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
-                                <controls:ResponsiveGrid MinItemWidth="150" MaxColumns="6" Gap="10" />
+                                <controls:ResponsiveGrid MinItemWidth="118" MaxColumns="8" Gap="8" />
                             </ItemsPanelTemplate>
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="10,8"
+                                <Border Background="{StaticResource SurfaceBrush}" CornerRadius="7" Padding="8,5"
                                         ToolTip="{Binding Tooltip}">
                                     <StackPanel>
                                         <Grid>
@@ -1057,7 +1060,7 @@
                                                        FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"
                                                        Typography.NumeralAlignment="Tabular" />
                                         </Grid>
-                                        <controls:Sparkline Height="34" Margin="0,6,0,0"
+                                        <controls:Sparkline Height="24" Margin="0,4,0,0"
                                                             FirstValues="{Binding History}"
                                                             FirstBrush="{StaticResource ChartCpuBrush}"
                                                             Capacity="60" MinimumScale="100" />
