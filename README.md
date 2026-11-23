@@ -3,16 +3,16 @@
 **Hardware monitor for Windows · Monitor de hardware para Windows**
 
 <p align="center"><b>Home / Inicio</b> · CPU, GPU, motherboard and disks at a glance · CPU, GPU, placa y discos de un vistazo</p>
-<p align="center"><img src="docs/screenshot-home.png" alt="Ctrl Monitor: Home / Inicio" width="100%"></p>
+<p align="center"><img src="docs/screenshots/2.13-home.png" alt="Ctrl Monitor: Home / Inicio" width="100%"></p>
 
 <p align="center"><b>Charts / Gráficos</b> · Live panels you can pick and reorder · Paneles en vivo que elegís y reordenás</p>
-<p align="center"><img src="docs/screenshot-charts.png" alt="Charts / Gráficos" width="100%"></p>
+<p align="center"><img src="docs/screenshots/2.13-charts.png" alt="Charts / Gráficos" width="100%"></p>
 
 <p align="center"><b>Overlay</b> · FPS and metrics on top of your games · FPS y métricas encima de tus juegos</p>
-<p align="center"><img src="docs/screenshot-overlay.png" alt="Overlay" width="100%"></p>
+<p align="center"><img src="docs/screenshots/2.13-overlay.png" alt="Overlay" width="100%"></p>
 
 <p align="center"><b>Disks / Discos</b> · Health and S.M.A.R.T. of every drive · Salud y S.M.A.R.T. de cada disco</p>
-<p align="center"><img src="docs/screenshot-disks.png" alt="Disks / Discos" width="100%"></p>
+<p align="center"><img src="docs/screenshots/2.13-disks.png" alt="Disks / Discos" width="100%"></p>
 
 <p align="center"><a href="https://github.com/AgusTinMd/Ctrl-Monitoring/releases/latest"><b>⬇ Download / Descargar</b></a></p>
 
