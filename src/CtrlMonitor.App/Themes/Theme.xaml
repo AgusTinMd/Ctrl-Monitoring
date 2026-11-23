@@ -45,15 +45,16 @@
     <SolidColorBrush x:Key="TempHotBrush" Color="#FF8A3D" />
     <SolidColorBrush x:Key="TempCriticalBrush" Color="#FF4D6D" />
 
-    <!-- Series: tonos fuera de la escala térmica y de los estados (naranja,
-         ámbar, rojo y verde quedan solo para avisar algo). CPU rosa; GPU,
-         hotspot y VRAM en violetas; placa arena; carga y uso en tonos fríos. -->
-    <SolidColorBrush x:Key="ChartCpuBrush" Color="#F27FCF" />
-    <SolidColorBrush x:Key="ChartGpuBrush" Color="#A98BFF" />
-    <SolidColorBrush x:Key="ChartBoardBrush" Color="#E3DC6B" />
-    <SolidColorBrush x:Key="ChartHotspotBrush" Color="#C77DFF" />
+    <!-- Series: temperaturas en tonos cálidos y carga/uso en tonos fríos. Las
+         temperaturas usan versiones claras y suaves (durazno, oro claro, salmón,
+         arena) para no confundirse con el naranja, el ámbar y el rojo saturados
+         de las alertas y de la escala térmica. -->
+    <SolidColorBrush x:Key="ChartCpuBrush" Color="#FFA477" />
+    <SolidColorBrush x:Key="ChartGpuBrush" Color="#F2D58A" />
+    <SolidColorBrush x:Key="ChartBoardBrush" Color="#E0B88A" />
+    <SolidColorBrush x:Key="ChartHotspotBrush" Color="#FF8C8C" />
     <SolidColorBrush x:Key="ChartRamBrush" Color="#5AB8F5" />
-    <SolidColorBrush x:Key="ChartVramBrush" Color="#D0C2FF" />
+    <SolidColorBrush x:Key="ChartVramBrush" Color="#8FA0FF" />
     <SolidColorBrush x:Key="ChartNetDownBrush" Color="#4FD8E8" />
     <SolidColorBrush x:Key="ChartNetUpBrush" Color="#8FB3FF" />
     <SolidColorBrush x:Key="ChartDiskReadBrush" Color="#A6E3A1" />

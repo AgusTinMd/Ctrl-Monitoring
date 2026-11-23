@@ -17,12 +17,12 @@ internal static class UiBrushes
     public static readonly Brush NeutralSoft = Frozen("#2A2F37");
     public static readonly Brush TextPrimary = Frozen("#ECEEF1");
     public static readonly Brush TextSecondary = Frozen("#A3A9B3");
-    public static readonly Brush ChartCpu = Frozen("#F27FCF");
-    public static readonly Brush ChartGpu = Frozen("#A98BFF");
-    public static readonly Brush ChartBoard = Frozen("#E3DC6B");
-    public static readonly Brush ChartHotspot = Frozen("#C77DFF");
+    public static readonly Brush ChartCpu = Frozen("#FFA477");
+    public static readonly Brush ChartGpu = Frozen("#F2D58A");
+    public static readonly Brush ChartBoard = Frozen("#E0B88A");
+    public static readonly Brush ChartHotspot = Frozen("#FF8C8C");
     public static readonly Brush ChartRam = Frozen("#5AB8F5");
-    public static readonly Brush ChartVram = Frozen("#D0C2FF");
+    public static readonly Brush ChartVram = Frozen("#8FA0FF");
     public static readonly Brush ChartNetDown = Frozen("#4FD8E8");
     public static readonly Brush ChartNetUp = Frozen("#8FB3FF");
     public static readonly Brush ChartDiskRead = Frozen("#A6E3A1");
