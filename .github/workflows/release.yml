@@ -94,7 +94,7 @@ jobs:
           <a id="english"></a>
           ### English
 
-          Read-only hardware monitor for Windows 10/11 (64-bit): temperatures, fan speeds, power, voltages, RAM, VRAM and network traffic, plus **disk health (S.M.A.R.T.)**, a **process manager** and an **in-game overlay with FPS** (it shows **FG** with frame generation). It also shows the load of each CPU core and thread and the live read/write speed of every disk. When nobody is looking at it, it pauses and frees memory. Available in English, Spanish and Portuguese (Brazil).
+          Read-only hardware monitor for Windows 10/11 (64-bit): temperatures, fan speeds, power, voltages, RAM, VRAM and network traffic, plus **disk health (S.M.A.R.T.)**, a **process manager** and an **in-game overlay with FPS** (it shows **FG** with frame generation). It also shows the load of each CPU core and thread and the live read/write speed of every disk. The overlay has a **Benchmark mode** with frametime, FPS and load charts, benchmark recording with results and CSV, and configurable shortcuts. When nobody is looking at it, it pauses and frees memory. Available in English, Spanish and Portuguese (Brazil).
 
           **Download**
           - **CtrlMonitorSetup-$version.exe**: installer (recommended). Installs to Program Files, creates the Start menu shortcut and can be removed from *Add or remove programs*. It lets you choose the language and can install PawnIO for you.
@@ -107,7 +107,7 @@ jobs:
           - [PawnIO](https://pawnio.eu/) to read the motherboard sensors. The installer can download and install it, verifying its SHA-256; without it the app works but shows fewer sensors.
 
           **Privacy**
-          Ctrl Monitor doesn't send anything unless you allow it. The first time it opens it asks whether to send error reports: the error, the app and Windows versions and the CPU, GPU and motherboard model. They never include your user name, PC name, IP address, location or files. You can change it anytime in **Settings → Data and diagnostics**.
+          Ctrl Monitor doesn't send anything unless you allow it. The first time it opens it asks whether to send error reports: the error, the app and Windows versions and the CPU, GPU and motherboard model. They never include your user name, PC name, IP address, location or files. You can change it anytime in **Settings → Data and diagnostics**. Once a week the app also checks GitHub's public releases page for a new version, sending no data of yours; that can be turned off there too.
 
           **Windows SmartScreen**
           The executable isn't digitally signed, so Windows may show "Windows protected your PC". To continue: **More info → Run anyway**. You can verify the files with ``SHA256SUMS.txt``.
@@ -115,7 +115,7 @@ jobs:
           <a id="espanol"></a>
           ### Español
 
-          Monitor de hardware de solo lectura para Windows 10/11 (64 bits): temperaturas, ventiladores, potencia, voltajes, RAM, VRAM y red, más **salud de los discos (S.M.A.R.T.)**, un **administrador de procesos** y un **overlay para juegos con FPS** (muestra **FG** con generación de cuadros). También muestra la carga de cada núcleo e hilo del CPU y la lectura y escritura de cada disco en vivo. Cuando nadie la mira, se pone en reposo y libera memoria. Interfaz en español, inglés y portugués (Brasil).
+          Monitor de hardware de solo lectura para Windows 10/11 (64 bits): temperaturas, ventiladores, potencia, voltajes, RAM, VRAM y red, más **salud de los discos (S.M.A.R.T.)**, un **administrador de procesos** y un **overlay para juegos con FPS** (muestra **FG** con generación de cuadros). También muestra la carga de cada núcleo e hilo del CPU y la lectura y escritura de cada disco en vivo. El overlay tiene un **modo Benchmark** con gráficos de frametime, FPS y carga, grabación de benchmarks con resultados y CSV, y atajos configurables. Cuando nadie la mira, se pone en reposo y libera memoria. Interfaz en español, inglés y portugués (Brasil).
 
           **Descarga**
           - **CtrlMonitorSetup-$version.exe**: instalador (recomendado). Instala en Program Files, crea el acceso directo en el menú Inicio y se desinstala desde *Agregar o quitar programas*. Permite elegir el idioma y puede instalar PawnIO por vos.
@@ -128,7 +128,7 @@ jobs:
           - [PawnIO](https://pawnio.eu/) para leer los sensores de la placa madre. El instalador puede descargarlo e instalarlo verificando su SHA-256; sin él la app funciona, pero muestra menos sensores.
 
           **Privacidad**
-          Ctrl Monitor no envía nada si no lo permitís. La primera vez que se abre pregunta si querés enviar informes de errores: el error, la versión de la app y de Windows y el modelo de CPU, GPU y placa. Nunca incluyen tu nombre de usuario, el de la PC, tu IP, tu ubicación ni tus archivos. Podés cambiarlo cuando quieras en **Ajustes → Datos y diagnóstico**.
+          Ctrl Monitor no envía nada si no lo permitís. La primera vez que se abre pregunta si querés enviar informes de errores: el error, la versión de la app y de Windows y el modelo de CPU, GPU y placa. Nunca incluyen tu nombre de usuario, el de la PC, tu IP, tu ubicación ni tus archivos. Podés cambiarlo cuando quieras en **Ajustes → Datos y diagnóstico**. Además, una vez por semana la app consulta la página pública de versiones de GitHub para avisar si hay una nueva, sin enviar datos tuyos; eso también se apaga ahí.
 
           **Aviso de Windows SmartScreen**
           El ejecutable no está firmado digitalmente, así que Windows puede mostrar «Windows protegió su PC». Para continuar: **Más información → Ejecutar de todas formas**. Podés verificar los archivos con ``SHA256SUMS.txt``.
@@ -136,7 +136,7 @@ jobs:
           <a id="portugues"></a>
           ### Português (Brasil)
 
-          Monitor de hardware somente leitura para Windows 10/11 (64 bits): temperaturas, ventoinhas, potência, tensões, RAM, VRAM e rede, além da **saúde dos discos (S.M.A.R.T.)**, de um **gerenciador de processos** e de um **overlay para jogos com FPS** (mostra **FG** com geração de quadros). Também mostra a carga de cada núcleo e thread da CPU e a leitura e gravação de cada disco em tempo real. Quando ninguém está olhando, ele entra em repouso e libera memória. Interface em inglês, espanhol e português (Brasil).
+          Monitor de hardware somente leitura para Windows 10/11 (64 bits): temperaturas, ventoinhas, potência, tensões, RAM, VRAM e rede, além da **saúde dos discos (S.M.A.R.T.)**, de um **gerenciador de processos** e de um **overlay para jogos com FPS** (mostra **FG** com geração de quadros). Também mostra a carga de cada núcleo e thread da CPU e a leitura e gravação de cada disco em tempo real. O overlay tem um **modo Benchmark** com gráficos de frametime, FPS e carga, gravação de benchmarks com resultados e CSV, e atalhos configuráveis. Quando ninguém está olhando, ele entra em repouso e libera memória. Interface em inglês, espanhol e português (Brasil).
 
           **Download**
           - **CtrlMonitorSetup-$version.exe**: instalador (recomendado). Instala em Program Files, cria o atalho no menu Iniciar e pode ser removido em *Aplicativos e recursos*. Permite escolher o idioma e pode instalar o PawnIO para você.
@@ -149,7 +149,7 @@ jobs:
           - [PawnIO](https://pawnio.eu/) para ler os sensores da placa-mãe. O instalador pode baixá-lo e instalá-lo verificando o SHA-256; sem ele o app funciona, mas mostra menos sensores.
 
           **Privacidade**
-          O Ctrl Monitor não envia nada sem a sua permissão. Na primeira vez que é aberto, ele pergunta se você quer enviar relatórios de erros: o erro, as versões do app e do Windows e o modelo de CPU, GPU e placa-mãe. Eles nunca incluem seu nome de usuário, o nome do PC, seu IP, sua localização nem seus arquivos. Você pode mudar isso quando quiser em **Configurações → Dados e diagnóstico**.
+          O Ctrl Monitor não envia nada sem a sua permissão. Na primeira vez que é aberto, ele pergunta se você quer enviar relatórios de erros: o erro, as versões do app e do Windows e o modelo de CPU, GPU e placa-mãe. Eles nunca incluem seu nome de usuário, o nome do PC, seu IP, sua localização nem seus arquivos. Você pode mudar isso quando quiser em **Configurações → Dados e diagnóstico**. Além disso, uma vez por semana o app consulta a página pública de versões do GitHub para avisar se há uma nova, sem enviar dados seus; isso também pode ser desligado ali.
 
           **Aviso do Windows SmartScreen**
           O executável não é assinado digitalmente, então o Windows pode mostrar "O Windows protegeu o seu PC". Para continuar: **Mais informações → Executar assim mesmo**. Você pode verificar os arquivos com ``SHA256SUMS.txt``.

@@ -37,11 +37,15 @@ The interface is available in **English, Spanish and Portuguese (Brazil)**, live
 - **Disks** with the health and S.M.A.R.T. data of every drive, using the same engine as CrystalDiskInfo: condition (good, caution, bad), temperature, remaining life, power-on hours, data written and read, reallocated, pending and uncorrectable sectors, interface, firmware, serial number, the full attribute table and the volumes on each disk. Each card can be collapsed.
 - **Processes** grouped by app, with CPU, memory, disk and network use, machine totals, sortable and resizable columns, search by name or PID, expandable groups and a context menu to open the file location, search online, view properties or end the task / process tree. Critical Windows processes are protected and can't be ended.
 - **In-game overlay**: a compact bar that stays on top of games in fullscreen, without taking focus or catching clicks. Pick the metrics (FPS, CPU, GPU, RAM, network…), a minimal or colorful style or your own colors, text size, background opacity and square corners. Place it with 9 preset positions or by dragging it (with a guide grid), and lock it so it can't be moved by accident. `Ctrl+Alt+O` shows or hides it.
-- **FPS** of the game in the foreground, measured with Intel's [PresentMon](https://github.com/GameTechDev/PresentMon) from the Windows presentation events: nothing is injected into the game and its memory isn't read. With frame generation (AMD AFMF or Intel XeSS-FG) it shows **FG** instead of FPS.
+- **Benchmark mode**: the overlay can switch to a vertical panel like RTSS/Afterburner, with **frametime**, **FPS** and **CPU/GPU load** charts. The checked metrics decide which rows and charts it shows. A shortcut **records a benchmark**: when it stops it shows average, 1% low, 0.1% low, min and max FPS and saves a CSV to `Documents\Ctrl Monitor\Benchmarks`.
+- **Configurable shortcuts** for the overlay: show/hide (`Ctrl+Alt+O`), bar/benchmark (`Ctrl+Alt+B`) and record (`Ctrl+Alt+R`).
+- **FPS** of the game in the foreground, measured with Intel's [PresentMon](https://github.com/GameTechDev/PresentMon) from the Windows presentation events: nothing is injected into the game and its memory isn't read. With frame generation (AMD AFMF or Intel XeSS-FG) it shows **FG** instead of FPS. Optional extras: **frame time**, **1% low** and the **graphics API** (`DX9`, `DX11`, `DX12`, `VK`, `OGL`), detected from Windows events without opening the game.
 - **Detected hardware**: CPU, GPU, motherboard, Super I/O, installed RAM (modules and speed) and physical disks.
 - **Live refresh** every 0.5–10 seconds.
 - **Idle mode**: when the window is hidden or minimized and the overlay isn't on screen, it stops reading sensors and frees memory. It resumes instantly when you open the window or a fullscreen game shows the overlay.
 - **Optional error reports**: the first time it opens, the app asks whether to send error reports. See [Privacy](#privacy).
+- **New version notice**: once a week the app checks GitHub and, if there's a newer release, shows it in Settings and with a tray notification. It can be turned off.
+- **Optional extras**: the CPU or GPU **temperature on the tray icon**, colored by the thermal scale, and a small **desktop widget** with CPU, GPU, RAM and network that you can drag anywhere. Both are off by default.
 - **Resizable, responsive window**: cards and charts switch between one and two columns depending on the width, designed with vertical 1080p monitors in mind.
 - **Collapsible sidebar** with its own button or `Ctrl+B`; when hidden, the top bar shows the current page title and a button to bring it back.
 - **Thermal design**: graphite backgrounds with a coolant-teal accent; temperatures use warm tones and load and usage cool tones, while orange, amber and red are kept for warnings. Outline icons for CPU, GPU, motherboard and disks, and the **gauge C** logo.
@@ -140,8 +144,8 @@ The workflow can also be started by hand from **Actions → Release → Run work
 5. In **Sensors**, you get the full dump grouped by component. Rows with a bar are percentages (load and PWM). Click a group header to collapse or expand it.
 6. In **Disks**, check the health and S.M.A.R.T. data of each drive.
 7. In **Processes**, search, sort and end tasks. Right-click a row for more options.
-8. In **Overlay**, turn on the in-game bar, choose its metrics, style and position, and lock it when it's where you want it. It appears by itself when a game is in fullscreen; `Ctrl+Alt+O` shows or hides it at any time.
-9. In **Settings**, change the refresh interval, language, start with Windows, tray behavior and error reports. The **Detected hardware** card also summarizes installed RAM and physical disks.
+8. In **Overlay**, turn on the in-game bar, choose its metrics, style and position, and lock it when it's where you want it. It appears by itself when a game is in fullscreen; `Ctrl+Alt+O` shows or hides it at any time. Choose **Bar** or **Benchmark** in Appearance (or press `Ctrl+Alt+B`), press `Ctrl+Alt+R` to start and stop a benchmark recording, and click any shortcut to change it.
+9. In **Settings**, change the refresh interval, language, start with Windows, tray behavior, the tray temperature, the desktop widget, error reports and the new version notice. The **Detected hardware** card also summarizes installed RAM and physical disks.
 
 The ☰ button in the sidebar header (or `Ctrl+B`) hides the sidebar. When it's hidden, the ☰ button in the top bar shows it again. One click on the tray icon opens the window; to quit completely, use **Exit** in its context menu.
 
@@ -169,6 +173,9 @@ Settings keys:
 | `ErrorReportsAsked` | `false` | The app already asked about error reports, so it doesn't ask again. |
 | `InstallId` | random | Random identifier of this installation, used only to group error reports. |
 | `CpuThreadsExpanded` | `false` | The **Threads** section of the processor card on Home is expanded. |
+| `CheckForUpdates` | `true` | Checks GitHub for a new version once a week. |
+| `TrayShowTemperature` / `TrayTemperatureSource` | `false` / `"cpu"` | Temperature on the tray icon, from the CPU or the GPU. |
+| `WidgetEnabled` / `WidgetTopmost` | `false` / `true` | Desktop widget, and whether it stays on top. |
 
 If the file gets corrupted, the app backs it up as `config.json.bak-*` and goes back to the defaults.
 
@@ -183,6 +190,8 @@ If you turn them on, when the app hits an error it sends it to [Sentry](https://
 - A random installation ID, to tell whether several errors come from the same PC.
 
 It **doesn't** send your user name, your PC name, your IP address, your location or your files: user and PC names are replaced in paths and messages before anything leaves your PC. The same error is sent once per session, with at most 25 reports per session. Without an internet connection, reports wait in `%APPDATA%\CtrlMonitor\error-reports` until the next time the app opens.
+
+The **new version notice** asks GitHub's public releases page for the latest version once a week. It sends no data of yours (only a generic `CtrlMonitor-UpdateCheck` user agent) and can be turned off in **Settings → Data and diagnostics**.
 
 ## Feedback
 
@@ -306,11 +315,15 @@ La interfaz está en **español, inglés y portugués (Brasil)**, vive en la ban
 - **Discos** con la salud y los datos S.M.A.R.T. de cada unidad, con el mismo motor que CrystalDiskInfo: estado (bueno, en riesgo, malo), temperatura, vida útil restante, horas de encendido, datos escritos y leídos, sectores reasignados, pendientes e incorregibles, interfaz, firmware, número de serie, la tabla completa de atributos y los volúmenes de cada disco. Cada ficha se puede plegar.
 - **Procesos** agrupados por aplicación, con uso de CPU, memoria, disco y red, totales del equipo, columnas ordenables y redimensionables, búsqueda por nombre o PID, grupos desplegables y un menú contextual para abrir la ubicación del archivo, buscar en línea, ver las propiedades o finalizar la tarea / el árbol de procesos. Los procesos críticos de Windows están protegidos y no se pueden finalizar.
 - **Overlay para juegos**: una barra compacta que queda encima del juego en pantalla completa, sin quitarle el foco ni atrapar los clics. Elegís las métricas (FPS, CPU, GPU, RAM, red…), un estilo minimalista o variado o tus propios colores, el tamaño del texto, la opacidad del fondo y los bordes rectos. Se ubica con 9 posiciones fijas o arrastrándola (con una grilla de guía) y se bloquea para no moverla sin querer. `Ctrl+Alt+O` la muestra u oculta.
-- **FPS** del juego en primer plano, medidos con [PresentMon](https://github.com/GameTechDev/PresentMon) de Intel a partir de los eventos de presentación de Windows: no se inyecta nada en el juego ni se lee su memoria. Con generación de cuadros (AMD AFMF o Intel XeSS-FG) muestra **FG** en lugar de FPS.
+- **Modo Benchmark**: el overlay puede pasar a un panel vertical como el de RTSS/Afterburner, con gráficos de **frametime**, **FPS** y **carga de CPU/GPU**. Las métricas marcadas definen qué renglones y gráficos muestra. Un atajo **graba un benchmark**: al detenerlo muestra FPS promedio, 1 % low, 0,1 % low, mínimo y máximo, y guarda un CSV en `Documentos\Ctrl Monitor\Benchmarks`.
+- **Atajos configurables** del overlay: mostrar/ocultar (`Ctrl+Alt+O`), barra/benchmark (`Ctrl+Alt+B`) y grabar (`Ctrl+Alt+R`).
+- **FPS** del juego en primer plano, medidos con [PresentMon](https://github.com/GameTechDev/PresentMon) de Intel a partir de los eventos de presentación de Windows: no se inyecta nada en el juego ni se lee su memoria. Con generación de cuadros (AMD AFMF o Intel XeSS-FG) muestra **FG** en lugar de FPS. Opcionales: **tiempo por cuadro**, **1 % low** y la **API gráfica** (`DX9`, `DX11`, `DX12`, `VK`, `OGL`), detectada con eventos de Windows sin abrir el juego.
 - **Hardware detectado** con CPU, GPU, placa, Super I/O, cantidad de RAM (módulos y velocidad) y discos físicos.
 - **Actualización en vivo** cada 0,5–10 segundos.
 - **Modo reposo**: con la ventana oculta o minimizada y sin el overlay en pantalla, deja de leer los sensores y libera memoria. Vuelve al instante al abrir la ventana o cuando un juego en pantalla completa muestra el overlay.
 - **Informes de errores opcionales**: la primera vez que se abre, la app pregunta si querés enviarlos. Ver [Privacidad](#privacidad).
+- **Aviso de versión nueva**: una vez por semana consulta GitHub y, si hay una versión más nueva, la muestra en Ajustes y con un aviso en la bandeja. Se puede apagar.
+- **Opcionales**: la **temperatura del CPU o la GPU en el ícono de la bandeja**, con el color de la escala térmica, y un **widget de escritorio** chico con CPU, GPU, RAM y red que se arrastra a cualquier lugar. Los dos vienen desactivados.
 - **Ventana redimensionable y adaptable**: las tarjetas y los gráficos pasan a una o dos columnas según el ancho, pensado para monitores verticales de 1080p.
 - **Barra lateral colapsable** con el botón integrado en su cabecera o `Ctrl+B`; al ocultarla, la barra superior muestra el título de la página y un botón para reabrirla.
 - **Diseño térmico**: fondos grafito con un acento turquesa «refrigerante»; las temperaturas usan tonos cálidos y la carga y el uso tonos fríos, y el naranja, el ámbar y el rojo quedan para las alertas. Íconos de contorno para CPU, GPU, placa y discos, y el logo **Medidor C**.
@@ -409,8 +422,8 @@ El workflow también se puede lanzar a mano desde **Actions → Release → Run 
 5. En **Sensores** está el volcado completo agrupado por componente. Las filas con barra son porcentajes (carga y PWM). Tocá la cabecera de un grupo para plegarlo o desplegarlo.
 6. En **Discos** revisá la salud y los datos S.M.A.R.T. de cada unidad.
 7. En **Procesos** buscá, ordená y finalizá tareas. Con clic derecho sobre una fila hay más opciones.
-8. En **Overlay** activá la barra para juegos, elegí sus métricas, el estilo y la posición, y bloqueala cuando quede donde querés. Aparece sola cuando un juego está en pantalla completa; `Ctrl+Alt+O` la muestra u oculta en cualquier momento.
-9. En **Ajustes** cambiá el intervalo de refresco, el idioma, el inicio con Windows, el comportamiento de la bandeja y los informes de errores. La tarjeta **Hardware detectado** resume también la RAM instalada y los discos físicos.
+8. En **Overlay** activá la barra para juegos, elegí sus métricas, el estilo y la posición, y bloqueala cuando quede donde querés. Aparece sola cuando un juego está en pantalla completa; `Ctrl+Alt+O` la muestra u oculta en cualquier momento. Elegí **Barra** o **Benchmark** en Apariencia (o apretá `Ctrl+Alt+B`), usá `Ctrl+Alt+R` para empezar y terminar una grabación de benchmark, y hacé clic en un atajo para cambiarlo.
+9. En **Ajustes** cambiá el intervalo de refresco, el idioma, el inicio con Windows, el comportamiento de la bandeja, la temperatura en la bandeja, el widget de escritorio, los informes de errores y el aviso de versión nueva. La tarjeta **Hardware detectado** resume también la RAM instalada y los discos físicos.
 
 El botón ☰ de la cabecera de la barra lateral (o `Ctrl+B`) la oculta. Cuando está oculta, el botón ☰ de la barra superior la vuelve a mostrar. El icono de la bandeja abre la ventana con un clic. Para cerrar del todo usá **Salir** en su menú contextual.
 
@@ -438,6 +451,9 @@ Claves de configuración:
 | `ErrorReportsAsked` | `false` | La app ya preguntó por los informes de errores y no vuelve a preguntar. |
 | `InstallId` | al azar | Identificador al azar de esta instalación; solo sirve para agrupar los informes de errores. |
 | `CpuThreadsExpanded` | `false` | La sección **Hilos** de la tarjeta del procesador en Inicio está desplegada. |
+| `CheckForUpdates` | `true` | Consulta GitHub una vez por semana para ver si hay una versión nueva. |
+| `TrayShowTemperature` / `TrayTemperatureSource` | `false` / `"cpu"` | Temperatura en el ícono de la bandeja, del CPU o de la GPU. |
+| `WidgetEnabled` / `WidgetTopmost` | `false` / `true` | Widget de escritorio, y si queda encima de las demás ventanas. |
 
 Si el archivo se corrompe, la app lo respalda como `config.json.bak-*` y vuelve a los valores por defecto.
 
@@ -452,6 +468,8 @@ Si los activás, cuando la app tiene un error lo envía a [Sentry](https://sentr
 - Un ID de instalación al azar, para saber si varios errores vienen de la misma PC.
 
 **No** envía tu nombre de usuario, el de la PC, tu dirección IP, tu ubicación ni tus archivos: los nombres de usuario y de la PC se reemplazan en rutas y mensajes antes de salir del equipo. Cada error se envía una sola vez por sesión, con un máximo de 25 informes por sesión. Sin conexión, los informes esperan en `%APPDATA%\CtrlMonitor\error-reports` hasta la próxima vez que se abra la app.
+
+El **aviso de versión nueva** le pide a la página pública de versiones de GitHub cuál es la última, una vez por semana. No envía ningún dato tuyo (solo un user agent genérico, `CtrlMonitor-UpdateCheck`) y se puede apagar en **Ajustes → Datos y diagnóstico**.
 
 ## Comentarios y sugerencias
 
