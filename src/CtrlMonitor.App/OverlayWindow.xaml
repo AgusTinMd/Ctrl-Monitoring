@@ -32,7 +32,10 @@
                     </Style.Triggers>
                 </Style>
             </Border.Style>
-            <controls:OverlayBar />
+            <Grid>
+                <controls:OverlayBar Visibility="{Binding IsBarMode, Converter={StaticResource BoolToVis}}" />
+                <controls:BenchmarkPanel Visibility="{Binding IsBenchmarkMode, Converter={StaticResource BoolToVis}}" />
+            </Grid>
         </Border>
     </Grid>
 </Window>

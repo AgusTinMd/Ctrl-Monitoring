@@ -781,7 +781,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         set => IsOverlayEditing = !value;
     }
 
-    public string OverlayHotkeyText => "Ctrl+Alt+O";
 
     public double? OverlayLeft => _config.Overlay.Left;
 
@@ -972,13 +971,14 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     public void UpdateFpsTarget(int processId)
     {
+        // En modo Benchmark los FPS y la API se miden siempre: el panel los muestra.
         bool wanted = OverlayEnabled
-                      && _overlayMetrics.Any(option => option.IsSelected && OverlayMetricKeys.IsFps(option.Key));
+                      && (IsBenchmarkMode || _overlayMetrics.Any(option => option.IsSelected && OverlayMetricKeys.IsFps(option.Key)));
 
         _fps.SetTarget(wanted ? processId : 0);
 
         // La API gráfica solo se busca si el usuario la eligió en el overlay.
-        bool apiWanted = wanted && _overlayMetrics.Any(option => option.IsSelected && option.Key == OverlayMetricKeys.GraphicsApi);
+        bool apiWanted = wanted && (IsBenchmarkMode || _overlayMetrics.Any(option => option.IsSelected && option.Key == OverlayMetricKeys.GraphicsApi));
         _graphicsApi.SetTarget(apiWanted ? processId : 0);
     }
 
@@ -992,6 +992,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
 
         FpsReading? fps = _fps.Current();
+        string? api = fps is null ? null : _graphicsApi.Detect(fps.Value.Runtime);
+        UpdateBenchmark(fps, api);
 
         var snapshot = new OverlaySnapshot
         {
@@ -1016,7 +1018,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             FrameGeneration = fps?.FrameGeneration == true,
             FrameTimeMs = fps?.FrameTimeMs,
             FpsLow1 = fps?.Low1Fps,
-            GraphicsApi = fps is null ? null : _graphicsApi.Detect(fps.Value.Runtime)
+            GraphicsApi = api
         };
 
         var selected = _overlayMetrics

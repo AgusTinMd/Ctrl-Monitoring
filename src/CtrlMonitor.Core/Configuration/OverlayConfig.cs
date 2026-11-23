@@ -52,6 +52,21 @@ public sealed class OverlayConfig
     /// </summary>
     public string Anchor { get; set; } = OverlayAnchors.Default;
 
+    public const string ModeBar = "bar";
+    public const string ModeBenchmark = "benchmark";
+
+    /// <summary>«bar»: la barra compacta; «benchmark»: el panel con gráficos.</summary>
+    public string Mode { get; set; } = ModeBar;
+
+    /// <summary>Atajo para mostrar u ocultar el overlay.</summary>
+    public string HotkeyToggle { get; set; } = Hotkey.DefaultToggle;
+
+    /// <summary>Atajo para cambiar entre barra y benchmark.</summary>
+    public string HotkeyMode { get; set; } = Hotkey.DefaultMode;
+
+    /// <summary>Atajo para iniciar o detener la grabación del benchmark.</summary>
+    public string HotkeyRecord { get; set; } = Hotkey.DefaultRecord;
+
     /// <summary>Posición libre de la barra, en unidades de WPF. Solo con <c>Anchor = custom</c>.</summary>
     public double? Left { get; set; }
 
@@ -80,6 +95,20 @@ public sealed class OverlayConfig
 
     public void Normalize()
     {
+        Mode = string.Equals(Mode, ModeBenchmark, StringComparison.OrdinalIgnoreCase) ? ModeBenchmark : ModeBar;
+
+        HotkeyToggle = Hotkey.NormalizeOr(HotkeyToggle, Hotkey.DefaultToggle);
+        HotkeyMode = Hotkey.NormalizeOr(HotkeyMode, Hotkey.DefaultMode);
+        HotkeyRecord = Hotkey.NormalizeOr(HotkeyRecord, Hotkey.DefaultRecord);
+
+        // Dos acciones no pueden compartir atajo: la repetida vuelve a su valor por defecto.
+        if (string.Equals(HotkeyMode, HotkeyToggle, StringComparison.OrdinalIgnoreCase))
+            HotkeyMode = Hotkey.DefaultMode;
+
+        if (string.Equals(HotkeyRecord, HotkeyToggle, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(HotkeyRecord, HotkeyMode, StringComparison.OrdinalIgnoreCase))
+            HotkeyRecord = Hotkey.DefaultRecord;
+
         ColorStyle = OverlayColors.IsKnownStyle(ColorStyle)
             ? ColorStyle.Trim().ToLowerInvariant()
             : OverlayColors.DefaultStyle;
