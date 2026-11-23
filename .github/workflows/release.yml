@@ -94,7 +94,7 @@ jobs:
           <a id="english"></a>
           ### English
 
-          Read-only hardware monitor for Windows 10/11 (64-bit): temperatures, fan speeds, power, voltages, RAM, VRAM and network traffic, plus **disk health (S.M.A.R.T.)**, a **process manager** and an **in-game overlay with FPS** (it shows **FG** with frame generation). When nobody is looking at it, it pauses and frees memory. Available in English, Spanish and Portuguese (Brazil).
+          Read-only hardware monitor for Windows 10/11 (64-bit): temperatures, fan speeds, power, voltages, RAM, VRAM and network traffic, plus **disk health (S.M.A.R.T.)**, a **process manager** and an **in-game overlay with FPS** (it shows **FG** with frame generation). It also shows the load of each CPU core and thread and the live read/write speed of every disk. When nobody is looking at it, it pauses and frees memory. Available in English, Spanish and Portuguese (Brazil).
 
           **Download**
           - **CtrlMonitorSetup-$version.exe**: installer (recommended). Installs to Program Files, creates the Start menu shortcut and can be removed from *Add or remove programs*. It lets you choose the language and can install PawnIO for you.
@@ -115,7 +115,7 @@ jobs:
           <a id="espanol"></a>
           ### Español
 
-          Monitor de hardware de solo lectura para Windows 10/11 (64 bits): temperaturas, ventiladores, potencia, voltajes, RAM, VRAM y red, más **salud de los discos (S.M.A.R.T.)**, un **administrador de procesos** y un **overlay para juegos con FPS** (muestra **FG** con generación de cuadros). Cuando nadie la mira, se pone en reposo y libera memoria. Interfaz en español, inglés y portugués (Brasil).
+          Monitor de hardware de solo lectura para Windows 10/11 (64 bits): temperaturas, ventiladores, potencia, voltajes, RAM, VRAM y red, más **salud de los discos (S.M.A.R.T.)**, un **administrador de procesos** y un **overlay para juegos con FPS** (muestra **FG** con generación de cuadros). También muestra la carga de cada núcleo e hilo del CPU y la lectura y escritura de cada disco en vivo. Cuando nadie la mira, se pone en reposo y libera memoria. Interfaz en español, inglés y portugués (Brasil).
 
           **Descarga**
           - **CtrlMonitorSetup-$version.exe**: instalador (recomendado). Instala en Program Files, crea el acceso directo en el menú Inicio y se desinstala desde *Agregar o quitar programas*. Permite elegir el idioma y puede instalar PawnIO por vos.
@@ -136,7 +136,7 @@ jobs:
           <a id="portugues"></a>
           ### Português (Brasil)
 
-          Monitor de hardware somente leitura para Windows 10/11 (64 bits): temperaturas, ventoinhas, potência, tensões, RAM, VRAM e rede, além da **saúde dos discos (S.M.A.R.T.)**, de um **gerenciador de processos** e de um **overlay para jogos com FPS** (mostra **FG** com geração de quadros). Quando ninguém está olhando, ele entra em repouso e libera memória. Interface em inglês, espanhol e português (Brasil).
+          Monitor de hardware somente leitura para Windows 10/11 (64 bits): temperaturas, ventoinhas, potência, tensões, RAM, VRAM e rede, além da **saúde dos discos (S.M.A.R.T.)**, de um **gerenciador de processos** e de um **overlay para jogos com FPS** (mostra **FG** com geração de quadros). Também mostra a carga de cada núcleo e thread da CPU e a leitura e gravação de cada disco em tempo real. Quando ninguém está olhando, ele entra em repouso e libera memória. Interface em inglês, espanhol e português (Brasil).
 
           **Download**
           - **CtrlMonitorSetup-$version.exe**: instalador (recomendado). Instala em Program Files, cria o atalho no menu Iniciar e pode ser removido em *Aplicativos e recursos*. Permite escolher o idioma e pode instalar o PawnIO para você.
