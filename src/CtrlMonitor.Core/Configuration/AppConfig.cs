@@ -54,6 +54,12 @@ public sealed class AppConfig
     /// </summary>
     public bool SendErrorReports { get; set; }
 
+    /// <summary>Avisar cuando haya una versión nueva en GitHub. Desactivado por defecto.</summary>
+    public bool CheckForUpdates { get; set; }
+
+    /// <summary>Última versión avisada en la bandeja, para no repetir el aviso.</summary>
+    public string LastNotifiedUpdate { get; set; } = string.Empty;
+
     /// <summary>
     /// Ya se le preguntó al usuario si quiere enviar informes: la pregunta
     /// aparece una sola vez, la primera vez que se abre la ventana.
