@@ -2336,6 +2336,23 @@
                                     <TextBlock Text="{l:Tr settings.exitHint}"
                                                Style="{StaticResource MutedText}" Margin="28,4,0,0" />
 
+                                    <!-- Temperatura en el ícono de la bandeja: opcional. -->
+                                    <CheckBox Content="{l:Tr settings.trayTemperature}" Margin="0,16,0,0"
+                                              IsChecked="{Binding TrayShowTemperature, Mode=TwoWay}" />
+                                    <TextBlock Text="{l:Tr settings.trayTemperatureHint}" TextWrapping="Wrap"
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0" />
+                                    <Border Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Left"
+                                            BorderBrush="{StaticResource BorderBrush}" Margin="28,8,0,0"
+                                            BorderThickness="1" CornerRadius="9" Padding="2"
+                                            IsEnabled="{Binding TrayShowTemperature}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Content="CPU" Style="{StaticResource SegmentButton}" GroupName="TrayTemp"
+                                                         IsChecked="{Binding TrayTemperatureIsCpu, Mode=TwoWay}" />
+                                            <RadioButton Content="GPU" Style="{StaticResource SegmentButton}" GroupName="TrayTemp"
+                                                         IsChecked="{Binding TrayTemperatureIsGpu, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Border>
+
                                     <Separator Margin="0,18,0,14" />
 
                                     <StackPanel Orientation="Horizontal">

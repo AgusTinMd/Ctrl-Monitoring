@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.Input;
 using CtrlMonitor.App.ViewModels;
@@ -20,6 +21,9 @@ public sealed class TrayService : IDisposable
     private readonly MenuItem _exitItem;
     private bool _disposed;
     private string? _tooltip;
+    private System.Drawing.Icon? _drawnIcon;
+    private string? _iconKey;
+    private bool _iconFailing;
     private bool _tooltipFailing;
 
     public TrayService(MainViewModel viewModel, Action showWindow, Action exit)
@@ -74,6 +78,7 @@ public sealed class TrayService : IDisposable
         _viewModel.UpdateFound += OnUpdateFound;
         Loc.Instance.LanguageChanged += OnLanguageChanged;
         UpdateTooltip();
+        UpdateIcon();
     }
 
     /// <summary>Aviso de Windows desde la bandeja cuando hay una versión nueva.</summary>
@@ -103,6 +108,13 @@ public sealed class TrayService : IDisposable
             or nameof(MainViewModel.GpuTemperature))
         {
             UpdateTooltip();
+            UpdateIcon();
+        }
+        else if (e.PropertyName is nameof(MainViewModel.TrayShowTemperature)
+                 or nameof(MainViewModel.TrayTemperatureIsCpu)
+                 or nameof(MainViewModel.TrayTemperatureIsGpu))
+        {
+            UpdateIcon();
         }
     }
 
@@ -147,6 +159,58 @@ public sealed class TrayService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Con la opción activa, el ícono muestra la temperatura del CPU o la GPU
+    /// en el color de la escala térmica. Solo se redibuja si cambia el número
+    /// o el color, y un error del Explorador no cierra la app.
+    /// </summary>
+    private void UpdateIcon()
+    {
+        if (_disposed)
+            return;
+
+        double? temperature = _viewModel.TrayTemperatureIsGpu ? _viewModel.GpuTemperature : _viewModel.CpuTemperature;
+        bool show = _viewModel.TrayShowTemperature && temperature is not null;
+        string key = show ? TrayTemperatureIcon.Key(temperature!.Value) : "default";
+
+        if (key == _iconKey)
+            return;
+
+        // Al volver al logo con la opción apagada no hace falta tocar nada si
+        // nunca se cambió el ícono.
+        if (!show && _iconKey is null)
+        {
+            _iconKey = key;
+            return;
+        }
+
+        try
+        {
+            // H.NotifyIcon no acepta imágenes generadas en memoria como
+            // IconSource: se le pasa un ícono de Windows ya armado.
+            System.Drawing.Icon next = show
+                ? TrayTemperatureIcon.RenderIcon(temperature!.Value)
+                : TrayTemperatureIcon.DefaultIcon();
+
+            System.Drawing.Icon? previous = _drawnIcon;
+            _icon.Icon = next;
+            _drawnIcon = next;
+            previous?.Dispose();
+
+            _iconKey = key;
+            _iconFailing = false;
+        }
+        catch (Exception ex)
+        {
+            // Un ícono que no se puede dibujar nunca debe cerrar la app.
+            if (!_iconFailing)
+            {
+                _iconFailing = true;
+                AppLog.Warn("Bandeja: no se pudo actualizar el ícono: " + ex.Message);
+            }
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -160,6 +224,7 @@ public sealed class TrayService : IDisposable
         try
         {
             _icon.Dispose();
+            _drawnIcon?.Dispose();
         }
         catch
         {
