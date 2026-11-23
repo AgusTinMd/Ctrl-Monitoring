@@ -2453,7 +2453,7 @@
                                                Style="{StaticResource MutedText}" TextWrapping="Wrap"
                                                Margin="28,4,0,0" />
 
-                                    <!-- Aviso de versión nueva: opcional, desactivado por defecto. -->
+                                    <!-- Aviso de versión nueva: activado por defecto, se puede apagar. -->
                                     <CheckBox Content="{l:Tr settings.checkUpdates}" Margin="0,18,0,0"
                                               IsChecked="{Binding CheckForUpdates, Mode=TwoWay}" />
                                     <TextBlock Text="{l:Tr settings.checkUpdatesHint}"

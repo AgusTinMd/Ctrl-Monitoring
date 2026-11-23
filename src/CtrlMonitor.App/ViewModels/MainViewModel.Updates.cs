@@ -7,7 +7,7 @@ using CtrlMonitor.Core.Localization;
 
 namespace CtrlMonitor.App.ViewModels;
 
-/// <summary>Aviso opcional de versión nueva (desactivado por defecto).</summary>
+/// <summary>Aviso de versión nueva (activado por defecto; se puede apagar en Ajustes).</summary>
 public partial class MainViewModel
 {
     /// <summary>

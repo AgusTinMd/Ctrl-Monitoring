@@ -58,9 +58,9 @@ public class UpdateCheckTests
     }
 
     [Fact]
-    public void UpdateCheck_IsOffByDefault()
+    public void UpdateCheck_IsOnByDefault()
     {
-        Assert.False(new AppConfig().CheckForUpdates);
+        Assert.True(new AppConfig().CheckForUpdates);
     }
 
     [Fact]
