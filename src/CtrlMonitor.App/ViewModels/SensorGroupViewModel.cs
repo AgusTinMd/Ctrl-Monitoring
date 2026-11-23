@@ -36,6 +36,7 @@ public sealed partial class SensorGroupViewModel : ObservableObject
     {
         "Cpu" => "Cpu",
         "GpuAmd" or "GpuNvidia" => "Gpu",
+        "Storage" => "Disk",
         _ => "Board"
     };
 
