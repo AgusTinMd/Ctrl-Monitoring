@@ -1648,7 +1648,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             CpuLoad,
             GpuLoad,
             _disks.Count == 0 ? null : _disks,
-            CpuThreads.Count == 0 ? null : CpuThreads.Select(t => t.Load).ToArray()));
+            CpuThreads.Count == 0 ? null : CpuThreads.Select(t => t.Load).ToArray(),
+            CoreLoads.Count == 0 ? null : CoreLoads.ToArray()));
 
         // El gráfico permite ventanas de hasta 10 minutos; conservamos ese
         // margen y descartamos lo más viejo para no crecer sin límite.
@@ -1667,7 +1668,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             string key = configured[i];
             ChartMetric? metric = FindChartMetric(key);
 
-            if (metric is null && key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase))
+            if (metric is null && (key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.OrdinalIgnoreCase)
+                                   || key.StartsWith(ChartMetrics.CoreKeyPrefix, StringComparison.OrdinalIgnoreCase)))
             {
                 _pendingChartKeys.Add((i, key));
                 continue;
@@ -1882,7 +1884,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             .Select(panel => panel.SelectedMetric)
             .Where(metric => metric.Key.StartsWith(ChartMetrics.DiskKeyPrefix, StringComparison.Ordinal));
 
-        AllChartMetrics = ChartMetrics.Base.Concat(diskMetrics).Concat(orphaned).Distinct().ToList();
+        // Un gráfico por núcleo, en orden, entre las métricas fijas y los discos.
+        IEnumerable<ChartMetric> coreMetrics = Enumerable.Range(1, CoreLoads.Count).Select(ChartMetrics.ForCore);
+
+        IEnumerable<ChartMetric> orphanedCores = ChartPanels
+            .Select(panel => panel.SelectedMetric)
+            .Where(metric => metric.Key.StartsWith(ChartMetrics.CoreKeyPrefix, StringComparison.Ordinal));
+
+        AllChartMetrics = ChartMetrics.Base.Concat(coreMetrics).Concat(orphanedCores)
+            .Concat(diskMetrics).Concat(orphaned).Distinct().ToList();
 
         AppLog.Info($"Discos para gráficos: {string.Join(", ", _disks.Keys.OrderBy(DiskNames.Number))}");
 

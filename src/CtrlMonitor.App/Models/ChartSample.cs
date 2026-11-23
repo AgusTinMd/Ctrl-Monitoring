@@ -16,4 +16,5 @@ public sealed record ChartSample(
     double? CpuLoad,
     double? GpuLoad,
     IReadOnlyDictionary<string, DiskActivity>? Disks,
-    IReadOnlyList<double>? Threads = null);
+    IReadOnlyList<double>? Threads = null,
+    IReadOnlyList<double>? Cores = null);

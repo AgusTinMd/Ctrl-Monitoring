@@ -39,6 +39,25 @@ public sealed partial class ThreadLoadViewModel : ObservableObject
 
     public string Tooltip => Loc.F("summary.threadTooltip", Core, Thread, Load.ToString("0"));
 
+    /// <summary>Muestras para el mini gráfico del hilo (las últimas <see cref="HistorySize"/>).</summary>
+    public const int HistorySize = 60;
+
+    private readonly List<double> _samples = new();
+
+    [ObservableProperty]
+    private IReadOnlyList<double> _history = Array.Empty<double>();
+
+    public void Push(double load)
+    {
+        Load = load;
+        _samples.Add(load);
+
+        if (_samples.Count > HistorySize)
+            _samples.RemoveAt(0);
+
+        History = _samples.ToArray();
+    }
+
     public void RefreshLanguage()
     {
         OnPropertyChanged(nameof(Label));
@@ -95,8 +114,28 @@ public partial class MainViewModel
         }
 
         for (int i = 0; i < loads.Count; i++)
-            CpuThreads[i].Load = loads[i].Load;
+            CpuThreads[i].Push(loads[i].Load);
+
+        // Carga de cada núcleo: el promedio de sus hilos.
+        List<double> cores = CpuThreads
+            .GroupBy(t => t.Core)
+            .OrderBy(g => g.Key)
+            .Select(g => g.Average(t => t.Load))
+            .ToList();
+
+        bool coreCountChanged = cores.Count != CoreLoads.Count;
+        CoreLoads = cores;
+
+        if (coreCountChanged)
+            RebuildChartMetrics();
     }
+
+    /// <summary>Carga actual de cada núcleo, desde el núcleo 1.</summary>
+    public IReadOnlyList<double> CoreLoads { get; private set; } = Array.Empty<double>();
+
+    /// <summary>Carga de un núcleo (desde 1), o null si no existe.</summary>
+    public double? GetCoreLoad(int core) =>
+        core >= 1 && core <= CoreLoads.Count ? CoreLoads[core - 1] : null;
 
     private static IReadOnlyList<CpuThreadLoad> CpuThreads_From(IReadOnlyList<SensorReading> cpu) =>
         Core.Hardware.CpuThreads.From(cpu);

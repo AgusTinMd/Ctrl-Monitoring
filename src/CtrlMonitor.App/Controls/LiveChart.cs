@@ -201,12 +201,6 @@ public sealed class LiveChart : FrameworkElement
         double width = ActualWidth;
         double height = ActualHeight;
 
-        if (IsThreadMap)
-        {
-            RenderThreadMap(dc, width, height);
-            return;
-        }
-
         if (Compact)
         {
             RenderCompact(dc, width, height);
@@ -331,108 +325,6 @@ public sealed class LiveChart : FrameworkElement
         dc.Pop();
     }
 
-    private bool IsThreadMap => string.Equals(Series?.Trim(), "CpuThreads", StringComparison.OrdinalIgnoreCase);
-
-    private readonly Dictionary<int, Brush> _threadCellBrushes = new();
-
-    /// <summary>
-    /// Mapa de calor de los hilos: una fila por hilo y el tiempo a lo ancho.
-    /// Cuanto más intenso el color, más carga. Escala igual con 4 o con 64 hilos.
-    /// </summary>
-    private void RenderThreadMap(DrawingContext dc, double width, double height)
-    {
-        if (width < 20 || height < 20)
-            return;
-
-        Brush textBrush = Resource("TextMutedBrush", Brushes.Gray);
-        Brush trackBrush = Resource("TrackBrush", Brushes.DimGray);
-        Brush baseBrush = Resource("ChartCpuBrush", Brushes.DodgerBlue);
-        var typeface = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-        double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
-
-        double windowMinutes = Math.Clamp(WindowMinutes, 0.5, 60);
-        var samples = Samples?.OfType<ChartSample>().Where(s => s.Threads is { Count: > 0 }).ToList()
-                      ?? new List<ChartSample>();
-
-        int threads = samples.Count > 0 ? samples[^1].Threads!.Count : 0;
-        bool labels = !Compact;
-        double labelWidth = labels ? 30 : 0;
-        var plot = Compact
-            ? new Rect(1, 2, width - 2, height - 4)
-            : new Rect(labelWidth, PlotTop, Math.Max(20, width - labelWidth - PlotRight), Math.Max(20, height - PlotTop - PlotBottom));
-
-        if (threads == 0)
-        {
-            if (!Compact)
-            {
-                FormattedText waiting = Text(Loc.T("chart.waiting"), typeface, 12, textBrush, dpi);
-                dc.DrawText(waiting, new Point(plot.Left + (plot.Width - waiting.Width) / 2, plot.Top + (plot.Height - waiting.Height) / 2));
-            }
-
-            return;
-        }
-
-        DateTime end = samples[^1].TimestampUtc;
-        DateTime start = end - TimeSpan.FromMinutes(windowMinutes);
-        double rowHeight = plot.Height / threads;
-        double gap = rowHeight >= 6 ? 1 : 0;
-
-        dc.DrawRectangle(trackBrush, null, plot);
-        dc.PushClip(new RectangleGeometry(plot));
-
-        for (int i = 0; i < samples.Count; i++)
-        {
-            ChartSample sample = samples[i];
-            DateTime next = i + 1 < samples.Count ? samples[i + 1].TimestampUtc : sample.TimestampUtc + TimeSpan.FromSeconds(1);
-
-            if (next < start)
-                continue;
-
-            double x0 = plot.Left + (sample.TimestampUtc - start).TotalSeconds / (end - start).TotalSeconds * plot.Width;
-            double x1 = plot.Left + (next - start).TotalSeconds / (end - start).TotalSeconds * plot.Width;
-            IReadOnlyList<double> loads = sample.Threads!;
-
-            for (int t = 0; t < Math.Min(threads, loads.Count); t++)
-            {
-                int level = (int)Math.Round(Math.Clamp(loads[t], 0, 100) / 5);
-
-                if (level == 0)
-                    continue;
-
-                double y = plot.Top + t * rowHeight;
-                dc.DrawRectangle(CellBrush(baseBrush, level), null,
-                    new Rect(x0, y, Math.Max(1, x1 - x0 + 0.5), Math.Max(1, rowHeight - gap)));
-            }
-        }
-
-        dc.Pop();
-
-        if (!labels)
-            return;
-
-        // Número de hilo a la izquierda; con muchos hilos, solo algunos para que no se encimen.
-        int every = Math.Max(1, (int)Math.Ceiling(12 / Math.Max(1, rowHeight)));
-
-        for (int t = 0; t < threads; t += every)
-        {
-            FormattedText label = Text(Loc.F("summary.threadShort", t + 1), typeface, 10, textBrush, dpi);
-            double y = plot.Top + t * rowHeight + (rowHeight - label.Height) / 2;
-            dc.DrawText(label, new Point(plot.Left - label.Width - 6, y));
-        }
-    }
-
-    private Brush CellBrush(Brush baseBrush, int level)
-    {
-        if (_threadCellBrushes.TryGetValue(level, out Brush? cached))
-            return cached;
-
-        Brush brush = baseBrush.Clone();
-        brush.Opacity = 0.12 + 0.88 * level / 20.0;
-        brush.Freeze();
-        _threadCellBrushes[level] = brush;
-        return brush;
-    }
-
     private List<ChartSeries> GetActiveSeries()
     {
         var result = new List<ChartSeries>(5);
@@ -449,10 +341,23 @@ public sealed class LiveChart : FrameworkElement
             return result;
         }
 
+        // Cada núcleo tiene su serie: «Core:3».
+        if (series.StartsWith(ChartMetrics.CoreKeyPrefix, StringComparison.OrdinalIgnoreCase)
+            && int.TryParse(series[ChartMetrics.CoreKeyPrefix.Length..], out int core))
+        {
+            result.Add(new ChartSeries(s => s.Cores is { } cores && core >= 1 && core <= cores.Count ? cores[core - 1] : null,
+                Resource("ChartCpuBrush", Brushes.DodgerBlue)));
+            return result;
+        }
+
         if (series.Length > 0)
         {
             switch (series.ToLowerInvariant())
             {
+                case "cputhreads":
+                    // En la vista de lista, la miniatura muestra la carga total.
+                    result.Add(new ChartSeries(s => s.CpuLoad, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
+                    break;
                 case "cpu":
                     result.Add(new ChartSeries(s => s.Cpu, Resource("ChartCpuBrush", Brushes.DodgerBlue)));
                     break;
