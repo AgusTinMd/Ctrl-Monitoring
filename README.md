@@ -231,7 +231,7 @@ tests/CtrlMonitor.Core.Tests/  xUnit tests
 tools/CtrlMonitor.Probe/   Read-only probe for elevated diagnostics
 build/package.ps1          Packaging: self-contained exe, zip, installer and hashes
 build/get-presentmon.ps1   Downloads PresentMon and verifies its SHA-256
-docs/                      README screenshots
+docs/screenshots/          README screenshots, named by version (2.13-home.png…)
 installer/CtrlMonitor.iss  Inno Setup installer
 .github/workflows/         Automatic release when a vX.Y.Z tag is pushed
 LICENSE                    MIT license
@@ -500,7 +500,7 @@ tests/CtrlMonitor.Core.Tests/  Tests xUnit
 tools/CtrlMonitor.Probe/   Sonda de solo lectura para diagnóstico elevado
 build/package.ps1          Empaquetado: exe autocontenido, zip, instalador y hashes
 build/get-presentmon.ps1   Descarga PresentMon y verifica su SHA-256
-docs/                      Capturas del README
+docs/screenshots/          Capturas del README, con la versión en el nombre (2.13-home.png…)
 installer/CtrlMonitor.iss  Instalador de Inno Setup
 .github/workflows/         Release automática al subir un tag vX.Y.Z
 LICENSE                    Licencia MIT
