@@ -492,27 +492,37 @@
                                                ToolTip="{Binding RamUsageText}" />
                                 </Grid>
 
-                                <!-- Carga de cada hilo, al estilo btop: una barra por hilo. -->
+                                <!-- Carga de cada hilo, al estilo btop: una fila por hilo con su número,
+                                     barra y porcentaje. Las columnas se acomodan al ancho, así que
+                                     procesadores con muchos hilos suman filas en lugar de achicarlas. -->
                                 <StackPanel Margin="0,14,0,0"
                                             Visibility="{Binding HasCpuThreads, Converter={StaticResource BoolToVis}}">
                                     <TextBlock Text="{Binding CpuThreadsTitle}" Style="{StaticResource SecondaryText}" />
-                                    <ItemsControl ItemsSource="{Binding CpuThreads}" Margin="0,7,0,0" Focusable="False">
+                                    <ItemsControl ItemsSource="{Binding CpuThreads}" Margin="0,8,0,0" Focusable="False">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
-                                                <UniformGrid Rows="1" />
+                                                <controls:ResponsiveGrid MinItemWidth="112" MaxColumns="4" Gap="8" />
                                             </ItemsPanelTemplate>
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <Grid Height="34" Margin="1.5,0" ToolTip="{Binding Tooltip}"
-                                                      Background="Transparent">
-                                                    <Border Background="{StaticResource TrackBrush}" CornerRadius="2" />
-                                                    <Border Background="{StaticResource ChartCpuBrush}" CornerRadius="2"
-                                                            RenderTransformOrigin="0.5,1">
-                                                        <Border.RenderTransform>
-                                                            <ScaleTransform ScaleY="{Binding Fraction}" />
-                                                        </Border.RenderTransform>
-                                                    </Border>
+                                                <Grid ToolTip="{Binding Tooltip}" Background="Transparent">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="30" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="36" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Text="{Binding Label}" Style="{StaticResource MutedText}"
+                                                               FontSize="11" VerticalAlignment="Center" />
+                                                    <ProgressBar Grid.Column="1" Style="{StaticResource MeterBar}"
+                                                                 Minimum="0" Maximum="100" Height="6"
+                                                                 Value="{Binding Load, Mode=OneWay}"
+                                                                 Foreground="{StaticResource ChartCpuBrush}"
+                                                                 VerticalAlignment="Center" />
+                                                    <TextBlock Grid.Column="2" Text="{Binding LoadText}" FontSize="11"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               Typography.NumeralAlignment="Tabular"
+                                                               HorizontalAlignment="Right" VerticalAlignment="Center" />
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>

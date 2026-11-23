@@ -39,6 +39,7 @@ public static partial class Translations
         ["summary.temperature"] = "Temperature",
         ["summary.coreMax"] = "Hottest core",
         ["summary.threads"] = "Threads ({0})",
+        ["summary.threadShort"] = "T{0}",
         ["summary.threadTooltip"] = "Core {0} · thread {1}: {2} %",
         ["summary.maxValue"] = "Max {0}",
         ["summary.hotspotValue"] = "Hotspot {0}",

@@ -9,11 +9,15 @@ namespace CtrlMonitor.App.ViewModels;
 /// <summary>Barra de un hilo del CPU en la tarjeta del procesador.</summary>
 public sealed partial class ThreadLoadViewModel : ObservableObject
 {
-    public ThreadLoadViewModel(int core, int thread)
+    public ThreadLoadViewModel(int index, int core, int thread)
     {
+        Index = index;
         Core = core;
         Thread = thread;
     }
+
+    /// <summary>Número de hilo lógico, desde 1, como en el Administrador de tareas.</summary>
+    public int Index { get; }
 
     public int Core { get; }
 
@@ -22,14 +26,24 @@ public sealed partial class ThreadLoadViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Fraction))]
     [NotifyPropertyChangedFor(nameof(Tooltip))]
+    [NotifyPropertyChangedFor(nameof(LoadText))]
     private double _load;
+
+    /// <summary>Etiqueta corta: «H1», «T1»…</summary>
+    public string Label => Loc.F("summary.threadShort", Index);
+
+    public string LoadText => Load.ToString("0") + "%";
 
     /// <summary>De 0 a 1, para escalar la barra.</summary>
     public double Fraction => Math.Clamp(Load / 100, 0, 1);
 
     public string Tooltip => Loc.F("summary.threadTooltip", Core, Thread, Load.ToString("0"));
 
-    public void RefreshLanguage() => OnPropertyChanged(nameof(Tooltip));
+    public void RefreshLanguage()
+    {
+        OnPropertyChanged(nameof(Label));
+        OnPropertyChanged(nameof(Tooltip));
+    }
 }
 
 /// <summary>Hilos del CPU y lectura/escritura de los discos en Inicio.</summary>
@@ -55,8 +69,8 @@ public partial class MainViewModel
         {
             CpuThreads.Clear();
 
-            foreach (CpuThreadLoad load in loads)
-                CpuThreads.Add(new ThreadLoadViewModel(load.Core, load.Thread));
+            for (int i = 0; i < loads.Count; i++)
+                CpuThreads.Add(new ThreadLoadViewModel(i + 1, loads[i].Core, loads[i].Thread));
 
             OnPropertyChanged(nameof(HasCpuThreads));
             OnPropertyChanged(nameof(CpuThreadsTitle));
