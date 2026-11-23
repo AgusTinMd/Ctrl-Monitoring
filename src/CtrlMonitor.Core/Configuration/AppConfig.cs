@@ -17,6 +17,22 @@ public sealed class AppConfig
 
     public bool MinimizeToTray { get; set; } = true;
 
+    /// <summary>Widget compacto de escritorio. Desactivado por defecto.</summary>
+    public bool WidgetEnabled { get; set; }
+
+    /// <summary>El widget queda encima de las demás ventanas.</summary>
+    public bool WidgetTopmost { get; set; } = true;
+
+    /// <summary>Posición del widget; null = abajo a la derecha.</summary>
+    public double? WidgetLeft { get; set; }
+
+    public double? WidgetTop { get; set; }
+    /// <summary>Mostrar la temperatura en el ícono de la bandeja. Desactivado por defecto.</summary>
+    public bool TrayShowTemperature { get; set; }
+
+    /// <summary>Temperatura del ícono: «cpu» o «gpu».</summary>
+    public string TrayTemperatureSource { get; set; } = "cpu";
+
     public bool RunAtStartup { get; set; }
 
     /// <summary>Muestra u oculta la barra lateral de navegación.</summary>
@@ -54,6 +70,20 @@ public sealed class AppConfig
     /// </summary>
     public bool SendErrorReports { get; set; }
 
+    /// <summary>Avisar cuando haya una versión nueva en GitHub. Activado por defecto; se puede apagar en Ajustes.</summary>
+    public bool CheckForUpdates { get; set; } = true;
+
+    /// <summary>Última versión avisada en la bandeja, para no repetir el aviso.</summary>
+    public string LastNotifiedUpdate { get; set; } = string.Empty;
+
+    /// <summary>Última consulta a GitHub; se consulta como mucho una vez por semana.</summary>
+    public DateTime? LastUpdateCheckUtc { get; set; }
+
+    /// <summary>Última versión publicada que se encontró, para mostrarla entre consultas.</summary>
+    public string LatestUpdateTag { get; set; } = string.Empty;
+
+    public string LatestUpdateUrl { get; set; } = string.Empty;
+
     /// <summary>
     /// Ya se le preguntó al usuario si quiere enviar informes: la pregunta
     /// aparece una sola vez, la primera vez que se abre la ventana.
@@ -71,8 +101,16 @@ public sealed class AppConfig
         RefreshIntervalMs = Math.Clamp(RefreshIntervalMs, 500, 10000);
         Language = AppLanguage.NormalizeSetting(Language);
 
+        TrayTemperatureSource = string.Equals(TrayTemperatureSource, "gpu", StringComparison.OrdinalIgnoreCase) ? "gpu" : "cpu";
+
         if (!Guid.TryParseExact(InstallId, "N", out _))
             InstallId = Guid.NewGuid().ToString("N");
+
+        if (WidgetLeft is { } wl && !double.IsFinite(wl))
+            WidgetLeft = null;
+
+        if (WidgetTop is { } wt && !double.IsFinite(wt))
+            WidgetTop = null;
 
         Overlay ??= new OverlayConfig();
         Overlay.Normalize();

@@ -98,6 +98,58 @@ public partial class MainWindow : Window
         base.OnClosing(e);
     }
 
+    /// <summary>
+    /// Edición de un atajo: se hace clic en el cuadro y se aprieta la
+    /// combinación nueva. Escape cancela. Necesita Ctrl, Alt o Win.
+    /// </summary>
+    private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (sender is not TextBox { Tag: string action })
+            return;
+
+        e.Handled = true;
+        Key key = e.Key == Key.System ? e.SystemKey : e.Key;
+
+        if (key == Key.Escape)
+        {
+            Keyboard.ClearFocus();
+            return;
+        }
+
+        string? name = key switch
+        {
+            >= Key.A and <= Key.Z => key.ToString(),
+            >= Key.D0 and <= Key.D9 => ((int)(key - Key.D0)).ToString(System.Globalization.CultureInfo.InvariantCulture),
+            >= Key.NumPad0 and <= Key.NumPad9 => ((int)(key - Key.NumPad0)).ToString(System.Globalization.CultureInfo.InvariantCulture),
+            >= Key.F1 and <= Key.F24 => key.ToString(),
+            _ => null
+        };
+
+        // Solo modificadores todavía: se espera la tecla.
+        if (name is null)
+            return;
+
+        ModifierKeys modifiers = Keyboard.Modifiers;
+        var parts = new List<string>(4);
+
+        if (modifiers.HasFlag(ModifierKeys.Control))
+            parts.Add("Ctrl");
+
+        if (modifiers.HasFlag(ModifierKeys.Alt))
+            parts.Add("Alt");
+
+        if (modifiers.HasFlag(ModifierKeys.Shift))
+            parts.Add("Shift");
+
+        if (modifiers.HasFlag(ModifierKeys.Windows))
+            parts.Add("Win");
+
+        parts.Add(name);
+
+        if (_viewModel.TrySetHotkey(action, string.Join("+", parts)))
+            Keyboard.ClearFocus();
+    }
+
     protected override void OnStateChanged(EventArgs e)
     {
         base.OnStateChanged(e);

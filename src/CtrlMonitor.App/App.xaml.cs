@@ -38,6 +38,7 @@ public partial class App : Application
     private TrayService? _tray;
     private MainWindow? _window;
     private OverlayWindowManager? _overlay;
+    private WidgetManager? _widget;
 
     private bool _exiting;
     private bool _cleaned;
@@ -215,6 +216,9 @@ public partial class App : Application
         _viewModel = new MainViewModel(_store, _config, _hardware);
         _tray = new TrayService(_viewModel, ShowMainWindow, RequestExit);
 
+        // Aviso de versión nueva: solo si el usuario lo activó en Ajustes.
+        _ = _viewModel.CheckForUpdatesAsync();
+
         _window = new MainWindow(_viewModel);
         _window.Closed += OnMainWindowClosed;
 
@@ -229,6 +233,9 @@ public partial class App : Application
             AppLog.Error("No se pudo iniciar el overlay", ex);
             _overlay = null;
         }
+
+        // Widget de escritorio: solo si el usuario lo activó en Ajustes.
+        _widget = new WidgetManager(_viewModel);
 
         bool startHidden = args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase))
                            || _config.StartMinimized;
@@ -297,6 +304,15 @@ public partial class App : Application
         catch (Exception ex)
         {
             AppLog.Error("Error al cerrar el icono de bandeja", ex);
+        }
+
+        try
+        {
+            _widget?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("Error al cerrar el widget", ex);
         }
 
         try

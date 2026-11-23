@@ -15,6 +15,15 @@ public static class OverlayMetricKeys
     /// <summary>Cuadros por segundo del juego en primer plano (PresentMon).</summary>
     public const string Fps = "fps";
 
+    /// <summary>Tiempo medio entre cuadros, en ms.</summary>
+    public const string FrameTime = "fps.frametime";
+
+    /// <summary>«1 % low»: FPS del 1 % de cuadros más lentos de los últimos 10 s.</summary>
+    public const string FpsLow1 = "fps.low1";
+
+    /// <summary>API gráfica del juego (DX9, DX11, DX12, Vulkan, OpenGL).</summary>
+    public const string GraphicsApi = "fps.api";
+
     public const string CpuLoad = "cpu.load";
     public const string CpuTemperature = "cpu.temp";
     public const string CpuClock = "cpu.clock";
@@ -36,7 +45,7 @@ public static class OverlayMetricKeys
     /// <summary>Todas las métricas disponibles, en el orden del selector.</summary>
     public static readonly IReadOnlyList<string> All = new[]
     {
-        Fps,
+        Fps, GraphicsApi, FrameTime, FpsLow1,
         CpuLoad, CpuTemperature, CpuClock, CpuPower, CpuFan,
         GpuLoad, GpuTemperature, GpuHotspot, GpuVram, GpuPower, GpuFan,
         RamUsed, RamPercent,
@@ -66,7 +75,8 @@ public static class OverlayMetricKeys
     /// <summary>Grupo al que pertenece una clave; vacío si no se reconoce.</summary>
     public static string GroupOf(string key)
     {
-        if (string.Equals(key, Fps, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(key, Fps, StringComparison.OrdinalIgnoreCase)
+            || key.StartsWith("fps.", StringComparison.OrdinalIgnoreCase))
             return FpsGroup;
 
         if (key.StartsWith("cpu.", StringComparison.OrdinalIgnoreCase))

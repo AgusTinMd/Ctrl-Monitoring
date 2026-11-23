@@ -78,6 +78,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly List<OverlayGroupColorOption> _overlayGroupColors = new();
     private readonly List<OverlayAnchorOption> _overlayAnchorOptions = new();
     private readonly PresentMonSession _fps = new();
+    private readonly GraphicsApiMonitor _graphicsApi = new();
     private IReadOnlyList<OverlaySegmentViewModel> _overlaySegments = Array.Empty<OverlaySegmentViewModel>();
     private Brush _overlayBackgroundBrush = Brushes.Transparent;
     private bool _isOverlayEditing;
@@ -780,7 +781,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         set => IsOverlayEditing = !value;
     }
 
-    public string OverlayHotkeyText => "Ctrl+Alt+O";
 
     public double? OverlayLeft => _config.Overlay.Left;
 
@@ -971,10 +971,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     public void UpdateFpsTarget(int processId)
     {
+        // En modo Benchmark los FPS y la API se miden siempre: el panel los muestra.
         bool wanted = OverlayEnabled
-                      && _overlayMetrics.Any(option => option.IsSelected && option.Key == OverlayMetricKeys.Fps);
+                      && (IsBenchmarkMode || _overlayMetrics.Any(option => option.IsSelected && OverlayMetricKeys.IsFps(option.Key)));
 
         _fps.SetTarget(wanted ? processId : 0);
+
+        // La API gráfica solo se busca si el usuario la eligió en el overlay.
+        bool apiWanted = wanted && (IsBenchmarkMode || _overlayMetrics.Any(option => option.IsSelected && option.Key == OverlayMetricKeys.GraphicsApi));
+        _graphicsApi.SetTarget(apiWanted ? processId : 0);
     }
 
     /// <summary>
@@ -987,6 +992,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             return;
 
         FpsReading? fps = _fps.Current();
+        string? api = fps is null ? null : _graphicsApi.Detect(fps.Value.Runtime);
+        UpdateBenchmark(fps, api);
 
         var snapshot = new OverlaySnapshot
         {
@@ -1008,7 +1015,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             NetDownMbs = NetDownMbs,
             NetUpMbs = NetUpMbs,
             Fps = fps?.Fps,
-            FrameGeneration = fps?.FrameGeneration == true
+            FrameGeneration = fps?.FrameGeneration == true,
+            FrameTimeMs = fps?.FrameTimeMs,
+            FpsLow1 = fps?.Low1Fps,
+            GraphicsApi = api
         };
 
         var selected = _overlayMetrics
@@ -1056,6 +1066,9 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private static string MetricLabelKey(string key) => key switch
     {
         OverlayMetricKeys.Fps => "overlay.metric.fps",
+        OverlayMetricKeys.GraphicsApi => "overlay.metric.graphicsApi",
+        OverlayMetricKeys.FrameTime => "overlay.metric.frameTime",
+        OverlayMetricKeys.FpsLow1 => "overlay.metric.fpsLow1",
         OverlayMetricKeys.CpuLoad => "overlay.metric.cpuLoad",
         OverlayMetricKeys.CpuTemperature => "overlay.metric.cpuTemp",
         OverlayMetricKeys.CpuClock => "overlay.metric.cpuClock",
@@ -1102,6 +1115,51 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
             OnPropertyChanged();
             OnPropertyChanged(nameof(ShowErrorReportsPrompt));
             ErrorReporting.Configure(value, _config.InstallId);
+            SaveSoon();
+        }
+    }
+
+    /// <summary>Temperatura en el ícono de la bandeja (opcional).</summary>
+    public bool TrayShowTemperature
+    {
+        get => _config.TrayShowTemperature;
+        set
+        {
+            if (_config.TrayShowTemperature == value)
+                return;
+
+            _config.TrayShowTemperature = value;
+            OnPropertyChanged();
+            SaveSoon();
+        }
+    }
+
+    public bool TrayTemperatureIsCpu
+    {
+        get => _config.TrayTemperatureSource != "gpu";
+        set
+        {
+            if (!value || TrayTemperatureIsCpu)
+                return;
+
+            _config.TrayTemperatureSource = "cpu";
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TrayTemperatureIsGpu));
+            SaveSoon();
+        }
+    }
+
+    public bool TrayTemperatureIsGpu
+    {
+        get => _config.TrayTemperatureSource == "gpu";
+        set
+        {
+            if (!value || TrayTemperatureIsGpu)
+                return;
+
+            _config.TrayTemperatureSource = "gpu";
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(TrayTemperatureIsCpu));
             SaveSoon();
         }
     }
@@ -1279,10 +1337,12 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _disposed = true;
         _saveTimer.Stop();
         _saveTimer.Tick -= OnSaveTimerTick;
+        StopUpdateTimer();
         _trimTimer?.Stop();
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
         _fps.Dispose();
+        _graphicsApi.Dispose();
 
         _diskUsage.Dispose();
         Processes.Dispose();
@@ -1327,6 +1387,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         OnPropertyChanged(nameof(DriverShortText));
         OnPropertyChanged(nameof(AdminText));
+        RefreshUpdateText();
         OnPropertyChanged(nameof(CpuMaxText));
         OnPropertyChanged(nameof(GpuHotspotText));
         OnPropertyChanged(nameof(CpuLoadText));

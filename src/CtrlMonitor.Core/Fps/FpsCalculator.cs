@@ -2,8 +2,11 @@ using System.Globalization;
 
 namespace CtrlMonitor.Core.Fps;
 
-/// <summary>Lectura de FPS: cuadros mostrados por segundo y si hay frame generation.</summary>
-public readonly record struct FpsReading(double Fps, bool FrameGeneration);
+/// <summary>
+/// Lectura de FPS: cuadros mostrados por segundo, si hay frame generation,
+/// el tiempo medio entre cuadros (ms) y el «1 % low» de los últimos segundos.
+/// </summary>
+public readonly record struct FpsReading(double Fps, bool FrameGeneration, double? FrameTimeMs = null, double? Low1Fps = null, string? Runtime = null);
 
 /// <summary>
 /// Convierte la salida CSV de PresentMon en FPS. Es lógica pura para poder
@@ -14,6 +17,12 @@ public sealed class FpsCalculator
     /// <summary>Ventana sobre la que se cuentan los cuadros.</summary>
     public const double WindowMs = 1000;
 
+    /// <summary>
+    /// Ventana para el «1 % low»: hace falta más historia que un segundo
+    /// para que el 1 % de los cuadros más lentos sea representativo.
+    /// </summary>
+    public const double LowWindowMs = 10_000;
+
     private readonly Dictionary<string, Queue<Frame>> _frames = new(StringComparer.Ordinal);
     private readonly object _gate = new();
 
@@ -21,6 +30,16 @@ public sealed class FpsCalculator
     private int _time = -1;
     private int _frameType = -1;
     private int _untilDisplayed = -1;
+    private int _runtime = -1;
+    private readonly Dictionary<string, string> _runtimes = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, double> _lastShown = new(StringComparer.Ordinal);
+    private string? _primaryChain;
+
+    /// <summary>
+    /// Tiempo de cada cuadro mostrado de la cadena principal, en ms, apenas
+    /// llega. Lo usa la grabación del benchmark. Se llama desde el hilo de PresentMon.
+    /// </summary>
+    public event Action<double>? FrameDisplayed;
     private int _columnCount;
     private double _latest = double.MinValue;
 
@@ -48,6 +67,7 @@ public sealed class FpsCalculator
             return;
 
         string swapChain = _swapChain >= 0 ? cells[_swapChain] : string.Empty;
+        double? interval = null;
         bool displayed = _untilDisplayed < 0 || !string.Equals(cells[_untilDisplayed], "NA", StringComparison.OrdinalIgnoreCase);
         bool generated = _frameType >= 0 && IsGenerated(cells[_frameType]);
 
@@ -61,11 +81,28 @@ public sealed class FpsCalculator
 
             queue.Enqueue(new Frame(time, displayed, generated));
 
+            if (displayed)
+            {
+                if (_lastShown.TryGetValue(swapChain, out double last) && time > last
+                    && (_primaryChain is null || _primaryChain == swapChain))
+                {
+                    interval = time - last;
+                }
+
+                _lastShown[swapChain] = time;
+            }
+
+            if (_runtime >= 0)
+                _runtimes[swapChain] = cells[_runtime];
+
             if (time > _latest)
                 _latest = time;
 
             Trim();
         }
+
+        if (interval is { } ms)
+            FrameDisplayed?.Invoke(ms);
     }
 
     /// <summary>
@@ -80,23 +117,48 @@ public sealed class FpsCalculator
             FpsReading? best = null;
             int bestCount = 0;
 
-            foreach (Queue<Frame> queue in _frames.Values)
+            foreach ((string chain, Queue<Frame> queue) in _frames)
             {
                 int displayed = 0;
                 bool generated = false;
+                double from = _latest - WindowMs;
+                var intervals = new List<double>();
+                var recentIntervals = new List<double>();
+                double? previous = null;
 
                 foreach (Frame frame in queue)
                 {
-                    if (frame.Displayed)
-                        displayed++;
+                    if (!frame.Displayed)
+                        continue;
 
-                    generated |= frame.Generated && frame.Displayed;
+                    if (previous is { } last && frame.Time > last)
+                    {
+                        double gap = frame.Time - last;
+                        intervals.Add(gap);
+
+                        if (frame.Time > from)
+                            recentIntervals.Add(gap);
+                    }
+
+                    previous = frame.Time;
+
+                    if (frame.Time > from)
+                    {
+                        displayed++;
+                        generated |= frame.Generated;
+                    }
                 }
 
                 if (displayed > bestCount)
                 {
                     bestCount = displayed;
-                    best = new FpsReading(displayed * 1000 / WindowMs, generated);
+                    _primaryChain = chain;
+                    best = new FpsReading(
+                        displayed * 1000 / WindowMs,
+                        generated,
+                        recentIntervals.Count > 0 ? recentIntervals.Average() : null,
+                        Low1(intervals),
+                        _runtimes.TryGetValue(chain, out string? runtime) ? runtime : null);
                 }
             }
 
@@ -104,11 +166,55 @@ public sealed class FpsCalculator
         }
     }
 
+    /// <summary>Tiempos de los últimos cuadros mostrados de la cadena principal, en ms.</summary>
+    public IReadOnlyList<double> RecentFrameTimes(int count)
+    {
+        lock (_gate)
+        {
+            if (_primaryChain is null || !_frames.TryGetValue(_primaryChain, out Queue<Frame>? queue))
+                return Array.Empty<double>();
+
+            var result = new List<double>(count);
+            double? previous = null;
+
+            foreach (Frame frame in queue)
+            {
+                if (!frame.Displayed)
+                    continue;
+
+                if (previous is { } last && frame.Time > last)
+                    result.Add(frame.Time - last);
+
+                previous = frame.Time;
+            }
+
+            return result.Count > count ? result.GetRange(result.Count - count, count) : result;
+        }
+    }
+
+    /// <summary>
+    /// «1 % low»: los FPS equivalentes al promedio del 1 % de los cuadros más
+    /// lentos. Muestra los tirones que el promedio de FPS esconde.
+    /// </summary>
+    public static double? Low1(IReadOnlyList<double> intervalsMs)
+    {
+        if (intervalsMs.Count < 2)
+            return null;
+
+        int count = Math.Max(1, (int)Math.Ceiling(intervalsMs.Count * 0.01));
+        double slowest = intervalsMs.OrderByDescending(v => v).Take(count).Average();
+
+        return slowest > 0 ? 1000 / slowest : null;
+    }
+
     public void Reset()
     {
         lock (_gate)
         {
             _frames.Clear();
+            _runtimes.Clear();
+            _lastShown.Clear();
+            _primaryChain = null;
             _latest = double.MinValue;
         }
     }
@@ -150,7 +256,9 @@ public sealed class FpsCalculator
             _time = Find("TimeInMs", "CPUStartTimeInMs", "CPUStartTime");
             _frameType = Find("FrameType");
             _untilDisplayed = Find("MsUntilDisplayed", "DisplayedTime");
-            _columnCount = new[] { _swapChain, _time, _frameType, _untilDisplayed }.Max() + 1;
+            _runtime = Find("PresentRuntime", "Runtime");
+            _columnCount = new[] { _swapChain, _time, _frameType, _untilDisplayed, _runtime }.Max() + 1;
+            _runtimes.Clear();
             _frames.Clear();
             _latest = double.MinValue;
         }
@@ -158,7 +266,7 @@ public sealed class FpsCalculator
 
     private void Trim()
     {
-        double from = _latest - WindowMs;
+        double from = _latest - LowWindowMs;
 
         foreach (Queue<Frame> queue in _frames.Values)
         {

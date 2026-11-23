@@ -1988,7 +1988,10 @@
                                     </Border.Background>
                                     <Viewbox Stretch="Uniform" StretchDirection="DownOnly"
                                              HorizontalAlignment="Center" VerticalAlignment="Center">
-                                        <controls:OverlayBar />
+                                        <Grid>
+                                            <controls:OverlayBar Visibility="{Binding IsBarMode, Converter={StaticResource BoolToVis}}" />
+                                            <controls:BenchmarkPanel Visibility="{Binding IsBenchmarkMode, Converter={StaticResource BoolToVis}}" />
+                                        </Grid>
                                     </Viewbox>
                                 </Border>
                             </StackPanel>
@@ -2000,6 +2003,21 @@
                             <Border Style="{StaticResource Card}">
                                 <StackPanel>
                                     <TextBlock Text="{l:Tr overlay.appearance}" Style="{StaticResource SectionTitle}" />
+
+                                    <!-- Modo: barra compacta o panel de benchmark con gráficos. -->
+                                    <TextBlock Text="{l:Tr overlay.mode}" Style="{StaticResource SecondaryText}" Margin="0,10,0,6" />
+                                    <Border Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Left"
+                                            BorderBrush="{StaticResource BorderBrush}"
+                                            BorderThickness="1" CornerRadius="9" Padding="2">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Content="{l:Tr overlay.modeBar}" Style="{StaticResource SegmentButton}" GroupName="OverlayMode"
+                                                         IsChecked="{Binding IsBarMode, Mode=TwoWay}" />
+                                            <RadioButton Content="{l:Tr overlay.modeBenchmark}" Style="{StaticResource SegmentButton}" GroupName="OverlayMode"
+                                                         IsChecked="{Binding IsBenchmarkMode, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock Text="{l:Tr overlay.modeHint}" Style="{StaticResource MutedText}"
+                                               TextWrapping="Wrap" Margin="0,6,0,4" />
 
                                     <!-- Estilo de colores: la primera elección. Con colores a
                                          medida activos queda atenuado porque no se aplica. -->
@@ -2248,18 +2266,43 @@
                                            Visibility="{Binding IsOverlayEditing, Converter={StaticResource BoolToVis}}" />
 
                                 <Grid Margin="0,14,0,0">
-                                    <TextBlock Text="{l:Tr overlay.hotkey}"
-                                               Style="{StaticResource SecondaryText}"
+                                    <TextBlock Text="{l:Tr overlay.hotkey}" Style="{StaticResource SecondaryText}"
                                                VerticalAlignment="Center" />
-                                    <Border HorizontalAlignment="Right"
-                                            Background="{StaticResource SurfaceBrush}"
-                                            BorderBrush="{StaticResource BorderStrongBrush}"
-                                            BorderThickness="1" CornerRadius="6" Padding="9,4">
-                                        <TextBlock Text="{Binding OverlayHotkeyText}"
-                                                   FontFamily="Consolas" FontSize="12"
-                                                   FontWeight="SemiBold" />
-                                    </Border>
+                                    <TextBox HorizontalAlignment="Right" Width="150" IsReadOnly="True" Tag="toggle"
+                                             Text="{Binding OverlayHotkeyText, Mode=OneWay}" Cursor="Hand"
+                                             FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
+                                             TextAlignment="Center" Padding="6,4" IsReadOnlyCaretVisible="False"
+                                             Background="{StaticResource SurfaceBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                                             BorderBrush="{StaticResource BorderStrongBrush}"
+                                             PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                                             ToolTip="{l:Tr overlay.hotkeyEditHint}" />
                                 </Grid>
+                                <Grid Margin="0,8,0,0">
+                                    <TextBlock Text="{l:Tr overlay.hotkeyMode}" Style="{StaticResource SecondaryText}"
+                                               VerticalAlignment="Center" />
+                                    <TextBox HorizontalAlignment="Right" Width="150" IsReadOnly="True" Tag="mode"
+                                             Text="{Binding OverlayModeHotkeyText, Mode=OneWay}" Cursor="Hand"
+                                             FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
+                                             TextAlignment="Center" Padding="6,4" IsReadOnlyCaretVisible="False"
+                                             Background="{StaticResource SurfaceBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                                             BorderBrush="{StaticResource BorderStrongBrush}"
+                                             PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                                             ToolTip="{l:Tr overlay.hotkeyEditHint}" />
+                                </Grid>
+                                <Grid Margin="0,8,0,0">
+                                    <TextBlock Text="{l:Tr overlay.hotkeyRecord}" Style="{StaticResource SecondaryText}"
+                                               VerticalAlignment="Center" />
+                                    <TextBox HorizontalAlignment="Right" Width="150" IsReadOnly="True" Tag="record"
+                                             Text="{Binding OverlayRecordHotkeyText, Mode=OneWay}" Cursor="Hand"
+                                             FontFamily="Consolas" FontSize="12" FontWeight="SemiBold"
+                                             TextAlignment="Center" Padding="6,4" IsReadOnlyCaretVisible="False"
+                                             Background="{StaticResource SurfaceBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                                             BorderBrush="{StaticResource BorderStrongBrush}"
+                                             PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                                             ToolTip="{l:Tr overlay.hotkeyEditHint}" />
+                                </Grid>
+                                <TextBlock Text="{Binding HotkeyError}" Foreground="{StaticResource DangerBrush}"
+                                           Margin="0,6,0,0" TextWrapping="Wrap" FontSize="11.5" />
                                 <TextBlock Text="{l:Tr overlay.hotkeyHint}"
                                            Style="{StaticResource MutedText}" Margin="0,6,0,0"
                                            TextWrapping="Wrap" />
@@ -2335,6 +2378,31 @@
                                               IsChecked="{Binding MinimizeToTray, Mode=TwoWay}" />
                                     <TextBlock Text="{l:Tr settings.exitHint}"
                                                Style="{StaticResource MutedText}" Margin="28,4,0,0" />
+
+                                    <!-- Widget de escritorio: opcional. -->
+                                    <CheckBox Content="{l:Tr settings.widget}" Margin="0,16,0,0"
+                                              IsChecked="{Binding ShowWidget, Mode=TwoWay}" />
+                                    <TextBlock Text="{l:Tr settings.widgetHint}" TextWrapping="Wrap"
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0" />
+                                    <CheckBox Content="{l:Tr settings.widgetTopmost}" Margin="28,8,0,0"
+                                              IsEnabled="{Binding ShowWidget}"
+                                              IsChecked="{Binding WidgetTopmost, Mode=TwoWay}" />
+                                    <!-- Temperatura en el ícono de la bandeja: opcional. -->
+                                    <CheckBox Content="{l:Tr settings.trayTemperature}" Margin="0,16,0,0"
+                                              IsChecked="{Binding TrayShowTemperature, Mode=TwoWay}" />
+                                    <TextBlock Text="{l:Tr settings.trayTemperatureHint}" TextWrapping="Wrap"
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0" />
+                                    <Border Background="{StaticResource SurfaceBrush}" HorizontalAlignment="Left"
+                                            BorderBrush="{StaticResource BorderBrush}" Margin="28,8,0,0"
+                                            BorderThickness="1" CornerRadius="9" Padding="2"
+                                            IsEnabled="{Binding TrayShowTemperature}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <RadioButton Content="CPU" Style="{StaticResource SegmentButton}" GroupName="TrayTemp"
+                                                         IsChecked="{Binding TrayTemperatureIsCpu, Mode=TwoWay}" />
+                                            <RadioButton Content="GPU" Style="{StaticResource SegmentButton}" GroupName="TrayTemp"
+                                                         IsChecked="{Binding TrayTemperatureIsGpu, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Border>
 
                                     <Separator Margin="0,18,0,14" />
 
@@ -2452,6 +2520,23 @@
                                     <TextBlock Text="{l:Tr settings.sendErrorsHint}"
                                                Style="{StaticResource MutedText}" TextWrapping="Wrap"
                                                Margin="28,4,0,0" />
+
+                                    <!-- Aviso de versión nueva: activado por defecto, se puede apagar. -->
+                                    <CheckBox Content="{l:Tr settings.checkUpdates}" Margin="0,18,0,0"
+                                              IsChecked="{Binding CheckForUpdates, Mode=TwoWay}" />
+                                    <TextBlock Text="{l:Tr settings.checkUpdatesHint}"
+                                               Style="{StaticResource MutedText}" TextWrapping="Wrap"
+                                               Margin="28,4,0,0" />
+                                    <Border Style="{StaticResource Chip}" Background="{StaticResource AccentSoftBrush}"
+                                            Margin="28,10,0,0" Padding="12,8" HorizontalAlignment="Left"
+                                            Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding UpdateText}" Foreground="{StaticResource AccentTextBrush}"
+                                                       FontWeight="SemiBold" VerticalAlignment="Center" />
+                                            <Button Content="{l:Tr settings.downloadUpdate}" Style="{StaticResource AccentButton}"
+                                                    Margin="12,0,0,0" Command="{Binding OpenUpdateCommand}" />
+                                        </StackPanel>
+                                    </Border>
 
                                     <!-- Feedback en GitHub: abre el formulario en el navegador. -->
                                     <TextBlock Text="{l:Tr settings.feedback}" Style="{StaticResource SecondaryText}"
