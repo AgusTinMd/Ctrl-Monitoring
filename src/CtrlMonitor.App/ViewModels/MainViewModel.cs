@@ -79,6 +79,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     private readonly List<OverlayAnchorOption> _overlayAnchorOptions = new();
     private readonly PresentMonSession _fps = new();
     private readonly GraphicsApiMonitor _graphicsApi = new();
+    private readonly CpuUsageCounter _cpuUsage = new();
     private IReadOnlyList<OverlaySegmentViewModel> _overlaySegments = Array.Empty<OverlaySegmentViewModel>();
     private Brush _overlayBackgroundBrush = Brushes.Transparent;
     private bool _isOverlayEditing;
@@ -971,6 +972,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
     /// </summary>
     public void UpdateFpsTarget(int processId)
     {
+        // Con un juego en pantalla se leen menos seguido CPU y GPU para no frenarlo.
+        bool gaming = processId != 0;
+
+        if (_hardware.GameMode != gaming)
+        {
+            _hardware.GameMode = gaming;
+            AppLog.Info(gaming ? "Modo juego: lecturas de CPU y GPU espaciadas." : "Modo juego terminado.");
+        }
+
         // En modo Benchmark los FPS y la API se miden siempre: el panel los muestra.
         bool wanted = OverlayEnabled
                       && (IsBenchmarkMode || _overlayMetrics.Any(option => option.IsSelected && OverlayMetricKeys.IsFps(option.Key)));
@@ -1343,6 +1353,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
         _fps.Dispose();
         _graphicsApi.Dispose();
+        _cpuUsage.Dispose();
 
         _diskUsage.Dispose();
         Processes.Dispose();
@@ -1666,6 +1677,11 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         UpdateCpuThreads(cpu);
         CpuLoad = FindValue(cpu, SensorKind.Load, "CPU Total", "Total")
                   ?? FirstValue(cpu, SensorKind.Load);
+
+        // En modo juego el CPU se lee cada 5 s; el uso sale del contador de
+        // Windows, que no frena al juego, para seguir viéndolo cada segundo.
+        if (_hardware.GameMode && _cpuUsage.Read() is { } windowsLoad)
+            CpuLoad = windowsLoad;
 
         GpuTemperature = FindValue(gpu, SensorKind.Temperature, "GPU Core")
                          ?? FirstValue(gpu, SensorKind.Temperature);

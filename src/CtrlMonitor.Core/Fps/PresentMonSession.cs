@@ -32,6 +32,12 @@ public sealed class PresentMonSession : IDisposable
 
     public PresentMonSession(string? executable = null)
     {
+        _calculator.PresentModeChanged += mode =>
+        {
+            FpsReading? reading = _calculator.Current();
+            AppLog.Info($"FPS: modo de presentación del juego: {mode} ({reading?.Fps:0} FPS).");
+        };
+
         _executable = executable ?? Path.Combine(AppContext.BaseDirectory, ExecutableName);
     }
 

@@ -31,6 +31,16 @@ public sealed class FpsCalculator
     private int _frameType = -1;
     private int _untilDisplayed = -1;
     private int _runtime = -1;
+    private int _presentMode = -1;
+    private int _syncInterval = -1;
+    private string? _lastModeKey;
+
+    /// <summary>
+    /// Se dispara cuando cambia cómo presenta Windows los cuadros de la cadena
+    /// principal (por ejemplo «Hardware: Independent Flip» → «Composed: Flip»).
+    /// Sirve para diagnosticar caídas de FPS con el overlay.
+    /// </summary>
+    public event Action<string>? PresentModeChanged;
     private readonly Dictionary<string, string> _runtimes = new(StringComparer.Ordinal);
     private readonly Dictionary<string, double> _lastShown = new(StringComparer.Ordinal);
     private string? _primaryChain;
@@ -68,6 +78,7 @@ public sealed class FpsCalculator
 
         string swapChain = _swapChain >= 0 ? cells[_swapChain] : string.Empty;
         double? interval = null;
+        string? modeChange = null;
         bool displayed = _untilDisplayed < 0 || !string.Equals(cells[_untilDisplayed], "NA", StringComparison.OrdinalIgnoreCase);
         bool generated = _frameType >= 0 && IsGenerated(cells[_frameType]);
 
@@ -95,6 +106,17 @@ public sealed class FpsCalculator
             if (_runtime >= 0)
                 _runtimes[swapChain] = cells[_runtime];
 
+            if (_presentMode >= 0 && (_primaryChain is null || _primaryChain == swapChain))
+            {
+                string key = cells[_presentMode] + (_syncInterval >= 0 ? " · SyncInterval " + cells[_syncInterval] : string.Empty);
+
+                if (key != _lastModeKey)
+                {
+                    _lastModeKey = key;
+                    modeChange = key;
+                }
+            }
+
             if (time > _latest)
                 _latest = time;
 
@@ -103,6 +125,9 @@ public sealed class FpsCalculator
 
         if (interval is { } ms)
             FrameDisplayed?.Invoke(ms);
+
+        if (modeChange is not null)
+            PresentModeChanged?.Invoke(modeChange);
     }
 
     /// <summary>
@@ -257,7 +282,10 @@ public sealed class FpsCalculator
             _frameType = Find("FrameType");
             _untilDisplayed = Find("MsUntilDisplayed", "DisplayedTime");
             _runtime = Find("PresentRuntime", "Runtime");
-            _columnCount = new[] { _swapChain, _time, _frameType, _untilDisplayed, _runtime }.Max() + 1;
+            _presentMode = Find("PresentMode");
+            _syncInterval = Find("SyncInterval");
+            _lastModeKey = null;
+            _columnCount = new[] { _swapChain, _time, _frameType, _untilDisplayed, _runtime, _presentMode, _syncInterval }.Max() + 1;
             _runtimes.Clear();
             _frames.Clear();
             _latest = double.MinValue;

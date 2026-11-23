@@ -153,6 +153,46 @@ public sealed partial class HardwareService : IDisposable
     }
 
     private static readonly TimeSpan StorageInterval = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Modo juego: con un juego en pantalla se leen menos seguido los
+    /// componentes caros. Leer el CPU ejecuta código en cada núcleo (más de
+    /// 100 ms en un i5-10400F con un juego corriendo) y eso le bajaba los FPS
+    /// al juego; la GPU tarda menos pero también pasa por el driver.
+    /// </summary>
+    public bool GameMode
+    {
+        get => Volatile.Read(ref _gameMode);
+        set => Volatile.Write(ref _gameMode, value);
+    }
+
+    private static readonly TimeSpan GameCpuInterval = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan GameGpuInterval = TimeSpan.FromSeconds(2);
+    private bool _gameMode;
+    private readonly Dictionary<IHardware, DateTime> _lastUpdateUtc = new();
+
+    /// <summary>En modo juego, si este componente puede esperar a la próxima vuelta.</summary>
+    private bool SkipForGame(IHardware hardware, DateTime now)
+    {
+        if (!GameMode)
+            return false;
+
+        TimeSpan interval = hardware.HardwareType switch
+        {
+            HardwareType.Cpu => GameCpuInterval,
+            HardwareType.GpuAmd or HardwareType.GpuNvidia or HardwareType.GpuIntel => GameGpuInterval,
+            _ => TimeSpan.Zero
+        };
+
+        if (interval == TimeSpan.Zero)
+            return false;
+
+        if (_lastUpdateUtc.TryGetValue(hardware, out DateTime last) && now - last < interval)
+            return true;
+
+        _lastUpdateUtc[hardware] = now;
+        return false;
+    }
     private bool _storageUpdatesEnabled;
     private DateTime _storageUpdatedUtc = DateTime.MinValue;
 
@@ -169,6 +209,11 @@ public sealed partial class HardwareService : IDisposable
             if (hardware.HardwareType == HardwareType.Storage && !updateStorage)
                 continue;
 
+            if (SkipForGame(hardware, DateTime.UtcNow))
+                continue;
+
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+
             try
             {
                 hardware.Update();
@@ -177,8 +222,27 @@ public sealed partial class HardwareService : IDisposable
             {
                 LastError = ex.Message;
             }
+
+            // Diagnóstico: un componente que tarda en leerse puede trabar al
+            // driver y bajar los FPS de un juego. Se anota como mucho una vez
+            // por minuto por componente.
+            double ms = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+
+            if (ms > 15)
+            {
+                string name = hardware.HardwareType + " " + hardware.Name;
+                long now = Environment.TickCount64;
+
+                if (!_slowLogged.TryGetValue(name, out long last) || now - last > 60_000)
+                {
+                    _slowLogged[name] = now;
+                    Diagnostics.AppLog.Info($"Sensores: {name} tardó {ms:0} ms en leerse.");
+                }
+            }
         }
     }
+
+    private readonly Dictionary<string, long> _slowLogged = new(StringComparer.Ordinal);
 
     private void DiscoverNamesLocked()
     {
