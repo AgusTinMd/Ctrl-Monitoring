@@ -45,18 +45,20 @@
     <SolidColorBrush x:Key="TempHotBrush" Color="#FF8A3D" />
     <SolidColorBrush x:Key="TempCriticalBrush" Color="#FF4D6D" />
 
-    <!-- Series: temperaturas en tonos cálidos; carga y uso en tonos fríos. -->
-    <SolidColorBrush x:Key="ChartCpuBrush" Color="#FF8A3D" />
-    <SolidColorBrush x:Key="ChartGpuBrush" Color="#F4C152" />
-    <SolidColorBrush x:Key="ChartBoardBrush" Color="#D9A0FF" />
-    <SolidColorBrush x:Key="ChartHotspotBrush" Color="#FF4D6D" />
+    <!-- Series: tonos fuera de la escala térmica y de los estados (naranja,
+         ámbar, rojo y verde quedan solo para avisar algo). CPU rosa; GPU,
+         hotspot y VRAM en violetas; placa arena; carga y uso en tonos fríos. -->
+    <SolidColorBrush x:Key="ChartCpuBrush" Color="#F27FCF" />
+    <SolidColorBrush x:Key="ChartGpuBrush" Color="#A98BFF" />
+    <SolidColorBrush x:Key="ChartBoardBrush" Color="#E3DC6B" />
+    <SolidColorBrush x:Key="ChartHotspotBrush" Color="#C77DFF" />
     <SolidColorBrush x:Key="ChartRamBrush" Color="#5AB8F5" />
-    <SolidColorBrush x:Key="ChartVramBrush" Color="#9B8CFF" />
+    <SolidColorBrush x:Key="ChartVramBrush" Color="#D0C2FF" />
     <SolidColorBrush x:Key="ChartNetDownBrush" Color="#4FD8E8" />
     <SolidColorBrush x:Key="ChartNetUpBrush" Color="#8FB3FF" />
-    <SolidColorBrush x:Key="ChartDiskReadBrush" Color="#67D6B0" />
+    <SolidColorBrush x:Key="ChartDiskReadBrush" Color="#A6E3A1" />
     <SolidColorBrush x:Key="ChartDiskWriteBrush" Color="#C9D66A" />
-    <SolidColorBrush x:Key="ChartDiskActiveBrush" Color="#3367D6B0" />
+    <SolidColorBrush x:Key="ChartDiskActiveBrush" Color="#33A6E3A1" />
 
     <FontFamily x:Key="AppFont">Segoe UI Variable Text, Segoe UI</FontFamily>
     <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas</FontFamily>
