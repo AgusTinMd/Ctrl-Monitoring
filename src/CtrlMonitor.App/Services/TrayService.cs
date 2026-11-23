@@ -21,7 +21,7 @@ public sealed class TrayService : IDisposable
     private readonly MenuItem _exitItem;
     private bool _disposed;
     private string? _tooltip;
-    private readonly ImageSource _defaultIcon;
+    private System.Drawing.Icon? _drawnIcon;
     private string? _iconKey;
     private bool _iconFailing;
     private bool _tooltipFailing;
@@ -57,8 +57,6 @@ public sealed class TrayService : IDisposable
         image.CacheOption = BitmapCacheOption.OnLoad;
         image.EndInit();
         image.Freeze();
-
-        _defaultIcon = image;
 
         _icon = new TaskbarIcon
         {
@@ -162,15 +160,33 @@ public sealed class TrayService : IDisposable
         if (key == _iconKey)
             return;
 
+        // Al volver al logo con la opción apagada no hace falta tocar nada si
+        // nunca se cambió el ícono.
+        if (!show && _iconKey is null)
+        {
+            _iconKey = key;
+            return;
+        }
+
         try
         {
-            _icon.IconSource = show ? TrayTemperatureIcon.Render(temperature!.Value) : _defaultIcon;
+            // H.NotifyIcon no acepta imágenes generadas en memoria como
+            // IconSource: se le pasa un ícono de Windows ya armado.
+            System.Drawing.Icon next = show
+                ? TrayTemperatureIcon.RenderIcon(temperature!.Value)
+                : TrayTemperatureIcon.DefaultIcon();
+
+            System.Drawing.Icon? previous = _drawnIcon;
+            _icon.Icon = next;
+            _drawnIcon = next;
+            previous?.Dispose();
+
             _iconKey = key;
             _iconFailing = false;
         }
-        catch (Exception ex) when (ex is InvalidOperationException or ObjectDisposedException
-                                       or System.ComponentModel.Win32Exception or NotSupportedException)
+        catch (Exception ex)
         {
+            // Un ícono que no se puede dibujar nunca debe cerrar la app.
             if (!_iconFailing)
             {
                 _iconFailing = true;
@@ -191,6 +207,7 @@ public sealed class TrayService : IDisposable
         try
         {
             _icon.Dispose();
+            _drawnIcon?.Dispose();
         }
         catch
         {

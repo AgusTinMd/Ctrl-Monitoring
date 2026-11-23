@@ -55,6 +55,44 @@ internal static class TrayTemperatureIcon
         return bitmap;
     }
 
+    /// <summary>Ícono de Windows con la temperatura, para la bandeja.</summary>
+    public static System.Drawing.Icon RenderIcon(double celsius)
+    {
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(Render(celsius)));
+
+        using var stream = new System.IO.MemoryStream();
+        encoder.Save(stream);
+        stream.Position = 0;
+
+        using var bitmap = new System.Drawing.Bitmap(stream);
+        IntPtr handle = bitmap.GetHicon();
+
+        try
+        {
+            // Copia propia: el handle de GetHicon se libera enseguida.
+            using var temporary = System.Drawing.Icon.FromHandle(handle);
+            return (System.Drawing.Icon)temporary.Clone();
+        }
+        finally
+        {
+            DestroyIcon(handle);
+        }
+    }
+
+    /// <summary>El logo de la app, para volver a él al apagar la opción.</summary>
+    public static System.Drawing.Icon DefaultIcon()
+    {
+        System.Windows.Resources.StreamResourceInfo? resource =
+            Application.GetResourceStream(new Uri("pack://application:,,,/Assets/fan.ico"));
+
+        using System.IO.Stream stream = resource?.Stream ?? throw new InvalidOperationException("Falta el ícono de la app.");
+        return new System.Drawing.Icon(stream);
+    }
+
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool DestroyIcon(IntPtr handle);
+
     private static Brush Frozen(string hex)
     {
         var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
