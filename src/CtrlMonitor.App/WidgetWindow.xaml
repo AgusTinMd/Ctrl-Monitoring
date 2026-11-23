@@ -1,0 +1,72 @@
+<Window x:Class="CtrlMonitor.App.WidgetWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:CtrlMonitor.App.Localization"
+        Title="Ctrl Monitor widget"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ResizeMode="NoResize" ShowInTaskbar="False" ShowActivated="False"
+        SizeToContent="WidthAndHeight"
+        Topmost="{Binding WidgetTopmost}">
+    <!-- Widget compacto: CPU, GPU, RAM y red. Se arrastra desde cualquier lugar. -->
+    <Border Background="{StaticResource CardBrush}" BorderBrush="{StaticResource BorderBrush}"
+            BorderThickness="1" CornerRadius="10" Padding="12,9,12,11" Width="250"
+            MouseLeftButtonDown="Root_MouseLeftButtonDown">
+        <StackPanel>
+            <Grid Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="Ctrl Monitor" Margin="7,0,0,0" FontSize="11.5"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                </StackPanel>
+                <Button HorizontalAlignment="Right" Style="{StaticResource GhostButton}" Padding="4,1"
+                        ToolTip="{l:Tr widget.hide}" Click="Close_Click">
+                    <Path Data="M 0,0 L 8,8 M 8,0 L 0,8" Stroke="{StaticResource TextMutedBrush}"
+                          StrokeThickness="1.4" Width="8" Height="8" />
+                </Button>
+            </Grid>
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="40" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="64" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="22" />
+                    <RowDefinition Height="22" />
+                    <RowDefinition Height="22" />
+                    <RowDefinition Height="22" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="CPU" Style="{StaticResource SecondaryText}" VerticalAlignment="Center" />
+                <ProgressBar Grid.Column="1" Style="{StaticResource MeterBar}" Minimum="0" Maximum="100" Height="5"
+                             Value="{Binding CpuLoad, Mode=OneWay, TargetNullValue=0}"
+                             Foreground="{StaticResource ChartCpuBrush}" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Text="{Binding CpuTemperature, StringFormat={}{0:0} °C, TargetNullValue=—}" />
+
+                <TextBlock Grid.Row="1" Text="GPU" Style="{StaticResource SecondaryText}" VerticalAlignment="Center" />
+                <ProgressBar Grid.Row="1" Grid.Column="1" Style="{StaticResource MeterBar}" Minimum="0" Maximum="100" Height="5"
+                             Value="{Binding GpuLoad, Mode=OneWay, TargetNullValue=0}"
+                             Foreground="{StaticResource ChartGpuBrush}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Text="{Binding GpuTemperature, StringFormat={}{0:0} °C, TargetNullValue=—}" />
+
+                <TextBlock Grid.Row="2" Text="RAM" Style="{StaticResource SecondaryText}" VerticalAlignment="Center" />
+                <ProgressBar Grid.Row="2" Grid.Column="1" Style="{StaticResource MeterBar}" Minimum="0" Maximum="100" Height="5"
+                             Value="{Binding RamPercent, Mode=OneWay, TargetNullValue=0}"
+                             Foreground="{StaticResource ChartRamBrush}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="2" Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           Text="{Binding RamPercent, StringFormat={}{0:0} %, TargetNullValue=—}" />
+
+                <TextBlock Grid.Row="3" Text="{l:Tr widget.net}" Style="{StaticResource SecondaryText}" VerticalAlignment="Center" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" HorizontalAlignment="Right"
+                           VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"
+                           Text="{Binding WidgetNetText}" />
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>

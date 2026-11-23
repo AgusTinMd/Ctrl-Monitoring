@@ -60,7 +60,7 @@ public partial class MainViewModel
         if (_disposed)
             return;
 
-        bool active = _windowShown || _overlayShown;
+        bool active = _windowShown || _overlayShown || _widgetShown;
 
         if (active == _monitoring && _activityStarted)
             return;

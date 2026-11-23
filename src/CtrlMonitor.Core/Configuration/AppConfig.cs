@@ -17,6 +17,17 @@ public sealed class AppConfig
 
     public bool MinimizeToTray { get; set; } = true;
 
+    /// <summary>Widget compacto de escritorio. Desactivado por defecto.</summary>
+    public bool WidgetEnabled { get; set; }
+
+    /// <summary>El widget queda encima de las demás ventanas.</summary>
+    public bool WidgetTopmost { get; set; } = true;
+
+    /// <summary>Posición del widget; null = abajo a la derecha.</summary>
+    public double? WidgetLeft { get; set; }
+
+    public double? WidgetTop { get; set; }
+
     public bool RunAtStartup { get; set; }
 
     /// <summary>Muestra u oculta la barra lateral de navegación.</summary>
@@ -73,6 +84,12 @@ public sealed class AppConfig
 
         if (!Guid.TryParseExact(InstallId, "N", out _))
             InstallId = Guid.NewGuid().ToString("N");
+
+        if (WidgetLeft is { } wl && !double.IsFinite(wl))
+            WidgetLeft = null;
+
+        if (WidgetTop is { } wt && !double.IsFinite(wt))
+            WidgetTop = null;
 
         Overlay ??= new OverlayConfig();
         Overlay.Normalize();

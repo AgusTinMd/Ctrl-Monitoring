@@ -18,6 +18,7 @@ public sealed class TrayService : IDisposable
     private readonly TaskbarIcon _icon;
     private readonly MenuItem _openItem;
     private readonly MenuItem _exitItem;
+    private readonly MenuItem _widgetItem;
     private bool _disposed;
     private string? _tooltip;
     private bool _tooltipFailing;
@@ -44,6 +45,12 @@ public sealed class TrayService : IDisposable
         MenuItem exitItem = _exitItem;
 
         menu.Items.Add(openItem);
+
+        // Atajo para mostrar u ocultar el widget de escritorio.
+        _widgetItem = new MenuItem { Header = Loc.T("tray.widget"), IsCheckable = true, IsChecked = _viewModel.ShowWidget };
+        _widgetItem.Click += (_, _) => _viewModel.ShowWidget = _widgetItem.IsChecked;
+        menu.Items.Add(_widgetItem);
+
         menu.Items.Add(new Separator());
         menu.Items.Add(exitItem);
 
@@ -78,11 +85,15 @@ public sealed class TrayService : IDisposable
     private void OnLanguageChanged(object? sender, EventArgs e)
     {
         _openItem.Header = Loc.T("tray.open");
+        _widgetItem.Header = Loc.T("tray.widget");
         _exitItem.Header = Loc.T("tray.exit");
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(MainViewModel.ShowWidget))
+            _widgetItem.IsChecked = _viewModel.ShowWidget;
+
         if (e.PropertyName is nameof(MainViewModel.CpuTemperature)
             or nameof(MainViewModel.GpuTemperature))
         {

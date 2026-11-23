@@ -2336,6 +2336,15 @@
                                     <TextBlock Text="{l:Tr settings.exitHint}"
                                                Style="{StaticResource MutedText}" Margin="28,4,0,0" />
 
+                                    <!-- Widget de escritorio: opcional. -->
+                                    <CheckBox Content="{l:Tr settings.widget}" Margin="0,16,0,0"
+                                              IsChecked="{Binding ShowWidget, Mode=TwoWay}" />
+                                    <TextBlock Text="{l:Tr settings.widgetHint}" TextWrapping="Wrap"
+                                               Style="{StaticResource MutedText}" Margin="28,4,0,0" />
+                                    <CheckBox Content="{l:Tr settings.widgetTopmost}" Margin="28,8,0,0"
+                                              IsEnabled="{Binding ShowWidget}"
+                                              IsChecked="{Binding WidgetTopmost, Mode=TwoWay}" />
+
                                     <Separator Margin="0,18,0,14" />
 
                                     <StackPanel Orientation="Horizontal">
