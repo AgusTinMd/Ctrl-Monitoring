@@ -71,8 +71,24 @@ public sealed class TrayService : IDisposable
         _icon.ForceCreate(false);
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        _viewModel.UpdateFound += OnUpdateFound;
         Loc.Instance.LanguageChanged += OnLanguageChanged;
         UpdateTooltip();
+    }
+
+    /// <summary>Aviso de Windows desde la bandeja cuando hay una versión nueva.</summary>
+    private void OnUpdateFound(object? sender, CtrlMonitor.Core.Diagnostics.ReleaseInfo release)
+    {
+        try
+        {
+            _icon.ShowNotification(
+                "Ctrl Monitor",
+                Loc.F("tray.updateAvailable", CtrlMonitor.Core.Diagnostics.UpdateCheck.Display(release.Version)));
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn("Bandeja: no se pudo mostrar el aviso de versión nueva: " + ex.Message);
+        }
     }
 
     private void OnLanguageChanged(object? sender, EventArgs e)
@@ -138,6 +154,7 @@ public sealed class TrayService : IDisposable
 
         _disposed = true;
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        _viewModel.UpdateFound -= OnUpdateFound;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
 
         try

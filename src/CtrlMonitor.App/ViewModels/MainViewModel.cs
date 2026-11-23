@@ -1283,6 +1283,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         _disposed = true;
         _saveTimer.Stop();
         _saveTimer.Tick -= OnSaveTimerTick;
+        StopUpdateTimer();
         _trimTimer?.Stop();
         _hardware.SnapshotUpdated -= OnSnapshotUpdated;
         Loc.Instance.LanguageChanged -= OnLanguageChanged;
@@ -1331,6 +1332,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
         OnPropertyChanged(nameof(DriverShortText));
         OnPropertyChanged(nameof(AdminText));
+        RefreshUpdateText();
         OnPropertyChanged(nameof(CpuMaxText));
         OnPropertyChanged(nameof(GpuHotspotText));
         OnPropertyChanged(nameof(CpuLoadText));

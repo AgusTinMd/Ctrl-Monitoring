@@ -215,6 +215,9 @@ public partial class App : Application
         _viewModel = new MainViewModel(_store, _config, _hardware);
         _tray = new TrayService(_viewModel, ShowMainWindow, RequestExit);
 
+        // Aviso de versión nueva: solo si el usuario lo activó en Ajustes.
+        _ = _viewModel.CheckForUpdatesAsync();
+
         _window = new MainWindow(_viewModel);
         _window.Closed += OnMainWindowClosed;
 
