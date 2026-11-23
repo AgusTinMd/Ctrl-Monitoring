@@ -1043,6 +1043,10 @@
                                                                         <Setter Property="Data" Value="{StaticResource BoardIconGeometry}" />
                                                                         <Setter Property="Fill" Value="{StaticResource ChartBoardBrush}" />
                                                                     </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding IconKey}" Value="Disk">
+                                                                        <Setter Property="Data" Value="{StaticResource DiskIconGeometry}" />
+                                                                        <Setter Property="Fill" Value="{StaticResource AccentBrush}" />
+                                                                    </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
                                                         </Path.Style>
